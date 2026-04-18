@@ -64,5 +64,5 @@ export async function getEventsForMonth(year: number, month: number) {
     return [];
   }
 
-  return (data ?? []) as CalendarEvent[];
+  return (data ?? []) as unknown as CalendarEvent[];
 }

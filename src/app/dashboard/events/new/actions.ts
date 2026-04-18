@@ -31,7 +31,17 @@ const allowedStatuses = [
   "Storniert",
 ] as const;
 
-function getFormValues(formData: FormData) {
+type EventFormValues = {
+  title: string;
+  date: string;
+  status: string;
+  company_name: string;
+  firstname: string;
+  lastname: string;
+  notes: string;
+};
+
+function getFormValues(formData: FormData): EventFormValues {
   return {
     title: String(formData.get("title") ?? "").trim(),
     date: String(formData.get("date") ?? "").trim(),
@@ -43,7 +53,7 @@ function getFormValues(formData: FormData) {
   };
 }
 
-function validateEventValues(values: CreateEventState["values"]) {
+function validateEventValues(values: EventFormValues) {
   const errors: CreateEventState["errors"] = {};
 
   if (!values.title) {
