@@ -1,13 +1,17 @@
-import { supabase } from "../lib/supabaseClient"
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import LoginForm from "@/components/login-form";
 
-export default async function Home() {
-  const { data, error } = await supabase.from("events").select("*")
+export default async function Page() {
+  const supabase = await createClient();
 
-  return (
-    <div>
-      <h1>Restaurant Event Manager 🍽️</h1>
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-      <pre>{JSON.stringify({ data, error }, null, 2)}</pre>
-    </div>
-  )
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  return <LoginForm />;
 }
