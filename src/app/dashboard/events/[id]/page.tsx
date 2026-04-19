@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import StatusBadge from "@/components/ui/status-badge";
 import { getEventById } from "@/lib/events/get-event-by-id";
 
+
 type Props = {
   params: Promise<{
     id: string;
@@ -39,6 +40,46 @@ function formatDate(date: string) {
 function getDisplayName(firstname: string | null, lastname: string | null) {
   const fullName = [firstname, lastname].filter(Boolean).join(" ").trim();
   return fullName || "—";
+}
+
+function getRoomLabel(room: string | null) {
+  switch (room) {
+    case "irgendwo":
+      return "Irgendwo";
+    case "restaurant":
+      return "Restaurant";
+    case "saal":
+      return "Saal";
+    case "seminarraum":
+      return "Seminarraum";
+    case "sitzungszimmer":
+      return "Sitzungszimmer";
+    case "terrasse":
+      return "Terrasse";
+    default:
+      return room || "—";
+  }
+}
+
+function getPaymentTypeLabel(paymentType: string | null) {
+  switch (paymentType) {
+    case "barzahlung":
+      return "Barzahlung";
+    case "rechnung":
+      return "Rechnung";
+    case "intern_bewohnende":
+      return "Intern Bewohnende";
+    case "intern_aktivierung":
+      return "Intern Aktivierung";
+    case "intern_mitarbeiter":
+      return "Intern Mitarbeiter";
+    case "intern_gl":
+      return "Intern GL";
+    case "intern_vr":
+      return "Intern VR";
+    default:
+      return paymentType || "—";
+  }
 }
 
 export default async function EventDetailPage({ params }: Props) {
@@ -123,6 +164,114 @@ export default async function EventDetailPage({ params }: Props) {
                 {getDisplayName(event.firstname, event.lastname)}
               </p>
             </div>
+            <div className="rounded-xl border p-4 space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Kontakt & Teilnehmer
+              </h2>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Telefon</p>
+                  <p className="font-medium">{event.phone || "—"}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">E-Mail</p>
+                  <p className="font-medium">{event.email || "—"}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">Erwachsene</p>
+                  <p className="font-medium">{event.adults ?? "—"}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">Kinder</p>
+                  <p className="font-medium">{event.children ?? "—"}</p>
+                </div>
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                Adresse
+              </p>
+              <p className="mt-1 text-sm">{event.address || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                Raum
+              </p>
+              <p className="mt-1 text-sm">{getRoomLabel(event.room)}</p>
+            </div>
+
+            <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+              <div className="space-y-1">
+                <h2 className="section-title">Organisation & Ablauf</h2>
+                <p className="section-text">
+                  Geplante Anforderungen und erster Ablauf des Events.
+                </p>
+              </div>
+
+              <div className="mt-6 grid gap-6">
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                    Technik
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{event.tech || "—"}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                    Infrastruktur
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">
+                    {event.infrastructure || "—"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                    Ablauf / Zeitplan
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">
+                    {event.schedule || "—"}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+              <div className="space-y-1">
+                <h2 className="section-title">Verpflegung & Abrechnung</h2>
+                <p className="section-text">
+                  Geplante Verpflegung und hinterlegte Zahlungsart.
+                </p>
+              </div>
+
+              <div className="mt-6 grid gap-6">
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                    Essen
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{event.food || "—"}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                    Getränke
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{event.drinks || "—"}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
+                    Zahlungsart
+                  </p>
+                  <p className="mt-1 text-sm">{getPaymentTypeLabel(event.payment_type)}</p>
+                </div>
+              </div>
+            </section>
 
             <div>
               <p className="text-sm font-medium text-[var(--color-text-muted)]">

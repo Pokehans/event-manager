@@ -11,6 +11,11 @@ export type CreateEventState = {
     date?: string;
     status?: string;
     contact?: string;
+    email?: string;
+    adults?: string;
+    children?: string;
+    room?: string;
+    payment_type?: string;
     general?: string;
   };
   values?: {
@@ -20,6 +25,18 @@ export type CreateEventState = {
     company_name?: string;
     firstname?: string;
     lastname?: string;
+    phone?: string;
+    email?: string;
+    adults?: string;
+    children?: string;
+    address?: string;
+    room?: string;
+    tech?: string;
+    infrastructure?: string;
+    schedule?: string;
+    food?: string;
+    drinks?: string;
+    payment_type?: string;
     notes?: string;
   };
 };
@@ -31,6 +48,25 @@ const allowedStatuses = [
   "Storniert",
 ] as const;
 
+const allowedRooms = [
+  "irgendwo",
+  "restaurant",
+  "saal",
+  "seminarraum",
+  "sitzungszimmer",
+  "terrasse",
+] as const;
+
+const allowedPaymentTypes = [
+  "barzahlung",
+  "rechnung",
+  "intern_bewohnende",
+  "intern_aktivierung",
+  "intern_mitarbeiter",
+  "intern_gl",
+  "intern_vr",
+] as const;
+
 type EventFormValues = {
   title: string;
   date: string;
@@ -38,6 +74,18 @@ type EventFormValues = {
   company_name: string;
   firstname: string;
   lastname: string;
+  phone: string;
+  email: string;
+  adults: string;
+  children: string;
+  address: string;
+  room: string;
+  tech: string;
+  infrastructure: string;
+  schedule: string;
+  food: string;
+  drinks: string;
+  payment_type: string;
   notes: string;
 };
 
@@ -49,8 +97,32 @@ function getFormValues(formData: FormData): EventFormValues {
     company_name: String(formData.get("company_name") ?? "").trim(),
     firstname: String(formData.get("firstname") ?? "").trim(),
     lastname: String(formData.get("lastname") ?? "").trim(),
+    phone: String(formData.get("phone") ?? "").trim(),
+    email: String(formData.get("email") ?? "").trim(),
+    adults: String(formData.get("adults") ?? "").trim(),
+    children: String(formData.get("children") ?? "").trim(),
+    address: String(formData.get("address") ?? "").trim(),
+    room: String(formData.get("room") ?? "").trim(),
+    tech: String(formData.get("tech") ?? "").trim(),
+    infrastructure: String(formData.get("infrastructure") ?? "").trim(),
+    schedule: String(formData.get("schedule") ?? "").trim(),
+    food: String(formData.get("food") ?? "").trim(),
+    drinks: String(formData.get("drinks") ?? "").trim(),
+    payment_type: String(formData.get("payment_type") ?? "").trim(),
     notes: String(formData.get("notes") ?? "").trim(),
   };
+}
+
+function parseOptionalInteger(value: string) {
+  if (!value) return null;
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return NaN;
+  }
+
+  return parsed;
 }
 
 function validateEventValues(values: EventFormValues) {
@@ -76,6 +148,42 @@ function validateEventValues(values: EventFormValues) {
     errors.contact = "Bitte mindestens Firma oder Nachname angeben.";
   }
 
+  if (values.email) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(values.email)) {
+      errors.email = "Bitte eine gültige E-Mail-Adresse eingeben.";
+    }
+  }
+
+  if (values.adults) {
+    const parsedAdults = parseOptionalInteger(values.adults);
+    if (Number.isNaN(parsedAdults)) {
+      errors.adults = "Bitte eine ganze Zahl ab 0 eingeben.";
+    }
+  }
+
+  if (values.children) {
+    const parsedChildren = parseOptionalInteger(values.children);
+    if (Number.isNaN(parsedChildren)) {
+      errors.children = "Bitte eine ganze Zahl ab 0 eingeben.";
+    }
+  }
+
+  if (values.room) {
+    if (!allowedRooms.includes(values.room as (typeof allowedRooms)[number])) {
+      errors.room = "Ungültiger Raum.";
+    }
+  }
+
+  if (values.payment_type) {
+    if (
+      !allowedPaymentTypes.includes(
+        values.payment_type as (typeof allowedPaymentTypes)[number]
+      )
+    ) {
+      errors.payment_type = "Ungültige Zahlungsart.";
+    }
+  }
   return errors;
 }
 
@@ -119,6 +227,18 @@ export async function createEvent(
       company_name: values.company_name || null,
       firstname: values.firstname || null,
       lastname: values.lastname || null,
+      phone: values.phone || null,
+      email: values.email || null,
+      adults: parseOptionalInteger(values.adults),
+      children: parseOptionalInteger(values.children),
+      address: values.address || null,
+      room: values.room || null,
+      tech: values.tech || null,
+      infrastructure: values.infrastructure || null,
+      schedule: values.schedule || null,
+      food: values.food || null,
+      drinks: values.drinks || null,
+      payment_type: values.payment_type || null,
       notes: values.notes || null,
       created_by: user.id,
     },
@@ -175,6 +295,18 @@ export async function updateEvent(
       company_name: values.company_name || null,
       firstname: values.firstname || null,
       lastname: values.lastname || null,
+      phone: values.phone || null,
+      email: values.email || null,
+      adults: parseOptionalInteger(values.adults),
+      children: parseOptionalInteger(values.children),
+      address: values.address || null,
+      room: values.room || null,
+      tech: values.tech || null,
+      infrastructure: values.infrastructure || null,
+      schedule: values.schedule || null,
+      food: values.food || null,
+      drinks: values.drinks || null,
+      payment_type: values.payment_type || null,
       notes: values.notes || null,
     })
     .eq("id", id);

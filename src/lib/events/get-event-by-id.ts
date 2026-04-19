@@ -8,6 +8,18 @@ export type EventDetail = {
   company_name: string | null;
   firstname: string | null;
   lastname: string | null;
+  phone: string | null;
+  email: string | null;
+  adults: number | null;
+  children: number | null;
+  address: string | null;
+  room: string | null;
+  tech: string | null;
+  infrastructure: string | null;
+  schedule: string | null;
+  food: string | null;
+  drinks: string | null;
+  payment_type: string | null;
   notes: string | null;
   created_by: string | null;
   created_at: string | null;
@@ -40,6 +52,18 @@ export async function getEventById(id: string) {
       company_name,
       firstname,
       lastname,
+      phone,
+      email,
+      adults,
+      children,
+      address,
+      room,
+      tech,
+      infrastructure,
+      schedule,
+      food,
+      drinks,
+      payment_type,
       notes,
       created_by,
       created_at,
