@@ -81,6 +81,10 @@ function getPaymentTypeLabel(paymentType: string | null) {
   }
 }
 
+function getLogUserLabel(email: string | null) {
+  return email || "Unbekannter Benutzer";
+}
+
 type DetailItemProps = {
   label: string;
   value: React.ReactNode;
@@ -90,7 +94,9 @@ type DetailItemProps = {
 function DetailItem({ label, value, className = "" }: DetailItemProps) {
   return (
     <div className={className}>
-      <p className="text-sm font-medium text-[var(--color-text-muted)]">{label}</p>
+      <p className="text-sm font-medium text-[var(--color-text-muted)]">
+        {label}
+      </p>
       <div className="mt-1 text-sm">{value}</div>
     </div>
   );
@@ -115,6 +121,39 @@ function DetailSection({ title, description, children }: DetailSectionProps) {
   );
 }
 
+type AuditLogListProps = {
+  logs: {
+    id: string;
+    change: string;
+    created_at: string | null;
+    users:
+      | {
+          id: string;
+          email: string | null;
+        }
+      | null;
+  }[];
+};
+
+function AuditLogList({ logs }: AuditLogListProps) {
+  return (
+    <div className="space-y-3">
+      {logs.map((log) => (
+        <div
+          key={log.id}
+          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"
+        >
+          <p className="text-sm font-medium">{log.change}</p>
+          <div className="mt-2 space-y-1 text-xs text-[var(--color-text-muted)]">
+            <p>{formatDateTime(log.created_at)}</p>
+            <p>{getLogUserLabel(log.users?.email ?? null)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default async function EventDetailPage({ params }: Props) {
   const { id } = await params;
   const event = await getEventById(id);
@@ -125,6 +164,12 @@ export default async function EventDetailPage({ params }: Props) {
 
   const creatorEmail = event.users?.email ?? "—";
   const creatorDepartment = event.users?.departments?.name ?? "—";
+
+  const logs = event.logs ?? [];
+  const latestLogs = logs.slice(0, 3);
+  const olderLogs = logs.slice(3);
+  const hasLogs = logs.length > 0;
+  const hasMoreLogs = logs.length > 3;
 
   return (
     <div className="w-full space-y-6">
@@ -155,9 +200,7 @@ export default async function EventDetailPage({ params }: Props) {
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
-          <DetailSection
-            title="Basisdaten"
-          >
+          <DetailSection title="Basisdaten">
             <div className="grid gap-4 sm:grid-cols-2">
               <DetailItem label="Datum" value={formatDate(event.date)} />
               <DetailItem
@@ -167,9 +210,7 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           </DetailSection>
 
-          <DetailSection
-            title="Kontaktdaten"
-          >
+          <DetailSection title="Kontaktdaten">
             <div className="grid gap-4 sm:grid-cols-2">
               <DetailItem label="Firma" value={event.company_name || "—"} />
               <DetailItem label="Vorname" value={event.firstname || "—"} />
@@ -184,18 +225,14 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           </DetailSection>
 
-          <DetailSection
-            title="Personenzahl"
-          >
+          <DetailSection title="Personenzahl">
             <div className="grid gap-4 sm:grid-cols-2">
               <DetailItem label="Erwachsene" value={event.adults ?? "—"} />
               <DetailItem label="Kinder" value={event.children ?? "—"} />
             </div>
           </DetailSection>
 
-          <DetailSection
-            title="Organisation"
-          >
+          <DetailSection title="Organisation">
             <div className="grid gap-6">
               <DetailItem label="Raum" value={getRoomLabel(event.room)} />
               <DetailItem
@@ -219,9 +256,7 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           </DetailSection>
 
-          <DetailSection
-            title="Essen & Getränke"
-          >
+          <DetailSection title="Essen & Getränke">
             <div className="grid gap-6">
               <DetailItem
                 label="Essen"
@@ -236,9 +271,7 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           </DetailSection>
 
-          <DetailSection
-            title="Besonderes"
-          >
+          <DetailSection title="Besonderes">
             <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
               <p className="whitespace-pre-wrap text-sm">
                 {event.notes?.trim() || "Keine Notizen vorhanden."}
@@ -246,9 +279,7 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           </DetailSection>
 
-          <DetailSection
-            title="Zahlungsart"
-          >
+          <DetailSection title="Zahlungsart">
             <DetailItem
               label="Zahlungsart"
               value={getPaymentTypeLabel(event.payment_type)}
@@ -257,9 +288,7 @@ export default async function EventDetailPage({ params }: Props) {
         </div>
 
         <aside className="space-y-6">
-          <DetailSection
-            title="Interne Informationen"
-          >
+          <DetailSection title="Interne Informationen">
             <div className="space-y-4">
               <DetailItem
                 label="Event-ID"
@@ -276,6 +305,26 @@ export default async function EventDetailPage({ params }: Props) {
               />
             </div>
           </DetailSection>
+
+          {hasLogs && (
+            <DetailSection
+              title="Letzte Änderungen"
+            >
+              <AuditLogList logs={latestLogs} />
+
+              {hasMoreLogs && (
+                <details className="mt-4 group">
+                  <summary className="cursor-pointer list-none rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]">
+                    Weitere Änderungen anzeigen
+                  </summary>
+
+                  <div className="mt-4">
+                    <AuditLogList logs={olderLogs} />
+                  </div>
+                </details>
+              )}
+            </DetailSection>
+          )}
         </aside>
       </div>
     </div>
