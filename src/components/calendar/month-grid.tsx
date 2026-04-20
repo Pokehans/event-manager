@@ -47,6 +47,14 @@ function formatLocalDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function NewBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+      NEW
+    </span>
+  );
+}
+
 export default function MonthGrid({ currentDate, events }: Props) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -54,7 +62,7 @@ export default function MonthGrid({ currentDate, events }: Props) {
   const firstDayOfMonth = new Date(year, month, 1);
   const lastDayOfMonth = new Date(year, month + 1, 0);
 
-  const startDay = (firstDayOfMonth.getDay() + 6) % 7; // Montag = 0
+  const startDay = (firstDayOfMonth.getDay() + 6) % 7;
   const totalDays = lastDayOfMonth.getDate();
 
   const days: (Date | null)[] = [];
@@ -143,8 +151,11 @@ export default function MonthGrid({ currentDate, events }: Props) {
                               secondaryLabel ? ` – ${secondaryLabel}` : ""
                             }`}
                           >
-                            <div className="truncate text-xs font-semibold">
-                              {event.title}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1 truncate text-xs font-semibold">
+                                {event.title}
+                              </div>
+                              {event.hasChanges && <NewBadge />}
                             </div>
 
                             <div className="mt-1 flex items-center justify-between gap-2">
@@ -231,7 +242,12 @@ export default function MonthGrid({ currentDate, events }: Props) {
                           color: style.textColor,
                         }}
                       >
-                        <div className="text-sm font-semibold">{event.title}</div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1 text-sm font-semibold">
+                            {event.title}
+                          </div>
+                          {event.hasChanges && <NewBadge />}
+                        </div>
 
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           {secondaryLabel && (

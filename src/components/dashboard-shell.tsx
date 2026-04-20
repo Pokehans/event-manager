@@ -1,9 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import SidebarLink from "@/components/ui/sidebar-link";
 import LogoutButton from "@/components/logout";
+
+const SIDEBAR_STORAGE_KEY = "dashboard-sidebar-collapsed";
+const SIDEBAR_STORAGE_EVENT = "dashboard-sidebar-storage-change";
+
+function subscribeSidebarPreference(callback: () => void) {
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === SIDEBAR_STORAGE_KEY) {
+      callback();
+    }
+  };
+
+  const handleCustomEvent = () => {
+    callback();
+  };
+
+  window.addEventListener("storage", handleStorage);
+  window.addEventListener(SIDEBAR_STORAGE_EVENT, handleCustomEvent);
+
+  return () => {
+    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener(SIDEBAR_STORAGE_EVENT, handleCustomEvent);
+  };
+}
+
+function getSidebarSnapshot() {
+  return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+}
+
+function getSidebarServerSnapshot() {
+  return false;
+}
+
+function setSidebarStoredValue(value: boolean) {
+  window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(value));
+  window.dispatchEvent(new Event(SIDEBAR_STORAGE_EVENT));
+}
 
 function DashboardIcon() {
   return (
@@ -83,17 +119,16 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem("dashboard-sidebar-collapsed") === "true";
-  });
 
-  useEffect(() => {
-    window.localStorage.setItem(
-      "dashboard-sidebar-collapsed",
-      String(sidebarCollapsed)
-    );
-  }, [sidebarCollapsed]);
+  const sidebarCollapsed = useSyncExternalStore(
+    subscribeSidebarPreference,
+    getSidebarSnapshot,
+    getSidebarServerSnapshot
+  );
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarStoredValue(!sidebarCollapsed);
+  };
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
@@ -125,7 +160,7 @@ export default function DashboardShell({
             <div>
               <button
                 type="button"
-                onClick={() => setSidebarCollapsed((prev) => !prev)}
+                onClick={toggleSidebarCollapsed}
                 title={
                   sidebarCollapsed
                     ? "Sidebar erweitern"
