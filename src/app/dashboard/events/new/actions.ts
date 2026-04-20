@@ -184,6 +184,7 @@ function validateEventValues(values: EventFormValues) {
       errors.payment_type = "Ungültige Zahlungsart.";
     }
   }
+
   return errors;
 }
 
@@ -264,9 +265,24 @@ export async function updateEvent(
 ): Promise<CreateEventState> {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
   const id = String(formData.get("id") ?? "").trim();
   const values = getFormValues(formData);
   const errors = validateEventValues(values);
+
+  if (userError || !user) {
+    return {
+      message: "Du bist nicht eingeloggt.",
+      errors: {
+        general: "Bitte melde dich erneut an.",
+      },
+      values,
+    };
+  }
 
   if (!id) {
     return {
@@ -319,6 +335,18 @@ export async function updateEvent(
       },
       values,
     };
+  }
+
+  const { error: logError } = await supabase.from("event_logs").insert([
+    {
+      event_id: id,
+      user_id: user.id,
+      change: "Event bearbeitet",
+    },
+  ]);
+
+  if (logError) {
+    console.error("Fehler beim Schreiben des Event-Logs:", logError.message);
   }
 
   revalidatePath("/dashboard");

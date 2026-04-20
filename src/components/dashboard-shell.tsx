@@ -83,24 +83,17 @@ export default function DashboardShell({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarReady, setSidebarReady] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("dashboard-sidebar-collapsed") === "true";
+  });
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("dashboard-sidebar-collapsed");
-    if (saved === "true") {
-      setSidebarCollapsed(true);
-    }
-    setSidebarReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!sidebarReady) return;
     window.localStorage.setItem(
       "dashboard-sidebar-collapsed",
       String(sidebarCollapsed)
     );
-  }, [sidebarCollapsed, sidebarReady]);
+  }, [sidebarCollapsed]);
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
@@ -230,46 +223,46 @@ export default function DashboardShell({
             </div>
 
             {mobileMenuOpen && (
-                <div className="border-t border-[var(--color-border)] px-4 py-4 md:px-6">
-                    <nav className="space-y-2">
-                    <SidebarLink
-                        href="/dashboard"
-                        label="Dashboard"
-                        icon={<DashboardIcon />}
-                        active
-                    />
-                    <SidebarLink
-                        href="/dashboard/events/new"
-                        label="Event +"
-                        icon={<EventsIcon />}
-                    />
-                    <SidebarLink
-                        href="#"
-                        label="Events"
-                        icon={<EventsIcon />}
-                    />
-                    <SidebarLink
-                        href="#"
-                        label="Archiv"
-                        icon={<ArchiveIcon />}
-                    />
-                    <SidebarLink
-                        href="#"
-                        label="Räume"
-                        icon={<RoomsIcon />}
-                    />
-                    <SidebarLink
-                        href="#"
-                        label="Benutzer"
-                        icon={<UsersIcon />}
-                    />
-                    </nav>
+              <div className="border-t border-[var(--color-border)] px-4 py-4 md:px-6">
+                <nav className="space-y-2">
+                  <SidebarLink
+                    href="/dashboard"
+                    label="Dashboard"
+                    icon={<DashboardIcon />}
+                    active
+                  />
+                  <SidebarLink
+                    href="/dashboard/events/new"
+                    label="Event +"
+                    icon={<EventsIcon />}
+                  />
+                  <SidebarLink
+                    href="#"
+                    label="Events"
+                    icon={<EventsIcon />}
+                  />
+                  <SidebarLink
+                    href="#"
+                    label="Archiv"
+                    icon={<ArchiveIcon />}
+                  />
+                  <SidebarLink
+                    href="#"
+                    label="Räume"
+                    icon={<RoomsIcon />}
+                  />
+                  <SidebarLink
+                    href="#"
+                    label="Benutzer"
+                    icon={<UsersIcon />}
+                  />
+                </nav>
 
-                    <div className="mt-4 border-t border-[var(--color-border)] pt-4">
-                    <LogoutButton />
-                    </div>
+                <div className="mt-4 border-t border-[var(--color-border)] pt-4">
+                  <LogoutButton />
                 </div>
-                )}
+              </div>
+            )}
           </header>
 
           <main className="flex-1 p-6 md:p-8">{children}</main>
