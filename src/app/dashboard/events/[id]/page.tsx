@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import StatusBadge from "@/components/ui/status-badge";
 import { getEventById } from "@/lib/events/get-event-by-id";
 
-
 type Props = {
   params: Promise<{
     id: string;
@@ -37,9 +36,9 @@ function formatDate(date: string) {
   return `${day}.${month}.${year}`;
 }
 
-function getDisplayName(firstname: string | null, lastname: string | null) {
-  const fullName = [firstname, lastname].filter(Boolean).join(" ").trim();
-  return fullName || "—";
+function formatDateTime(date: string | null) {
+  if (!date) return "—";
+  return new Date(date).toLocaleString("de-CH");
 }
 
 function getRoomLabel(room: string | null) {
@@ -82,9 +81,42 @@ function getPaymentTypeLabel(paymentType: string | null) {
   }
 }
 
+type DetailItemProps = {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+};
+
+function DetailItem({ label, value, className = "" }: DetailItemProps) {
+  return (
+    <div className={className}>
+      <p className="text-sm font-medium text-[var(--color-text-muted)]">{label}</p>
+      <div className="mt-1 text-sm">{value}</div>
+    </div>
+  );
+}
+
+type DetailSectionProps = {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+};
+
+function DetailSection({ title, description, children }: DetailSectionProps) {
+  return (
+    <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+      <div className="space-y-1">
+        <h2 className="section-title">{title}</h2>
+        {description ? <p className="section-text">{description}</p> : null}
+      </div>
+
+      <div className="mt-6">{children}</div>
+    </section>
+  );
+}
+
 export default async function EventDetailPage({ params }: Props) {
   const { id } = await params;
-
   const event = await getEventById(id);
 
   if (!event) {
@@ -97,14 +129,12 @@ export default async function EventDetailPage({ params }: Props) {
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
+        <div className="space-y-1">
           <h1 className="page-title">{event.title}</h1>
-          <p className="page-subtitle">Detailansicht des Events</p>
+          <p className="page-subtitle">Detailansicht</p>
         </div>
 
-        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:flex-wrap sm:justify-end">
-          <StatusBadge label={getStatusLabel(event.status)} />
-
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/dashboard"
@@ -124,211 +154,130 @@ export default async function EventDetailPage({ params }: Props) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm xl:col-span-2">
-          <div className="space-y-1">
-            <h2 className="section-title">Event Infos</h2>
-            <p className="section-text">
-              Grunddaten und aktueller Stand des Events.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Datum
-              </p>
-              <p className="mt-1 text-sm">{formatDate(event.date)}</p>
+        <div className="space-y-6 xl:col-span-2">
+          <DetailSection
+            title="Basisdaten"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DetailItem label="Datum" value={formatDate(event.date)} />
+              <DetailItem
+                label="Status"
+                value={<StatusBadge label={getStatusLabel(event.status)} />}
+              />
             </div>
+          </DetailSection>
 
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Status
-              </p>
-              <div className="mt-1">
-                <StatusBadge label={getStatusLabel(event.status)} />
-              </div>
+          <DetailSection
+            title="Kontaktdaten"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DetailItem label="Firma" value={event.company_name || "—"} />
+              <DetailItem label="Vorname" value={event.firstname || "—"} />
+              <DetailItem label="Nachname" value={event.lastname || "—"} />
+              <DetailItem label="Telefon" value={event.phone || "—"} />
+              <DetailItem label="E-Mail" value={event.email || "—"} />
+              <DetailItem
+                label="Adresse"
+                value={event.address || "—"}
+                className="sm:col-span-2"
+              />
             </div>
+          </DetailSection>
 
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Firma
-              </p>
-              <p className="mt-1 text-sm">{event.company_name || "—"}</p>
+          <DetailSection
+            title="Personenzahl"
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DetailItem label="Erwachsene" value={event.adults ?? "—"} />
+              <DetailItem label="Kinder" value={event.children ?? "—"} />
             </div>
+          </DetailSection>
 
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Kontaktperson
-              </p>
-              <p className="mt-1 text-sm">
-                {getDisplayName(event.firstname, event.lastname)}
-              </p>
-            </div>
-            <div className="rounded-xl border p-4 space-y-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Kontakt & Teilnehmer
-              </h2>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">Telefon</p>
-                  <p className="font-medium">{event.phone || "—"}</p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-muted-foreground">E-Mail</p>
-                  <p className="font-medium">{event.email || "—"}</p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-muted-foreground">Erwachsene</p>
-                  <p className="font-medium">{event.adults ?? "—"}</p>
-                </div>
-
-                <div>
-                  <p className="text-xs text-muted-foreground">Kinder</p>
-                  <p className="font-medium">{event.children ?? "—"}</p>
-                </div>
-              </div>
-            </div>
-            <div className="sm:col-span-2">
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Adresse
-              </p>
-              <p className="mt-1 text-sm">{event.address || "—"}</p>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Raum
-              </p>
-              <p className="mt-1 text-sm">{getRoomLabel(event.room)}</p>
-            </div>
-
-            <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-              <div className="space-y-1">
-                <h2 className="section-title">Organisation & Ablauf</h2>
-                <p className="section-text">
-                  Geplante Anforderungen und erster Ablauf des Events.
-                </p>
-              </div>
-
-              <div className="mt-6 grid gap-6">
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                    Technik
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">{event.tech || "—"}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                    Infrastruktur
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">
+          <DetailSection
+            title="Organisation"
+          >
+            <div className="grid gap-6">
+              <DetailItem label="Raum" value={getRoomLabel(event.room)} />
+              <DetailItem
+                label="Ablauf"
+                value={
+                  <p className="whitespace-pre-wrap">{event.schedule || "—"}</p>
+                }
+              />
+              <DetailItem
+                label="Technik"
+                value={<p className="whitespace-pre-wrap">{event.tech || "—"}</p>}
+              />
+              <DetailItem
+                label="Infrastruktur"
+                value={
+                  <p className="whitespace-pre-wrap">
                     {event.infrastructure || "—"}
                   </p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                    Ablauf / Zeitplan
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">
-                    {event.schedule || "—"}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-              <div className="space-y-1">
-                <h2 className="section-title">Verpflegung & Abrechnung</h2>
-                <p className="section-text">
-                  Geplante Verpflegung und hinterlegte Zahlungsart.
-                </p>
-              </div>
-
-              <div className="mt-6 grid gap-6">
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                    Essen
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">{event.food || "—"}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                    Getränke
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm">{event.drinks || "—"}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                    Zahlungsart
-                  </p>
-                  <p className="mt-1 text-sm">{getPaymentTypeLabel(event.payment_type)}</p>
-                </div>
-              </div>
-            </section>
-
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Event-ID
-              </p>
-              <p className="mt-1 break-all text-sm">{event.id}</p>
+                }
+              />
             </div>
-          </div>
-        </section>
+          </DetailSection>
 
-        <aside className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-          <div className="space-y-1">
-            <h2 className="section-title">Erstellt von</h2>
-            <p className="section-text">Interne Zuordnung des Eintrags.</p>
-          </div>
-
-          <div className="mt-6 space-y-4">
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Benutzer
-              </p>
-              <p className="mt-1 break-all text-sm">{creatorEmail}</p>
+          <DetailSection
+            title="Essen & Getränke"
+          >
+            <div className="grid gap-6">
+              <DetailItem
+                label="Essen"
+                value={<p className="whitespace-pre-wrap">{event.food || "—"}</p>}
+              />
+              <DetailItem
+                label="Getränke"
+                value={
+                  <p className="whitespace-pre-wrap">{event.drinks || "—"}</p>
+                }
+              />
             </div>
+          </DetailSection>
 
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Department
-              </p>
-              <p className="mt-1 text-sm">{creatorDepartment}</p>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-[var(--color-text-muted)]">
-                Erstellt am
-              </p>
-              <p className="mt-1 text-sm">
-                {event.created_at
-                  ? new Date(event.created_at).toLocaleString("de-CH")
-                  : "—"}
+          <DetailSection
+            title="Besonderes"
+          >
+            <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
+              <p className="whitespace-pre-wrap text-sm">
+                {event.notes?.trim() || "Keine Notizen vorhanden."}
               </p>
             </div>
-          </div>
+          </DetailSection>
+
+          <DetailSection
+            title="Zahlungsart"
+          >
+            <DetailItem
+              label="Zahlungsart"
+              value={getPaymentTypeLabel(event.payment_type)}
+            />
+          </DetailSection>
+        </div>
+
+        <aside className="space-y-6">
+          <DetailSection
+            title="Interne Informationen"
+          >
+            <div className="space-y-4">
+              <DetailItem
+                label="Event-ID"
+                value={<span className="break-all">{event.id}</span>}
+              />
+              <DetailItem
+                label="Erstellt von"
+                value={<span className="break-all">{creatorEmail}</span>}
+              />
+              <DetailItem label="Department" value={creatorDepartment} />
+              <DetailItem
+                label="Erstellt am"
+                value={formatDateTime(event.created_at)}
+              />
+            </div>
+          </DetailSection>
         </aside>
       </div>
-
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-        <div className="space-y-1">
-          <h2 className="section-title">Notizen</h2>
-          <p className="section-text">Zusätzliche Informationen zum Event.</p>
-        </div>
-
-        <div className="mt-6 rounded-xl bg-[var(--color-surface-muted)] p-4">
-          <p className="whitespace-pre-wrap text-sm">
-            {event.notes?.trim() || "Keine Notizen vorhanden."}
-          </p>
-        </div>
-      </section>
     </div>
   );
 }
