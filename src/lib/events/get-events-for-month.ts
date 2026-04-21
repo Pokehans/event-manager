@@ -36,6 +36,7 @@ type RawUser = {
 
 type RawEventLog = {
   id: string;
+  created_at: string | null;
 };
 
 type RawCalendarEvent = {
@@ -66,6 +67,22 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
+function isWithinLastSevenDays(dateString: string | null) {
+  if (!dateString) return false;
+
+  const changedAt = new Date(dateString);
+  const now = new Date();
+
+  if (Number.isNaN(changedAt.getTime())) {
+    return false;
+  }
+
+  const diffMs = now.getTime() - changedAt.getTime();
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+  return diffMs >= 0 && diffMs <= sevenDaysMs;
+}
+
 export async function getEventsForMonth(
   year: number,
   month: number
@@ -89,7 +106,8 @@ export async function getEventsForMonth(
       lastname,
       created_by,
       event_logs (
-        id
+        id,
+        created_at
       ),
       users:created_by (
         id,
@@ -112,8 +130,16 @@ export async function getEventsForMonth(
   return ((data ?? []) as RawCalendarEvent[]).map((event) => {
     const rawUser = pickOne(event.users);
     const rawDepartment = pickOne(rawUser?.departments);
-    const hasLogs = (event.event_logs?.length ?? 0) > 0;
+
+    const latestLog = [...(event.event_logs ?? [])].sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    })[0] ?? null;
+
     const isTodayOrFuture = event.date >= todayString;
+    const hasRecentChanges =
+      isTodayOrFuture && isWithinLastSevenDays(latestLog?.created_at ?? null);
 
     return {
       id: event.id,
@@ -123,7 +149,7 @@ export async function getEventsForMonth(
       company_name: event.company_name,
       lastname: event.lastname,
       created_by: event.created_by,
-      hasChanges: hasLogs && isTodayOrFuture,
+      hasChanges: hasRecentChanges,
       users: rawUser
         ? {
             id: rawUser.id,
