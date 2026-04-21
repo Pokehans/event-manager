@@ -51,6 +51,9 @@ type RawCalendarEvent = {
   users?: RawUser | RawUser[] | null;
 };
 
+const BADGE_DURATION_DAYS = 7;
+const BADGE_DURATION_MS = BADGE_DURATION_DAYS * 24 * 60 * 60 * 1000;
+
 function formatLocalDate(year: number, month: number, day: number) {
   const monthString = String(month + 1).padStart(2, "0");
   const dayString = String(day).padStart(2, "0");
@@ -67,7 +70,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-function isWithinLastSevenDays(dateString: string | null) {
+function isWithinBadgeDuration(dateString: string | null) {
   if (!dateString) return false;
 
   const changedAt = new Date(dateString);
@@ -78,9 +81,8 @@ function isWithinLastSevenDays(dateString: string | null) {
   }
 
   const diffMs = now.getTime() - changedAt.getTime();
-  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
 
-  return diffMs >= 0 && diffMs <= sevenDaysMs;
+  return diffMs >= 0 && diffMs <= BADGE_DURATION_MS;
 }
 
 export async function getEventsForMonth(
@@ -131,15 +133,16 @@ export async function getEventsForMonth(
     const rawUser = pickOne(event.users);
     const rawDepartment = pickOne(rawUser?.departments);
 
-    const latestLog = [...(event.event_logs ?? [])].sort((a, b) => {
-      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return bTime - aTime;
-    })[0] ?? null;
+    const latestLog =
+      [...(event.event_logs ?? [])].sort((a, b) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      })[0] ?? null;
 
     const isTodayOrFuture = event.date >= todayString;
     const hasRecentChanges =
-      isTodayOrFuture && isWithinLastSevenDays(latestLog?.created_at ?? null);
+      isTodayOrFuture && isWithinBadgeDuration(latestLog?.created_at ?? null);
 
     return {
       id: event.id,
