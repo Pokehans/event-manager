@@ -5,6 +5,7 @@ import Image from "next/image";
 import SidebarLink from "@/components/ui/sidebar-link";
 import LogoutButton from "@/components/logout";
 import { ROLES, hasRole, type UserRole } from "@/lib/auth/roles";
+import SessionTimeoutGuard from "@/components/auth/session-timeout-guard";
 
 const SIDEBAR_STORAGE_KEY = "dashboard-sidebar-collapsed";
 const SIDEBAR_STORAGE_EVENT = "dashboard-sidebar-storage-change";
@@ -143,6 +144,7 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
+      <SessionTimeoutGuard />
       <div className="mx-auto flex min-h-screen max-w-[1440px]">
         <aside
           className={`hidden border-r border-[var(--color-border)] bg-white transition-all duration-300 xl:flex xl:flex-col ${
