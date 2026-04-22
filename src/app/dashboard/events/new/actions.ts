@@ -463,11 +463,31 @@ export async function createEvent(
   const values = getFormValues(formData);
   const errors = validateEventValues(values);
 
-  if (userError || !user) {
+   if (userError || !user) {
     return {
       message: "Du bist nicht eingeloggt.",
       errors: {
         general: "Bitte melde dich erneut an.",
+      },
+      values,
+    };
+  }
+
+  const currentUser = await getCurrentUser({ redirectTo: "/" });
+
+  const canEdit =
+    currentUser &&
+    hasRole(currentUser.role, [
+      ROLES.EDITOR,
+      ROLES.ADMIN,
+      ROLES.SYSTEMADMIN,
+    ]);
+
+  if (!canEdit) {
+    return {
+      message: "Du hast keine Berechtigung, dieses Event zu bearbeiten.",
+      errors: {
+        general: "Nur Bearbeiter, Admins und Systemadmins dürfen Events bearbeiten.",
       },
       values,
     };

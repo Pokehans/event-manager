@@ -1,5 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getEventById } from "@/lib/events/get-event-by-id";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { ROLES, hasRole } from "@/lib/auth/roles";
 import { EventForm } from "../../new/event-form";
 import { updateEvent } from "../../new/actions";
 
@@ -11,6 +13,20 @@ type Props = {
 
 export default async function EditEventPage({ params }: Props) {
   const { id } = await params;
+
+  const currentUser = await getCurrentUser({ redirectTo: "/" });
+
+  const canEdit =
+    currentUser &&
+    hasRole(currentUser.role, [
+      ROLES.EDITOR,
+      ROLES.ADMIN,
+      ROLES.SYSTEMADMIN,
+    ]);
+
+  if (!canEdit) {
+    redirect(`/dashboard/events/${id}`);
+  }
 
   const event = await getEventById(id);
 

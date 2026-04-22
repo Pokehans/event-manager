@@ -202,6 +202,14 @@ export default async function EventDetailPage({ params }: Props) {
     currentUser &&
     hasRole(currentUser.role, [ROLES.ADMIN, ROLES.SYSTEMADMIN]);
 
+  const canEdit =
+    currentUser &&
+    hasRole(currentUser.role, [
+      ROLES.EDITOR,
+      ROLES.ADMIN,
+      ROLES.SYSTEMADMIN,
+    ]);
+
   const creatorEmail = event.users?.email ?? "—";
   const creatorDepartment = event.users?.departments?.name ?? "—";
 
@@ -228,12 +236,14 @@ export default async function EventDetailPage({ params }: Props) {
               Zurück zum Dashboard
             </Link>
 
-            <Link
-              href={`/dashboard/events/${event.id}/edit`}
-              className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
-            >
-              Bearbeiten
-            </Link>
+            {canEdit ? (
+              <Link
+                href={`/dashboard/events/${event.id}/edit`}
+                className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
+              >
+                Bearbeiten
+              </Link>
+            ) : null}
 
             {canDelete ? (
               <DeleteEventButton action={deleteEvent} eventId={event.id} />
