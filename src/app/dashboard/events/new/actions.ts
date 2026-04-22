@@ -89,6 +89,29 @@ type EventFormValues = {
   notes: string;
 };
 
+type ExistingEvent = {
+  id: string;
+  title: string;
+  date: string;
+  status: string;
+  company_name: string | null;
+  firstname: string | null;
+  lastname: string | null;
+  phone: string | null;
+  email: string | null;
+  adults: number | null;
+  children: number | null;
+  address: string | null;
+  room: string | null;
+  tech: string | null;
+  infrastructure: string | null;
+  schedule: string | null;
+  food: string | null;
+  drinks: string | null;
+  payment_type: string | null;
+  notes: string | null;
+};
+
 function getFormValues(formData: FormData): EventFormValues {
   return {
     title: String(formData.get("title") ?? "").trim(),
@@ -123,6 +146,72 @@ function parseOptionalInteger(value: string) {
   }
 
   return parsed;
+}
+
+function normalizeOptionalString(value: string) {
+  return value.trim() ? value.trim() : null;
+}
+
+function getStatusLabel(status: string | null) {
+  switch (status) {
+    case "anfrage":
+    case "Anfrage":
+      return "Anfrage";
+    case "bearbeitung":
+    case "In Bearbeitung":
+      return "In Bearbeitung";
+    case "bestaetigt":
+    case "Bestätigt":
+      return "Bestätigt";
+    case "storniert":
+    case "Storniert":
+      return "Storniert";
+    case "archiviert":
+    case "Archiviert":
+      return "Archiviert";
+    default:
+      return status || "—";
+  }
+}
+
+function getRoomLabel(room: string | null) {
+  switch (room) {
+    case "irgendwo":
+      return "Irgendwo";
+    case "restaurant":
+      return "Restaurant";
+    case "saal":
+      return "Saal";
+    case "seminarraum":
+      return "Seminarraum";
+    case "sitzungszimmer":
+      return "Sitzungszimmer";
+    case "terrasse":
+      return "Terrasse";
+    default:
+      return room || "—";
+  }
+}
+
+function getPaymentTypeLabel(paymentType: string | null) {
+  switch (paymentType) {
+    case "barzahlung":
+      return "Barzahlung";
+    case "rechnung":
+      return "Rechnung";
+    case "intern_bewohnende":
+      return "Intern Bewohnende";
+    case "intern_aktivierung":
+      return "Intern Aktivierung";
+    case "intern_mitarbeiter":
+      return "Intern Mitarbeiter";
+    case "intern_gl":
+      return "Intern GL";
+    case "intern_vr":
+      return "Intern VR";
+    default:
+      return paymentType || "—";
+  }
 }
 
 function validateEventValues(values: EventFormValues) {
@@ -186,6 +275,138 @@ function validateEventValues(values: EventFormValues) {
   }
 
   return errors;
+}
+
+function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
+  const changes: string[] = [];
+
+  const nextAdults = parseOptionalInteger(values.adults);
+  const nextChildren = parseOptionalInteger(values.children);
+
+  const nextEvent: Omit<ExistingEvent, "id"> = {
+    title: values.title,
+    date: values.date,
+    status: values.status,
+    company_name: normalizeOptionalString(values.company_name),
+    firstname: normalizeOptionalString(values.firstname),
+    lastname: normalizeOptionalString(values.lastname),
+    phone: normalizeOptionalString(values.phone),
+    email: normalizeOptionalString(values.email),
+    adults: nextAdults,
+    children: nextChildren,
+    address: normalizeOptionalString(values.address),
+    room: normalizeOptionalString(values.room),
+    tech: normalizeOptionalString(values.tech),
+    infrastructure: normalizeOptionalString(values.infrastructure),
+    schedule: normalizeOptionalString(values.schedule),
+    food: normalizeOptionalString(values.food),
+    drinks: normalizeOptionalString(values.drinks),
+    payment_type: normalizeOptionalString(values.payment_type),
+    notes: normalizeOptionalString(values.notes),
+  };
+
+  if (existingEvent.title !== nextEvent.title) {
+    changes.push(`Titel geändert (${existingEvent.title} → ${nextEvent.title})`);
+  }
+
+  if (existingEvent.date !== nextEvent.date) {
+    changes.push(`Datum geändert (${existingEvent.date} → ${nextEvent.date})`);
+  }
+
+  if (existingEvent.status !== nextEvent.status) {
+    changes.push(
+      `Status geändert (${getStatusLabel(existingEvent.status)} → ${getStatusLabel(nextEvent.status)})`
+    );
+  }
+
+  if (existingEvent.company_name !== nextEvent.company_name) {
+    changes.push(
+      `Firma geändert (${existingEvent.company_name || "—"} → ${nextEvent.company_name || "—"})`
+    );
+  }
+
+  if (existingEvent.firstname !== nextEvent.firstname) {
+    changes.push(
+      `Vorname geändert (${existingEvent.firstname || "—"} → ${nextEvent.firstname || "—"})`
+    );
+  }
+
+  if (existingEvent.lastname !== nextEvent.lastname) {
+    changes.push(
+      `Nachname geändert (${existingEvent.lastname || "—"} → ${nextEvent.lastname || "—"})`
+    );
+  }
+
+  if (existingEvent.phone !== nextEvent.phone) {
+    changes.push(
+      `Telefon geändert (${existingEvent.phone || "—"} → ${nextEvent.phone || "—"})`
+    );
+  }
+
+  if (existingEvent.email !== nextEvent.email) {
+    changes.push(
+      `E-Mail geändert (${existingEvent.email || "—"} → ${nextEvent.email || "—"})`
+    );
+  }
+
+  if (existingEvent.adults !== nextEvent.adults) {
+    changes.push(
+      `Erwachsene geändert (${existingEvent.adults ?? "—"} → ${nextEvent.adults ?? "—"})`
+    );
+  }
+
+  if (existingEvent.children !== nextEvent.children) {
+    changes.push(
+      `Kinder geändert (${existingEvent.children ?? "—"} → ${nextEvent.children ?? "—"})`
+    );
+  }
+
+  if (existingEvent.address !== nextEvent.address) {
+    changes.push(
+      `Adresse geändert (${existingEvent.address || "—"} → ${nextEvent.address || "—"})`
+    );
+  }
+
+  if (existingEvent.room !== nextEvent.room) {
+    changes.push(
+      `Raum geändert (${getRoomLabel(existingEvent.room)} → ${getRoomLabel(nextEvent.room)})`
+    );
+  }
+
+  if (existingEvent.tech !== nextEvent.tech) {
+    changes.push("Technik geändert");
+  }
+
+  if (existingEvent.infrastructure !== nextEvent.infrastructure) {
+    changes.push("Infrastruktur geändert");
+  }
+
+  if (existingEvent.schedule !== nextEvent.schedule) {
+    changes.push("Ablauf geändert");
+  }
+
+  if (existingEvent.food !== nextEvent.food) {
+    changes.push("Essen geändert");
+  }
+
+  if (existingEvent.drinks !== nextEvent.drinks) {
+    changes.push("Getränke geändert");
+  }
+
+  if (existingEvent.payment_type !== nextEvent.payment_type) {
+    changes.push(
+      `Zahlungsart geändert (${getPaymentTypeLabel(existingEvent.payment_type)} → ${getPaymentTypeLabel(nextEvent.payment_type)})`
+    );
+  }
+
+  if (existingEvent.notes !== nextEvent.notes) {
+    changes.push("Notizen geändert");
+  }
+
+  return {
+    changes,
+    nextEvent,
+  };
 }
 
 export async function createEvent(
@@ -302,28 +523,67 @@ export async function updateEvent(
     };
   }
 
+  const { data: existingEvent, error: existingEventError } = await supabase
+    .from("events")
+    .select(`
+      id,
+      title,
+      date,
+      status,
+      company_name,
+      firstname,
+      lastname,
+      phone,
+      email,
+      adults,
+      children,
+      address,
+      room,
+      tech,
+      infrastructure,
+      schedule,
+      food,
+      drinks,
+      payment_type,
+      notes
+    `)
+    .eq("id", id)
+    .single<ExistingEvent>();
+
+  if (existingEventError || !existingEvent) {
+    return {
+      message: "Event konnte nicht aktualisiert werden.",
+      errors: {
+        general: "Bestehende Event-Daten konnten nicht geladen werden.",
+      },
+      values,
+    };
+  }
+
+  const { changes, nextEvent } = buildChangeLog(existingEvent, values);
+
   const { error } = await supabase
     .from("events")
     .update({
-      title: values.title,
-      status: values.status,
-      date: values.date,
-      company_name: values.company_name || null,
-      firstname: values.firstname || null,
-      lastname: values.lastname || null,
-      phone: values.phone || null,
-      email: values.email || null,
-      adults: parseOptionalInteger(values.adults),
-      children: parseOptionalInteger(values.children),
-      address: values.address || null,
-      room: values.room || null,
-      tech: values.tech || null,
-      infrastructure: values.infrastructure || null,
-      schedule: values.schedule || null,
-      food: values.food || null,
-      drinks: values.drinks || null,
-      payment_type: values.payment_type || null,
-      notes: values.notes || null,
+      title: nextEvent.title,
+      status: nextEvent.status,
+      date: nextEvent.date,
+      company_name: nextEvent.company_name,
+      firstname: nextEvent.firstname,
+      lastname: nextEvent.lastname,
+      phone: nextEvent.phone,
+      email: nextEvent.email,
+      adults: nextEvent.adults,
+      children: nextEvent.children,
+      address: nextEvent.address,
+      room: nextEvent.room,
+      tech: nextEvent.tech,
+      infrastructure: nextEvent.infrastructure,
+      schedule: nextEvent.schedule,
+      food: nextEvent.food,
+      drinks: nextEvent.drinks,
+      payment_type: nextEvent.payment_type,
+      notes: nextEvent.notes,
     })
     .eq("id", id);
 
@@ -337,16 +597,18 @@ export async function updateEvent(
     };
   }
 
-  const { error: logError } = await supabase.from("event_logs").insert([
-    {
-      event_id: id,
-      user_id: user.id,
-      change: "Event bearbeitet",
-    },
-  ]);
+  if (changes.length > 0) {
+    const { error: logError } = await supabase.from("event_logs").insert([
+      {
+        event_id: id,
+        user_id: user.id,
+        change: changes.join(", "),
+      },
+    ]);
 
-  if (logError) {
-    console.error("Fehler beim Schreiben des Event-Logs:", logError.message);
+    if (logError) {
+      console.error("Fehler beim Schreiben des Event-Logs:", logError.message);
+    }
   }
 
   revalidatePath("/dashboard");
