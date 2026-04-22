@@ -64,6 +64,11 @@ export default function LoginForm({
     router.refresh();
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await handleLogin();
+  };
+
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-10">
       <div className="w-full max-w-md">
@@ -96,7 +101,7 @@ export default function LoginForm({
             </div>
           ) : null}
 
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="E-Mail"
               type="email"
@@ -123,10 +128,10 @@ export default function LoginForm({
               <span>E-Mail merken</span>
             </label>
 
-            <Button fullWidth onClick={handleLogin} disabled={loading}>
+            <Button fullWidth type="submit" disabled={loading}>
               {loading ? "Lade..." : "Login"}
             </Button>
-          </div>
+          </form>
         </Card>
       </div>
     </main>
