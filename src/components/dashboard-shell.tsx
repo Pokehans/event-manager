@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import SidebarLink from "@/components/ui/sidebar-link";
 import LogoutButton from "@/components/logout";
+import { ROLES, hasRole, type UserRole } from "@/lib/auth/roles";
 
 const SIDEBAR_STORAGE_KEY = "dashboard-sidebar-collapsed";
 const SIDEBAR_STORAGE_EVENT = "dashboard-sidebar-storage-change";
@@ -113,11 +114,15 @@ function UsersIcon() {
   );
 }
 
+type DashboardShellProps = {
+  children: React.ReactNode;
+  userRole: UserRole;
+};
+
 export default function DashboardShell({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+  userRole,
+}: DashboardShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const sidebarCollapsed = useSyncExternalStore(
@@ -129,6 +134,12 @@ export default function DashboardShell({
   const toggleSidebarCollapsed = () => {
     setSidebarStoredValue(!sidebarCollapsed);
   };
+
+  const canCreateEvent = hasRole(userRole, [
+    ROLES.EDITOR,
+    ROLES.ADMIN,
+    ROLES.SYSTEMADMIN,
+  ]);
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
@@ -191,13 +202,15 @@ export default function DashboardShell({
                   active
                   collapsed={sidebarCollapsed}
                 />
-                <SidebarLink
-                  href="/dashboard/events/new"
-                  label="Events"
-                  icon={<EventsIcon />}
-                  active
-                  collapsed={sidebarCollapsed}
-                />
+                {canCreateEvent ? (
+                  <SidebarLink
+                    href="/dashboard/events/new"
+                    label="Events"
+                    icon={<EventsIcon />}
+                    active
+                    collapsed={sidebarCollapsed}
+                  />
+                ) : null}
                 <SidebarLink
                   href="#"
                   label="Events"
@@ -266,11 +279,13 @@ export default function DashboardShell({
                     icon={<DashboardIcon />}
                     active
                   />
-                  <SidebarLink
-                    href="/dashboard/events/new"
-                    label="Event +"
-                    icon={<EventsIcon />}
-                  />
+                  {canCreateEvent ? (
+                    <SidebarLink
+                      href="/dashboard/events/new"
+                      label="Event +"
+                      icon={<EventsIcon />}
+                    />
+                  ) : null}
                   <SidebarLink
                     href="#"
                     label="Events"
