@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import StatusBadge from "@/components/ui/status-badge";
 import { getEventById } from "@/lib/events/get-event-by-id";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { ROLES, hasRole } from "@/lib/auth/roles";
+import { deleteEvent } from "@/app/dashboard/events/new/actions";
+import DeleteEventButton from "@/components/events/delete-event-button";
 
 type Props = {
   params: Promise<{
@@ -192,6 +196,12 @@ export default async function EventDetailPage({ params }: Props) {
     notFound();
   }
 
+  const currentUser = await getCurrentUser({ redirectTo: "/" });
+
+  const canDelete =
+    currentUser &&
+    hasRole(currentUser.role, [ROLES.ADMIN, ROLES.SYSTEMADMIN]);
+
   const creatorEmail = event.users?.email ?? "—";
   const creatorDepartment = event.users?.departments?.name ?? "—";
 
@@ -224,6 +234,10 @@ export default async function EventDetailPage({ params }: Props) {
             >
               Bearbeiten
             </Link>
+
+            {canDelete ? (
+              <DeleteEventButton action={deleteEvent} eventId={event.id} />
+            ) : null}
           </div>
         </div>
       </div>

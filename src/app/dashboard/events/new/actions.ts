@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ROLES, hasRole } from "@/lib/auth/roles";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
 
 export type CreateEventState = {
   message?: string;
@@ -652,4 +654,66 @@ export async function updateEvent(
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/events/${id}`);
   redirect(`/dashboard/events/${id}`);
+}
+
+export async function deleteEvent(formData: FormData) {
+  const supabase = await createClient();
+
+  const user = await getCurrentUser({ redirectTo: "/" });
+
+  if (!user) {
+    redirect("/");
+  }
+
+  const allowedRoles = [ROLES.ADMIN, ROLES.SYSTEMADMIN];
+
+  if (!hasRole(user.role, allowedRoles)) {
+    redirect("/dashboard");
+  }
+
+  const id = String(formData.get("id") ?? "").trim();
+
+  if (!id) {
+    redirect("/dashboard");
+  }
+
+  const { data: existingEvent, error: existingEventError } = await supabase
+    .from("events")
+    .select("id")
+    .eq("id", id)
+    .single();
+
+  if (existingEventError || !existingEvent) {
+    redirect("/dashboard");
+  }
+
+    const { error: deleteLogsError } = await supabase
+    .from("event_logs")
+    .delete()
+    .eq("event_id", id);
+
+  if (deleteLogsError) {
+    throw new Error(`Event-Logs konnten nicht gelöscht werden: ${deleteLogsError.message}`);
+  }
+
+  const { data: deletedEvent, error: deleteEventError } = await supabase
+    .from("events")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (deleteEventError) {
+    throw new Error(`Event konnte nicht gelöscht werden: ${deleteEventError.message}`);
+  }
+
+  if (!deletedEvent) {
+    throw new Error(
+      "Event wurde nicht gelöscht. Wahrscheinlich fehlt eine DELETE-Policy in Supabase (RLS)."
+    );
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/events/${id}`);
+  redirect("/dashboard");
 }
