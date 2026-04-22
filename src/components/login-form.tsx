@@ -8,9 +8,19 @@ import Button from "@/components/ui/button";
 import Card from "@/components/ui/card";
 import Input from "@/components/ui/input";
 
+const REMEMBER_EMAIL_KEY = "event-manager-remember-email";
+
 type LoginFormProps = {
   reason?: string;
 };
+
+function getInitialRememberedEmail() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem(REMEMBER_EMAIL_KEY) ?? "";
+}
 
 export default function LoginForm({
   reason,
@@ -18,9 +28,12 @@ export default function LoginForm({
   const router = useRouter();
   const supabase = createClient();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(getInitialRememberedEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberEmail, setRememberEmail] = useState(
+    () => getInitialRememberedEmail() !== ""
+  );
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -39,6 +52,12 @@ export default function LoginForm({
       alert("Login fehlgeschlagen");
       setLoading(false);
       return;
+    }
+
+    if (rememberEmail) {
+      window.localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+    } else {
+      window.localStorage.removeItem(REMEMBER_EMAIL_KEY);
     }
 
     router.push("/dashboard");
@@ -93,6 +112,16 @@ export default function LoginForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+
+            <label className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
+              <input
+                type="checkbox"
+                checked={rememberEmail}
+                onChange={(e) => setRememberEmail(e.target.checked)}
+                className="h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+              />
+              <span>E-Mail merken</span>
+            </label>
 
             <Button fullWidth onClick={handleLogin} disabled={loading}>
               {loading ? "Lade..." : "Login"}
