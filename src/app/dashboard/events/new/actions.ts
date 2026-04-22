@@ -228,15 +228,15 @@ function formatChangeText(
     return null;
   }
 
-  if (!oldDisplay && newDisplay) {
+  if (newDisplay) {
     return `${label} geändert Neu: ${newDisplay}`;
   }
 
-  if (oldDisplay && !newDisplay) {
-    return `${label} entfernt Alt: ${oldDisplay}`;
+  if (oldDisplay) {
+    return `${label} entfernt`;
   }
 
-  return `${label} geändert Alt: ${oldDisplay}, Neu: ${newDisplay}`;
+  return null;
 }
 
 function validateEventValues(values: EventFormValues) {
@@ -640,7 +640,7 @@ export async function updateEvent(
       {
         event_id: id,
         user_id: user.id,
-        change: changes.join(", "),
+        change: changes.join("\n"),
       },
     ]);
 
