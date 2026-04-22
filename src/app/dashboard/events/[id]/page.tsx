@@ -135,6 +135,33 @@ type AuditLogListProps = {
   }[];
 };
 
+function renderLogChange(change: string) {
+  return change
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const neuIndex = line.indexOf("Neu:");
+
+      if (neuIndex === -1) {
+        return (
+          <p key={`${line}-${index}`} className="text-sm font-medium">
+            {line}
+          </p>
+        );
+      }
+
+      const before = line.slice(0, neuIndex).trimEnd();
+      const after = line.slice(neuIndex + 4).trim();
+
+      return (
+        <p key={`${line}-${index}`} className="text-sm font-medium">
+          {before} <strong>Neu: {after} </strong>
+        </p>
+      );
+    });
+}
+
 function AuditLogList({ logs }: AuditLogListProps) {
   return (
     <div className="space-y-3">
@@ -143,8 +170,11 @@ function AuditLogList({ logs }: AuditLogListProps) {
           key={log.id}
           className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"
         >
-          <p className="text-sm font-medium">{log.change}</p>
-          <div className="mt-2 space-y-1 text-xs text-[var(--color-text-muted)]">
+          <div className="space-y-1">
+            {renderLogChange(log.change)}
+          </div>
+
+          <div className="mt-3 space-y-1 text-xs text-[var(--color-text-muted)]">
             <p>{formatDateTime(log.created_at)}</p>
             <p>{getLogUserLabel(log.users?.email ?? null)}</p>
           </div>
@@ -307,9 +337,7 @@ export default async function EventDetailPage({ params }: Props) {
           </DetailSection>
 
           {hasLogs && (
-            <DetailSection
-              title="Letzte Änderungen"
-            >
+            <DetailSection title="Letzte Änderungen">
               <AuditLogList logs={latestLogs} />
 
               {hasMoreLogs && (
