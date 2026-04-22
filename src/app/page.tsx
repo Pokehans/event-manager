@@ -1,17 +1,16 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import LoginForm from "@/components/login-form";
 
-export default async function Page() {
-  const supabase = await createClient();
+type HomePageProps = {
+  searchParams?: Promise<{
+    reason?: string;
+  }>;
+};
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default async function HomePage({
+  searchParams,
+}: HomePageProps) {
+  const params = searchParams ? await searchParams : undefined;
+  const reason = params?.reason;
 
-  if (user) {
-    redirect("/dashboard");
-  }
-
-  return <LoginForm />;
+  return <LoginForm reason={reason} />;
 }

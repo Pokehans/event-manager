@@ -8,7 +8,13 @@ import Button from "@/components/ui/button";
 import Card from "@/components/ui/card";
 import Input from "@/components/ui/input";
 
-export default function LoginForm() {
+type LoginFormProps = {
+  reason?: string;
+};
+
+export default function LoginForm({
+  reason,
+}: LoginFormProps) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -63,6 +69,13 @@ export default function LoginForm() {
               Melde dich mit deinen Zugangsdaten an.
             </p>
           </div>
+
+          {reason === "session-timeout" ? (
+            <div className="mb-5 rounded-xl border border-[var(--color-warning)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-text)] shadow-sm">
+              Deine Sitzung wurde wegen Inaktivität beendet. Bitte erneut
+              anmelden.
+            </div>
+          ) : null}
 
           <div className="space-y-4">
             <Input
