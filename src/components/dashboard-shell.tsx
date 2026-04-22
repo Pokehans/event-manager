@@ -199,15 +199,13 @@ export default function DashboardShell({
                   href="/dashboard"
                   label="Dashboard"
                   icon={<DashboardIcon />}
-                  active
                   collapsed={sidebarCollapsed}
                 />
                 {canCreateEvent ? (
                   <SidebarLink
                     href="/dashboard/events/new"
-                    label="Events"
+                    label="Event erstellen"
                     icon={<EventsIcon />}
-                    active
                     collapsed={sidebarCollapsed}
                   />
                 ) : null}
@@ -277,12 +275,11 @@ export default function DashboardShell({
                     href="/dashboard"
                     label="Dashboard"
                     icon={<DashboardIcon />}
-                    active
                   />
                   {canCreateEvent ? (
                     <SidebarLink
                       href="/dashboard/events/new"
-                      label="Event +"
+                      label="Event erstellen"
                       icon={<EventsIcon />}
                     />
                   ) : null}
