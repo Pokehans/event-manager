@@ -170,7 +170,7 @@ function getStatusLabel(status: string | null) {
     case "Archiviert":
       return "Archiviert";
     default:
-      return status || "—";
+      return status || null;
   }
 }
 
@@ -189,7 +189,7 @@ function getRoomLabel(room: string | null) {
     case "terrasse":
       return "Terrasse";
     default:
-      return room || "—";
+      return room || null;
   }
 }
 
@@ -210,8 +210,33 @@ function getPaymentTypeLabel(paymentType: string | null) {
     case "intern_vr":
       return "Intern VR";
     default:
-      return paymentType || "—";
+      return paymentType || null;
   }
+}
+
+function formatChangeText(
+  label: string,
+  oldValue: string | number | null,
+  newValue: string | number | null
+) {
+  const oldDisplay =
+    oldValue === null || oldValue === "" ? null : String(oldValue);
+  const newDisplay =
+    newValue === null || newValue === "" ? null : String(newValue);
+
+  if (oldDisplay === newDisplay) {
+    return null;
+  }
+
+  if (!oldDisplay && newDisplay) {
+    return `${label} geändert Neu: ${newDisplay}`;
+  }
+
+  if (oldDisplay && !newDisplay) {
+    return `${label} entfernt Alt: ${oldDisplay}`;
+  }
+
+  return `${label} geändert Alt: ${oldDisplay}, Neu: ${newDisplay}`;
 }
 
 function validateEventValues(values: EventFormValues) {
@@ -305,73 +330,85 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
     notes: normalizeOptionalString(values.notes),
   };
 
-  if (existingEvent.title !== nextEvent.title) {
-    changes.push(`Titel geändert (${existingEvent.title} → ${nextEvent.title})`);
-  }
+  const titleChange = formatChangeText(
+    "Titel",
+    existingEvent.title,
+    nextEvent.title
+  );
+  if (titleChange) changes.push(titleChange);
 
-  if (existingEvent.date !== nextEvent.date) {
-    changes.push(`Datum geändert (${existingEvent.date} → ${nextEvent.date})`);
-  }
+  const dateChange = formatChangeText("Datum", existingEvent.date, nextEvent.date);
+  if (dateChange) changes.push(dateChange);
 
-  if (existingEvent.status !== nextEvent.status) {
-    changes.push(
-      `Status geändert (${getStatusLabel(existingEvent.status)} → ${getStatusLabel(nextEvent.status)})`
-    );
-  }
+  const statusChange = formatChangeText(
+    "Status",
+    getStatusLabel(existingEvent.status),
+    getStatusLabel(nextEvent.status)
+  );
+  if (statusChange) changes.push(statusChange);
 
-  if (existingEvent.company_name !== nextEvent.company_name) {
-    changes.push(
-      `Firma geändert (${existingEvent.company_name || "—"} → ${nextEvent.company_name || "—"})`
-    );
-  }
+  const companyChange = formatChangeText(
+    "Firma",
+    existingEvent.company_name,
+    nextEvent.company_name
+  );
+  if (companyChange) changes.push(companyChange);
 
-  if (existingEvent.firstname !== nextEvent.firstname) {
-    changes.push(
-      `Vorname geändert (${existingEvent.firstname || "—"} → ${nextEvent.firstname || "—"})`
-    );
-  }
+  const firstnameChange = formatChangeText(
+    "Vorname",
+    existingEvent.firstname,
+    nextEvent.firstname
+  );
+  if (firstnameChange) changes.push(firstnameChange);
 
-  if (existingEvent.lastname !== nextEvent.lastname) {
-    changes.push(
-      `Nachname geändert (${existingEvent.lastname || "—"} → ${nextEvent.lastname || "—"})`
-    );
-  }
+  const lastnameChange = formatChangeText(
+    "Nachname",
+    existingEvent.lastname,
+    nextEvent.lastname
+  );
+  if (lastnameChange) changes.push(lastnameChange);
 
-  if (existingEvent.phone !== nextEvent.phone) {
-    changes.push(
-      `Telefon geändert (${existingEvent.phone || "—"} → ${nextEvent.phone || "—"})`
-    );
-  }
+  const phoneChange = formatChangeText(
+    "Telefon",
+    existingEvent.phone,
+    nextEvent.phone
+  );
+  if (phoneChange) changes.push(phoneChange);
 
-  if (existingEvent.email !== nextEvent.email) {
-    changes.push(
-      `E-Mail geändert (${existingEvent.email || "—"} → ${nextEvent.email || "—"})`
-    );
-  }
+  const emailChange = formatChangeText(
+    "E-Mail",
+    existingEvent.email,
+    nextEvent.email
+  );
+  if (emailChange) changes.push(emailChange);
 
-  if (existingEvent.adults !== nextEvent.adults) {
-    changes.push(
-      `Erwachsene geändert (${existingEvent.adults ?? "—"} → ${nextEvent.adults ?? "—"})`
-    );
-  }
+  const adultsChange = formatChangeText(
+    "Erwachsene",
+    existingEvent.adults,
+    nextEvent.adults
+  );
+  if (adultsChange) changes.push(adultsChange);
 
-  if (existingEvent.children !== nextEvent.children) {
-    changes.push(
-      `Kinder geändert (${existingEvent.children ?? "—"} → ${nextEvent.children ?? "—"})`
-    );
-  }
+  const childrenChange = formatChangeText(
+    "Kinder",
+    existingEvent.children,
+    nextEvent.children
+  );
+  if (childrenChange) changes.push(childrenChange);
 
-  if (existingEvent.address !== nextEvent.address) {
-    changes.push(
-      `Adresse geändert (${existingEvent.address || "—"} → ${nextEvent.address || "—"})`
-    );
-  }
+  const addressChange = formatChangeText(
+    "Adresse",
+    existingEvent.address,
+    nextEvent.address
+  );
+  if (addressChange) changes.push(addressChange);
 
-  if (existingEvent.room !== nextEvent.room) {
-    changes.push(
-      `Raum geändert (${getRoomLabel(existingEvent.room)} → ${getRoomLabel(nextEvent.room)})`
-    );
-  }
+  const roomChange = formatChangeText(
+    "Raum",
+    getRoomLabel(existingEvent.room),
+    getRoomLabel(nextEvent.room)
+  );
+  if (roomChange) changes.push(roomChange);
 
   if (existingEvent.tech !== nextEvent.tech) {
     changes.push("Technik geändert");
@@ -393,11 +430,12 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
     changes.push("Getränke geändert");
   }
 
-  if (existingEvent.payment_type !== nextEvent.payment_type) {
-    changes.push(
-      `Zahlungsart geändert (${getPaymentTypeLabel(existingEvent.payment_type)} → ${getPaymentTypeLabel(nextEvent.payment_type)})`
-    );
-  }
+  const paymentTypeChange = formatChangeText(
+    "Zahlungsart",
+    getPaymentTypeLabel(existingEvent.payment_type),
+    getPaymentTypeLabel(nextEvent.payment_type)
+  );
+  if (paymentTypeChange) changes.push(paymentTypeChange);
 
   if (existingEvent.notes !== nextEvent.notes) {
     changes.push("Notizen geändert");
