@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Card from "@/components/ui/card";
 import Input from "@/components/ui/input";
@@ -8,6 +9,8 @@ import Button from "@/components/ui/button";
 
 type ChangePasswordFormProps = {
   email: string;
+  userId: string;
+  mode?: "standard" | "first-login";
 };
 
 function isStrongEnough(password: string) {
@@ -16,8 +19,13 @@ function isStrongEnough(password: string) {
 
 export default function ChangePasswordForm({
   email,
+  userId,
+  mode = "standard",
 }: ChangePasswordFormProps) {
+  const router = useRouter();
   const supabase = createClient();
+
+  const isFirstLoginMode = mode === "first-login";
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -41,7 +49,7 @@ export default function ChangePasswordForm({
   function validate() {
     let valid = true;
 
-    if (!currentPassword.trim()) {
+    if (!isFirstLoginMode && !currentPassword.trim()) {
       setCurrentPasswordError("Bitte gib dein aktuelles Passwort ein.");
       valid = false;
     }
@@ -51,7 +59,7 @@ export default function ChangePasswordForm({
       valid = false;
     }
 
-    if (newPassword === currentPassword && newPassword.trim() !== "") {
+    if (!isFirstLoginMode && newPassword === currentPassword && newPassword.trim() !== "") {
       setNewPasswordError("Das neue Passwort muss sich vom aktuellen Passwort unterscheiden.");
       valid = false;
     }
@@ -77,15 +85,17 @@ export default function ChangePasswordForm({
 
     setLoading(true);
 
-    const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email,
-      password: currentPassword,
-    });
+    if (!isFirstLoginMode) {
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
 
-    if (verifyError) {
-      setFormError("Das aktuelle Passwort ist nicht korrekt.");
-      setLoading(false);
-      return;
+      if (verifyError) {
+        setFormError("Das aktuelle Passwort ist nicht korrekt.");
+        setLoading(false);
+        return;
+      }
     }
 
     const { error: updateError } = await supabase.auth.updateUser({
@@ -100,6 +110,34 @@ export default function ChangePasswordForm({
       return;
     }
 
+    const updatePayload = isFirstLoginMode
+      ? {
+          must_change_password: false,
+          password_changed_at: new Date().toISOString(),
+        }
+      : {
+          password_changed_at: new Date().toISOString(),
+        };
+
+    const { error: dbError } = await supabase
+      .from("users")
+      .update(updatePayload)
+      .eq("id", userId);
+
+    if (dbError) {
+      setFormError(
+        "Das Passwort wurde geändert, aber der Benutzerstatus konnte nicht aktualisiert werden. Bitte kontaktiere einen Admin."
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (isFirstLoginMode) {
+      router.push("/dashboard");
+      router.refresh();
+      return;
+    }
+
     setFormSuccess("Dein Passwort wurde erfolgreich geändert.");
     setCurrentPassword("");
     setNewPassword("");
@@ -109,8 +147,12 @@ export default function ChangePasswordForm({
 
   return (
     <Card
-      title="Passwort ändern"
-      description="Ändere dein Passwort direkt in deinem Benutzerprofil."
+      title={isFirstLoginMode ? "Initialpasswort ändern" : "Passwort ändern"}
+      description={
+        isFirstLoginMode
+          ? "Beim ersten Login musst du dein Initialpasswort durch ein persönliches Passwort ersetzen."
+          : "Ändere dein Passwort direkt in deinem Benutzerprofil."
+      }
     >
       {formError ? (
         <div className="mb-5 rounded-xl border border-[rgba(192,57,43,0.35)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-danger)] shadow-sm">
@@ -125,23 +167,25 @@ export default function ChangePasswordForm({
       ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          id="current-password"
-          name="current-password"
-          label="Aktuelles Passwort"
-          type="password"
-          placeholder="Aktuelles Passwort"
-          value={currentPassword}
-          onChange={(e) => {
-            setCurrentPassword(e.target.value);
-            if (currentPasswordError) setCurrentPasswordError("");
-            if (formError) setFormError("");
-            if (formSuccess) setFormSuccess("");
-          }}
-          error={currentPasswordError}
-          autoComplete="current-password"
-          required
-        />
+        {!isFirstLoginMode ? (
+          <Input
+            id="current-password"
+            name="current-password"
+            label="Aktuelles Passwort"
+            type="password"
+            placeholder="Aktuelles Passwort"
+            value={currentPassword}
+            onChange={(e) => {
+              setCurrentPassword(e.target.value);
+              if (currentPasswordError) setCurrentPasswordError("");
+              if (formError) setFormError("");
+              if (formSuccess) setFormSuccess("");
+            }}
+            error={currentPasswordError}
+            autoComplete="current-password"
+            required
+          />
+        ) : null}
 
         <Input
           id="new-password"

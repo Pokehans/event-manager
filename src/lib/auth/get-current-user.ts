@@ -25,7 +25,9 @@ export async function getCurrentUser(
 
   const { data: dbUser, error } = await supabase
     .from("users")
-    .select("id, email, role, active, area, department, created_at")
+    .select(
+      "id, email, role, active, area, department, must_change_password, password_changed_at, created_at"
+    )
     .eq("id", authUser.id)
     .single();
 

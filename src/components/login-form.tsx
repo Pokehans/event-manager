@@ -121,6 +121,34 @@ export default function LoginForm({ reason }: LoginFormProps) {
       window.localStorage.removeItem(REMEMBER_EMAIL_KEY);
     }
 
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) {
+      setFormError("Die Sitzung konnte nach dem Login nicht geladen werden.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: dbUser, error: dbUserError } = await supabase
+      .from("users")
+      .select("must_change_password")
+      .eq("id", authUser.id)
+      .single();
+
+    if (dbUserError || !dbUser) {
+      setFormError("Dein Benutzerprofil konnte nicht geladen werden.");
+      setLoading(false);
+      return;
+    }
+
+    if (dbUser.must_change_password) {
+      router.push("/dashboard/force-password-change");
+      router.refresh();
+      return;
+    }
+
     router.push("/dashboard");
     router.refresh();
   };

@@ -37,7 +37,7 @@ export default async function ProfilePage() {
       <div>
         <h1 className="page-title">Mein Profil</h1>
         <p className="page-subtitle">
-          Verwalte deine Benutzerdaten und ändere dein Passwort.
+          Benutzerdaten und Passwort.
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export default async function ProfilePage() {
         </dl>
       </Card>
 
-      <ChangePasswordForm email={user.email} />
+      <ChangePasswordForm email={user.email} userId={user.id} />
     </div>
   );
 }

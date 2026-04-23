@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import SidebarLink from "@/components/ui/sidebar-link";
 import LogoutButton from "@/components/logout";
 import { ROLES, hasRole, type UserRole } from "@/lib/auth/roles";
 import SessionTimeoutGuard from "@/components/auth/session-timeout-guard";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const SIDEBAR_STORAGE_KEY = "dashboard-sidebar-collapsed";
 const SIDEBAR_STORAGE_EVENT = "dashboard-sidebar-storage-change";
@@ -139,6 +141,67 @@ export default function DashboardShell({
 }: DashboardShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const [passwordGuardChecked, setPasswordGuardChecked] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const supabase = createClient();
+
+    async function checkPasswordChangeRequirement() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        if (isMounted) {
+          setPasswordGuardChecked(true);
+        }
+        router.replace("/");
+        return;
+      }
+
+      const { data: dbUser, error } = await supabase
+        .from("users")
+        .select("must_change_password")
+        .eq("id", user.id)
+        .single();
+
+      if (!isMounted) return;
+
+      if (error || !dbUser) {
+        setPasswordGuardChecked(true);
+        router.replace("/");
+        return;
+      }
+
+      if (
+        dbUser.must_change_password &&
+        pathname !== "/dashboard/force-password-change"
+      ) {
+        router.replace("/dashboard/force-password-change");
+        return;
+      }
+
+      if (
+        !dbUser.must_change_password &&
+        pathname === "/dashboard/force-password-change"
+      ) {
+        router.replace("/dashboard");
+        return;
+      }
+
+      setPasswordGuardChecked(true);
+    }
+
+    void checkPasswordChangeRequirement();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname, router]);
+
   const sidebarCollapsed = useSyncExternalStore(
     subscribeSidebarPreference,
     getSidebarSnapshot,
@@ -154,6 +217,16 @@ export default function DashboardShell({
     ROLES.ADMIN,
     ROLES.SYSTEMADMIN,
   ]);
+
+  if (!passwordGuardChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-6">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white px-6 py-4 text-sm font-medium text-[var(--color-text-muted)] shadow-sm">
+          Benutzerstatus wird geprüft...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
