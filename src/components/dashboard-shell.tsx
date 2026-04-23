@@ -115,6 +115,19 @@ function UsersIcon() {
   );
 }
 
+function ProfileIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-none stroke-current"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20a8 8 0 0 1 16 0" />
+    </svg>
+  );
+}
+
 type DashboardShellProps = {
   children: React.ReactNode;
   userRole: UserRole;
@@ -224,6 +237,12 @@ export default function DashboardShell({
                   collapsed={sidebarCollapsed}
                 />
                 <SidebarLink
+                  href="/dashboard/profile"
+                  label="Profil"
+                  icon={<ProfileIcon />}
+                  collapsed={sidebarCollapsed}
+                />
+                <SidebarLink
                   href="#"
                   label="Räume"
                   icon={<RoomsIcon />}
@@ -294,6 +313,11 @@ export default function DashboardShell({
                     href="#"
                     label="Archiv"
                     icon={<ArchiveIcon />}
+                  />
+                  <SidebarLink
+                    href="/dashboard/profile"
+                    label="Profil"
+                    icon={<ProfileIcon />}
                   />
                   <SidebarLink
                     href="#"

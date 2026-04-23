@@ -13,6 +13,7 @@ export type AppUser = {
   role: UserRole;
   active: boolean;
   area: string | null;
+  department: string | null;
   created_at?: string;
 };
 

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { AppUser } from "@/lib/auth/roles";
+import type { AppUser, UserRole } from "@/lib/auth/roles";
 
 type GetCurrentUserOptions = {
   redirectTo?: string;
@@ -25,7 +25,7 @@ export async function getCurrentUser(
 
   const { data: dbUser, error } = await supabase
     .from("users")
-    .select("id, email, role, active, area, created_at")
+    .select("id, email, role, active, area, department, created_at")
     .eq("id", authUser.id)
     .single();
 
@@ -45,8 +45,6 @@ export async function getCurrentUser(
 
   return dbUser as AppUser;
 }
-
-import type { UserRole } from "@/lib/auth/roles";
 
 export async function requireRole(
   allowedRoles: UserRole[],
