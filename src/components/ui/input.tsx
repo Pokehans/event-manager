@@ -3,11 +3,17 @@
 import { useState } from "react";
 
 type InputProps = {
+  id?: string;
+  name?: string;
   label: string;
   type?: string;
   placeholder?: string;
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
+  hint?: string;
+  autoComplete?: string;
+  required?: boolean;
 };
 
 function EyeIcon() {
@@ -49,11 +55,17 @@ function EyeOffIcon() {
 }
 
 export default function Input({
+  id,
+  name,
   label,
   type = "text",
   placeholder,
   value,
   onChange,
+  error,
+  hint,
+  autoComplete,
+  required = false,
 }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -64,19 +76,40 @@ export default function Input({
       : "password"
     : type;
 
+  const describedBy = error
+    ? `${id ?? name ?? label}-error`
+    : hint
+      ? `${id ?? name ?? label}-hint`
+      : undefined;
+
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--color-text)]">
+      <label
+        htmlFor={id}
+        className="text-sm font-medium text-[var(--color-text)]"
+      >
         {label}
       </label>
 
       <div className="relative">
         <input
+          id={id}
+          name={name}
           type={resolvedType}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 pr-12 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
+          autoComplete={autoComplete}
+          required={required}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={describedBy}
+          className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-[var(--color-text)] outline-none transition focus:ring-2 ${
+            isPasswordField ? "pr-12" : ""
+          } ${
+            error
+              ? "border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:ring-[var(--color-danger)]/15"
+              : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/15"
+          }`}
         />
 
         {isPasswordField ? (
@@ -91,6 +124,22 @@ export default function Input({
           </button>
         ) : null}
       </div>
+
+      {error ? (
+        <p
+          id={`${id ?? name ?? label}-error`}
+          className="text-sm text-[var(--color-danger)]"
+        >
+          {error}
+        </p>
+      ) : hint ? (
+        <p
+          id={`${id ?? name ?? label}-hint`}
+          className="text-sm text-[var(--color-text-muted)]"
+        >
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

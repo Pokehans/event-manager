@@ -6,9 +6,7 @@ type HomePageProps = {
   }>;
 };
 
-export default async function HomePage({
-  searchParams,
-}: HomePageProps) {
+export default async function HomePage({ searchParams }: HomePageProps) {
   const params = searchParams ? await searchParams : undefined;
   const reason = params?.reason;
 
