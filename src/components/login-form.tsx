@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/button";
 import Card from "@/components/ui/card";
 import Input from "@/components/ui/input";
+import LegalModal from "@/components/legal-modal";
 
 const REMEMBER_EMAIL_KEY = "event-manager-remember-email";
 
@@ -44,6 +45,7 @@ export default function LoginForm({ reason }: LoginFormProps) {
   const [formSuccess, setFormSuccess] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [legalModalOpen, setLegalModalOpen] = useState(false);
 
   const title = useMemo(() => {
     return mode === "login" ? "Login" : "Passwort zurücksetzen";
@@ -344,7 +346,26 @@ export default function LoginForm({ reason }: LoginFormProps) {
             )}
           </form>
         </Card>
+
+        <footer className="mt-6 text-center text-xs leading-6 text-[var(--color-text-muted)]">
+          <span>© 2026 Event Manager</span>
+          <span className="mx-2">·</span>
+          <span>Max Mustermann</span>
+          <span className="mx-2">·</span>
+          <button
+            type="button"
+            onClick={() => setLegalModalOpen(true)}
+            className="font-medium text-[var(--color-primary)] transition hover:text-[var(--color-primary-hover)]"
+          >
+            Rechtliches
+          </button>
+        </footer>
       </div>
+
+      <LegalModal
+        open={legalModalOpen}
+        onClose={() => setLegalModalOpen(false)}
+      />
     </main>
   );
 }
