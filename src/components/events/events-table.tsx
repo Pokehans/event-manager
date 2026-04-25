@@ -13,6 +13,21 @@ type ViewMode = "table" | "months";
 
 const EVENTS_PER_PAGE = 12;
 
+const MONTHS = [
+  "Januar",
+  "Februar",
+  "März",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
+];
+
 function formatDate(date: string) {
   const [year, month, day] = date.split("-");
   return `${day}.${month}.${year}`;
@@ -103,6 +118,7 @@ export default function EventsTable({ events }: EventsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
@@ -114,6 +130,7 @@ export default function EventsTable({ events }: EventsTableProps) {
   setSearchTerm("");
   setStatusFilter("all");
   setMonthFilter("all");
+  setYearFilter("all");
   setDepartmentFilter("all");
   setShowPastEvents(false);
   setCurrentPage(1);
@@ -134,6 +151,7 @@ const hasActiveFilters =
   searchTerm.trim().length > 0 ||
   statusFilter !== "all" ||
   monthFilter !== "all" ||
+  yearFilter !== "all" ||
   departmentFilter !== "all" ||
   showPastEvents;
 
@@ -143,17 +161,10 @@ const hasActiveFilters =
     ).sort();
   }, [events]);
 
-  const monthOptions = useMemo(() => {
-    return Array.from(new Set(events.map((event) => event.date.slice(0, 7))))
-      .sort()
-      .map((month) => {
-        const [year, monthNumber] = month.split("-");
-
-        return {
-          value: month,
-          label: `${monthNumber}.${year}`,
-        };
-      });
+  const yearOptions = useMemo(() => {
+    return Array.from(
+      new Set(events.map((event) => event.date.slice(0, 4)))
+    ).sort();
   }, [events]);
 
   const departmentOptions = useMemo(() => {
@@ -174,7 +185,8 @@ const hasActiveFilters =
       const customerName = getCustomerName(event).toLowerCase();
       const title = event.title.toLowerCase();
       const status = getStatusLabel(event.status);
-      const month = event.date.slice(0, 7);
+      const eventYear = event.date.slice(0, 4);
+      const eventMonth = event.date.slice(5, 7);
       const departmentName = department?.name ?? "";
       const search = searchTerm.toLowerCase().trim();
 
@@ -184,7 +196,11 @@ const hasActiveFilters =
         customerName.includes(search);
 
       const matchesStatus = statusFilter === "all" || status === statusFilter;
-      const matchesMonth = monthFilter === "all" || month === monthFilter;
+      const matchesMonth =
+        monthFilter === "all" || eventMonth === monthFilter;
+
+      const matchesYear =
+        yearFilter === "all" || eventYear === yearFilter;
 
       const matchesDepartment =
         departmentFilter === "all" || departmentName === departmentFilter;
@@ -195,15 +211,17 @@ const hasActiveFilters =
         matchesSearch &&
         matchesStatus &&
         matchesMonth &&
+        matchesYear &&
         matchesDepartment &&
         matchesTime
       );
     });
-  }, [
+    }, [
     events,
     searchTerm,
     statusFilter,
     monthFilter,
+    yearFilter,
     departmentFilter,
     showPastEvents,
   ]);
@@ -235,13 +253,24 @@ const hasActiveFilters =
   }, [filteredEvents, sortField, sortDirection]);
 
   const monthlyForecastEvents = useMemo(() => {
-    if (monthFilter === "all") return [];
+    if (monthFilter === "all" || yearFilter === "all") return [];
 
-    return sortedEvents.filter((event) => event.date.slice(0, 7) === monthFilter);
-  }, [sortedEvents, monthFilter]);
+    return sortedEvents.filter((event) => {
+      const eventYear = event.date.slice(0, 4);
+      const eventMonth = event.date.slice(5, 7);
+
+      return eventYear === yearFilter && eventMonth === monthFilter;
+    });
+  }, [sortedEvents, monthFilter, yearFilter]);
 
   function handleExportMonthlyForecast() {
-    if (monthFilter === "all" || monthlyForecastEvents.length === 0) return;
+    if (
+      monthFilter === "all" ||
+      yearFilter === "all" ||
+      monthlyForecastEvents.length === 0
+    ) {
+      return;
+    }
 
     const rows = [
       ["Datum", "Status", "Titel", "Auftraggeber", "Personen", "Bereich"],
@@ -267,7 +296,7 @@ const hasActiveFilters =
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `monatsforecast-${monthFilter}.csv`;
+    link.download = `monatsforecast-${yearFilter}-${monthFilter}.csv`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -313,7 +342,7 @@ const hasActiveFilters =
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
           <input
             value={searchTerm}
             onChange={(event) => {
@@ -349,9 +378,29 @@ const hasActiveFilters =
             className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
           >
             <option value="all">Alle Monate</option>
-            {monthOptions.map((month) => (
-              <option key={month.value} value={month.value}>
-                {month.label}
+            {MONTHS.map((month, index) => {
+              const value = String(index + 1).padStart(2, "0");
+
+              return (
+                <option key={month} value={value}>
+                  {month}
+                </option>
+              );
+            })}
+          </select>
+
+          <select
+            value={yearFilter}
+            onChange={(event) => {
+              setYearFilter(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+          >
+            <option value="all">Alle Jahre</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
               </option>
             ))}
           </select>
@@ -703,8 +752,16 @@ const hasActiveFilters =
 
         <button
           type="button"
-          disabled={monthFilter === "all" || monthlyForecastEvents.length === 0}
-          title={monthFilter === "all" ? "Monat wählen" : "Monatsforecast exportieren"}
+          disabled={
+            monthFilter === "all" ||
+            yearFilter === "all" ||
+            monthlyForecastEvents.length === 0
+          }
+          title={
+            monthFilter === "all" || yearFilter === "all"
+              ? "Monat und Jahr wählen"
+              : "Monatsforecast exportieren"
+          }
           onClick={handleExportMonthlyForecast}
           className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
         >
