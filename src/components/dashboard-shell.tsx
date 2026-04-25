@@ -298,8 +298,8 @@ export default function DashboardShell({
                   />
                 ) : null}
                 <SidebarLink
-                  href="#"
-                  label="Events"
+                  href="/dashboard/events"
+                  label="Eventliste"
                   icon={<EventsIcon />}
                   collapsed={sidebarCollapsed}
                 />
@@ -378,8 +378,8 @@ export default function DashboardShell({
                     />
                   ) : null}
                   <SidebarLink
-                    href="#"
-                    label="Events"
+                    href="/dashboard/events"
+                    label="Eventliste"
                     icon={<EventsIcon />}
                   />
                   <SidebarLink
