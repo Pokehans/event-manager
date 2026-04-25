@@ -8,8 +8,10 @@ import { deleteEvent } from "@/app/dashboard/events/new/actions";
 import DeleteEventButton from "@/components/events/delete-event-button";
 
 type Props = {
-  params: Promise<{
-    id: string;
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{
+    month?: string;
+    year?: string;
   }>;
 };
 
@@ -188,8 +190,20 @@ function AuditLogList({ logs }: AuditLogListProps) {
   );
 }
 
-export default async function EventDetailPage({ params }: Props) {
+export default async function EventDetailPage({
+  params,
+  searchParams,
+}: Props) {
   const { id } = await params;
+  const query = searchParams ? await searchParams : undefined;
+
+  const month = query?.month;
+  const year = query?.year;
+
+  const backHref =
+    month && year
+      ? `/dashboard?month=${month}&year=${year}`
+      : "/dashboard";
   const event = await getEventById(id);
 
   if (!event) {
@@ -230,7 +244,7 @@ export default async function EventDetailPage({ params }: Props) {
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              href="/dashboard"
+              href={backHref}
               className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
             >
               Zurück zum Dashboard

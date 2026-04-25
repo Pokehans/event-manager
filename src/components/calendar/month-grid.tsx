@@ -47,6 +47,13 @@ function formatLocalDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function getEventDetailUrl(eventId: string, currentDate: Date) {
+  const month = currentDate.getMonth() + 1;
+  const year = currentDate.getFullYear();
+
+  return `/dashboard/events/${eventId}?month=${month}&year=${year}`;
+}
+
 function NewBadge() {
   return (
     <span className="inline-flex items-center rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
@@ -140,7 +147,7 @@ export default function MonthGrid({ currentDate, events }: Props) {
                         return (
                           <Link
                             key={event.id}
-                            href={`/dashboard/events/${event.id}`}
+                            href={getEventDetailUrl(event.id, currentDate)}
                             className="block rounded-lg border px-2 py-1 transition hover:opacity-90"
                             style={{
                               backgroundColor: style.backgroundColor,
@@ -234,7 +241,7 @@ export default function MonthGrid({ currentDate, events }: Props) {
                     return (
                       <Link
                         key={event.id}
-                        href={`/dashboard/events/${event.id}`}
+                        href={getEventDetailUrl(event.id, currentDate)}
                         className="block rounded-xl border px-3 py-2 transition hover:opacity-90"
                         style={{
                           backgroundColor: style.backgroundColor,
