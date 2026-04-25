@@ -1,10 +1,12 @@
 import Link from "next/link";
 import type { CalendarEvent } from "@/lib/events/get-events-for-month";
 import StatusBadge from "@/components/ui/status-badge";
+import type { CalendarHoliday } from "@/lib/holidays/get-holidays-for-month";
 
 type Props = {
   currentDate: Date;
   events: CalendarEvent[];
+  holidays: CalendarHoliday[];
 };
 
 function getEventStyle(event: CalendarEvent) {
@@ -62,7 +64,7 @@ function NewBadge() {
   );
 }
 
-export default function MonthGrid({ currentDate, events }: Props) {
+export default function MonthGrid({ currentDate, events, holidays }: Props) {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
@@ -98,6 +100,11 @@ export default function MonthGrid({ currentDate, events }: Props) {
     return events.filter((event) => event.date === dayString);
   };
 
+  const getHolidayForDay = (day: Date) => {
+    const dayString = formatLocalDate(day);
+    return holidays.find((holiday) => holiday.date === dayString) ?? null;
+  };
+
   return (
     <div className="mt-6">
       <div className="hidden md:block">
@@ -115,15 +122,18 @@ export default function MonthGrid({ currentDate, events }: Props) {
               day && new Date(day).toDateString() === new Date().toDateString();
 
             const dayEvents = day ? getEventsForDay(day) : [];
+            const holiday = day ? getHolidayForDay(day) : null;
 
             return (
               <div
                 key={index}
                 className={`min-h-[120px] rounded-xl border p-2 text-sm ${
                   day
-                    ? isToday
-                      ? "border-[rgba(219,142,34,0.25)] bg-[rgba(219,142,34,0.08)]"
-                      : "border-[var(--color-border)] bg-white"
+                    ? holiday
+                      ? "border-red-200 bg-red-50"
+                      : isToday
+                        ? "border-[rgba(219,142,34,0.25)] bg-[rgba(219,142,34,0.08)]"
+                        : "border-[var(--color-border)] bg-white"
                     : "border-transparent bg-transparent"
                 }`}
               >
@@ -138,6 +148,19 @@ export default function MonthGrid({ currentDate, events }: Props) {
                     >
                       {day.getDate()}
                     </div>
+
+                    {holiday && (
+                      <div
+                        className="mt-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                        style={{
+                          backgroundColor: holiday.background_color,
+                          color: holiday.color,
+                        }}
+                        title={holiday.name}
+                      >
+                        {holiday.name}
+                      </div>
+                    )}
 
                     <div className="mt-2 space-y-1">
                       {dayEvents.slice(0, 3).map((event) => {
@@ -198,14 +221,17 @@ export default function MonthGrid({ currentDate, events }: Props) {
 
           const weekdayIndex = (day.getDay() + 6) % 7;
           const dayEvents = getEventsForDay(day);
+          const holiday = getHolidayForDay(day);
 
           return (
             <div
               key={index}
               className={`rounded-2xl border p-4 ${
-                isToday
-                  ? "border-[rgba(219,142,34,0.25)] bg-[rgba(219,142,34,0.08)]"
-                  : "border-[var(--color-border)] bg-white"
+                holiday
+                  ? "border-red-200 bg-red-50"
+                  : isToday
+                    ? "border-[rgba(219,142,34,0.25)] bg-[rgba(219,142,34,0.08)]"
+                    : "border-[var(--color-border)] bg-white"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
@@ -223,6 +249,18 @@ export default function MonthGrid({ currentDate, events }: Props) {
                     {day.getDate()}.{" "}
                     {day.toLocaleString("de-CH", { month: "long" })}
                   </p>
+
+                  {holiday && (
+                    <div
+                      className="mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                      style={{
+                        backgroundColor: holiday.background_color,
+                        color: holiday.color,
+                      }}
+                    >
+                      {holiday.name}
+                    </div>
+                  )}
                 </div>
 
                 {isToday && (

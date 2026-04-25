@@ -5,10 +5,12 @@ import MonthNavigation from "@/components/calendar/month-navigation";
 import MonthGrid from "@/components/calendar/month-grid";
 import type { CalendarEvent } from "@/lib/events/get-events-for-month";
 import DepartmentLegend from "@/components/calendar/department-legend";
+import type { CalendarHoliday } from "@/lib/holidays/get-holidays-for-month";
 
 type Props = {
   initialDate: string;
   events: CalendarEvent[];
+  holidays: CalendarHoliday[];
 };
 
 function getDashboardUrl(date: Date) {
@@ -18,7 +20,11 @@ function getDashboardUrl(date: Date) {
   return `/dashboard?month=${month}&year=${year}`;
 }
 
-export default function CalendarDashboard({ initialDate, events }: Props) {
+export default function CalendarDashboard({
+  initialDate,
+  events,
+  holidays,
+}: Props) {
   const router = useRouter();
   const currentDate = new Date(initialDate);
 
@@ -65,7 +71,7 @@ export default function CalendarDashboard({ initialDate, events }: Props) {
         <DepartmentLegend events={events} />
       </div>
 
-      <MonthGrid currentDate={currentDate} events={events} />
+      <MonthGrid currentDate={currentDate} events={events} holidays={holidays} />
     </main>
   );
 }
