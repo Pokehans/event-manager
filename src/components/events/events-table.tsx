@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/status-badge";
 import type { EventListItem } from "@/lib/events/get-events";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type EventsTableProps = {
   events: EventListItem[];
@@ -115,16 +116,51 @@ function escapeCsvValue(value: string | number) {
 }
 
 export default function EventsTable({ events }: EventsTableProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [monthFilter, setMonthFilter] = useState("all");
-  const [yearFilter, setYearFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [showPastEvents, setShowPastEvents] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
+  const [monthFilter, setMonthFilter] = useState(searchParams.get("month") ?? "all");
+  const [yearFilter, setYearFilter] = useState(searchParams.get("year") ?? "all");
+  const [departmentFilter, setDepartmentFilter] = useState(
+    searchParams.get("department") ?? "all"
+  );
+  const [showPastEvents, setShowPastEvents] = useState(searchParams.get("past") === "1");
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    searchParams.get("view") === "months" ? "months" : "table"
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<"date" | "title" | "status">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); 
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (searchTerm.trim()) params.set("search", searchTerm.trim());
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (monthFilter !== "all") params.set("month", monthFilter);
+    if (yearFilter !== "all") params.set("year", yearFilter);
+    if (departmentFilter !== "all") params.set("department", departmentFilter);
+    if (showPastEvents) params.set("past", "1");
+    if (viewMode !== "table") params.set("view", viewMode);
+
+    const query = params.toString();
+
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  }, [
+    searchTerm,
+    statusFilter,
+    monthFilter,
+    yearFilter,
+    departmentFilter,
+    showPastEvents,
+    viewMode,
+    pathname,
+    router,
+  ]);
 
   function resetFilters() {
   setSearchTerm("");
