@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/status-badge";
 import type { EventListItem } from "@/lib/events/get-events";
@@ -6,14 +9,49 @@ type EventsTableProps = {
   events: EventListItem[];
 };
 
+type ViewMode = "table" | "months";
+
+const EVENTS_PER_PAGE = 12;
+
 function formatDate(date: string) {
   const [year, month, day] = date.split("-");
   return `${day}.${month}.${year}`;
 }
 
+function getTodayString() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatMonth(date: string) {
+  const [year, month] = date.split("-");
+
+  const monthNames = [
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+  ];
+
+  const monthIndex = Number(month) - 1;
+
+  return `${monthNames[monthIndex]} ${year}`;
+}
+
 function getCustomerName(event: EventListItem) {
   const fullName = [event.firstname, event.lastname].filter(Boolean).join(" ");
-
   return event.company_name || fullName || "—";
 }
 
@@ -48,6 +86,111 @@ function getStatusLabel(status: string) {
 }
 
 export default function EventsTable({ events }: EventsTableProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [showPastEvents, setShowPastEvents] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const statusOptions = useMemo(() => {
+    return Array.from(
+      new Set(events.map((event) => getStatusLabel(event.status)))
+    ).sort();
+  }, [events]);
+
+  const monthOptions = useMemo(() => {
+    return Array.from(new Set(events.map((event) => event.date.slice(0, 7))))
+      .sort()
+      .map((month) => {
+        const [year, monthNumber] = month.split("-");
+
+        return {
+          value: month,
+          label: `${monthNumber}.${year}`,
+        };
+      });
+  }, [events]);
+
+  const departmentOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        events
+          .map((event) => event.users?.departments?.name)
+          .filter((department): department is string => Boolean(department))
+      )
+    ).sort();
+  }, [events]);
+
+  const filteredEvents = useMemo(() => {
+    const today = getTodayString();
+
+    return events.filter((event) => {
+      const department = event.users?.departments;
+      const customerName = getCustomerName(event).toLowerCase();
+      const title = event.title.toLowerCase();
+      const status = getStatusLabel(event.status);
+      const month = event.date.slice(0, 7);
+      const departmentName = department?.name ?? "";
+      const search = searchTerm.toLowerCase().trim();
+
+      const matchesSearch =
+        search.length === 0 ||
+        title.includes(search) ||
+        customerName.includes(search);
+
+      const matchesStatus = statusFilter === "all" || status === statusFilter;
+      const matchesMonth = monthFilter === "all" || month === monthFilter;
+
+      const matchesDepartment =
+        departmentFilter === "all" || departmentName === departmentFilter;
+
+      const matchesTime = showPastEvents || event.date >= today;
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesMonth &&
+        matchesDepartment &&
+        matchesTime
+      );
+    });
+  }, [
+    events,
+    searchTerm,
+    statusFilter,
+    monthFilter,
+    departmentFilter,
+    showPastEvents,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredEvents.length / EVENTS_PER_PAGE)
+  );
+
+  const paginatedEvents = useMemo(() => {
+    const start = (currentPage - 1) * EVENTS_PER_PAGE;
+    return filteredEvents.slice(start, start + EVENTS_PER_PAGE);
+  }, [filteredEvents, currentPage]);
+
+  const groupedEvents = useMemo(() => {
+    return paginatedEvents.reduce<Record<string, EventListItem[]>>(
+      (groups, event) => {
+        const month = event.date.slice(0, 7);
+
+        if (!groups[month]) {
+          groups[month] = [];
+        }
+
+        groups[month].push(event);
+        return groups;
+      },
+      {}
+    );
+  }, [paginatedEvents]);
+
   if (events.length === 0) {
     return (
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center shadow-sm">
@@ -60,63 +203,267 @@ export default function EventsTable({ events }: EventsTableProps) {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-          <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
-            <tr>
-              <th className="px-5 py-4 font-bold">Datum</th>
-              <th className="px-5 py-4 font-bold">Status</th>
-              <th className="px-5 py-4 font-bold">Titel</th>
-              <th className="px-5 py-4 font-bold">Auftraggeber</th>
-              <th className="px-5 py-4 font-bold">Personen</th>
-              <th className="px-5 py-4 font-bold">Bereich</th>
-            </tr>
-          </thead>
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <input
+            value={searchTerm}
+            onChange={(event) => {
+              setSearchTerm(event.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Suche nach Titel oder Auftraggeber"
+            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+          />
 
-          <tbody className="divide-y divide-[var(--color-border)]">
-            {events.map((event) => {
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+          >
+            <option value="all">Alle Status</option>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={monthFilter}
+            onChange={(event) => {
+              setMonthFilter(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+          >
+            <option value="all">Alle Monate</option>
+            {monthOptions.map((month) => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={departmentFilter}
+            onChange={(event) => {
+              setDepartmentFilter(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+          >
+            <option value="all">Alle Bereiche</option>
+            {departmentOptions.map((department) => (
+              <option key={department} value={department}>
+                {department}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+            <p className="text-sm text-[var(--color-text-muted)]">
+              {filteredEvents.length} Event
+              {filteredEvents.length === 1 ? "" : "s"} gefunden
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--color-text-muted)]">
+              <input
+                type="checkbox"
+                checked={showPastEvents}
+                onChange={(event) => {
+                  setShowPastEvents(event.target.checked);
+                  setCurrentPage(1);
+                }}
+                className="sr-only"
+              />
+
+              <span className="relative h-6 w-11 rounded-full border-2 border-[var(--color-border)] bg-white transition">
+                <span
+                  className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full transition ${
+                    showPastEvents
+                      ? "left-5 bg-[var(--color-primary)] shadow-sm"
+                      : "left-0.5 bg-[var(--color-text-muted)]"
+                  }`}
+                />
+              </span>
+
+              {showPastEvents ? "Vergangene ein" : "Vergangene aus"}
+            </label>
+
+            <div className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode("table");
+                  setCurrentPage(1);
+                }}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                  viewMode === "table"
+                    ? "bg-white text-[var(--color-primary)] shadow-sm"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                }`}
+              >
+                Tabelle
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode("months");
+                  setCurrentPage(1);
+                }}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                  viewMode === "months"
+                    ? "bg-white text-[var(--color-primary)] shadow-sm"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                }`}
+              >
+                Monatsgruppen
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {filteredEvents.length === 0 ? (
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center shadow-sm">
+          <h2 className="section-title">Keine passenden Events gefunden</h2>
+          <p className="section-text mt-2">
+            Passe die Suche oder Filter an, um wieder Events anzuzeigen.
+          </p>
+        </div>
+      ) : viewMode === "table" ? (
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+              <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+                <tr>
+                  <th className="px-5 py-4 font-bold">Datum</th>
+                  <th className="px-5 py-4 font-bold">Status</th>
+                  <th className="px-5 py-4 font-bold">Titel</th>
+                  <th className="px-5 py-4 font-bold">Auftraggeber</th>
+                  <th className="px-5 py-4 font-bold">Personen</th>
+                  <th className="px-5 py-4 font-bold">Bereich</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {paginatedEvents.map((event) => {
+                  const department = event.users?.departments;
+
+                  return (
+                    <tr
+                      key={event.id}
+                      className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
+                    >
+                      <td className="whitespace-nowrap px-5 py-4 font-medium">
+                        <Link
+                          href={`/dashboard/events/${event.id}?from=list`}
+                          className="block"
+                        >
+                          {formatDate(event.date)}
+                        </Link>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <Link
+                          href={`/dashboard/events/${event.id}?from=list`}
+                          className="block"
+                        >
+                          <StatusBadge label={getStatusLabel(event.status)} />
+                        </Link>
+                      </td>
+
+                      <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
+                        <Link
+                          href={`/dashboard/events/${event.id}?from=list`}
+                          className="block"
+                        >
+                          {event.title}
+                        </Link>
+                      </td>
+
+                      <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                        <Link
+                          href={`/dashboard/events/${event.id}?from=list`}
+                          className="block"
+                        >
+                          {getCustomerName(event)}
+                        </Link>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <Link
+                          href={`/dashboard/events/${event.id}?from=list`}
+                          className="block"
+                        >
+                          {getPersonCount(event)}
+                        </Link>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <Link
+                          href={`/dashboard/events/${event.id}?from=list`}
+                          className="block"
+                        >
+                          {department ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: department.color }}
+                              />
+                              {department.name}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="divide-y divide-[var(--color-border)] lg:hidden">
+            {paginatedEvents.map((event) => {
               const department = event.users?.departments;
 
               return (
-                <tr
+                <Link
                   key={event.id}
-                  className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
+                  href={`/dashboard/events/${event.id}?from=list`}
+                  className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
                 >
-                  <td className="whitespace-nowrap px-5 py-4 font-medium">
-                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
-                      {formatDate(event.date)}
-                    </Link>
-                  </td>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-[var(--color-primary)]">
+                        {formatDate(event.date)}
+                      </p>
+                      <h2 className="mt-1 font-bold">{event.title}</h2>
+                      <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                        {getCustomerName(event)}
+                      </p>
+                    </div>
 
-                  <td className="px-5 py-4">
-                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
-                      <StatusBadge label={getStatusLabel(event.status)} />
-                    </Link>
-                  </td>
+                    <StatusBadge label={getStatusLabel(event.status)} />
+                  </div>
 
-                  <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
-                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
-                      {event.title}
-                    </Link>
-                  </td>
-
-                  <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
-                      {getCustomerName(event)}
-                    </Link>
-                  </td>
-
-                  <td className="px-5 py-4">
-                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
-                      {getPersonCount(event)}
-                    </Link>
-                  </td>
-
-                  <td className="px-5 py-4">
-                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
+                  <div className="mt-4 grid gap-2 text-sm text-[var(--color-text-muted)]">
+                    <p>Personen: {getPersonCount(event)}</p>
+                    <p>
+                      Bereich:{" "}
                       {department ? (
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex items-center gap-2 text-[var(--color-text)]">
                           <span
                             className="h-2.5 w-2.5 rounded-full"
                             style={{ backgroundColor: department.color }}
@@ -126,59 +473,100 @@ export default function EventsTable({ events }: EventsTableProps) {
                       ) : (
                         "—"
                       )}
-                    </Link>
-                  </td>
-                </tr>
+                    </p>
+                  </div>
+                </Link>
               );
             })}
-          </tbody>
-        </table>
-      </div>
-      <div className="divide-y divide-[var(--color-border)] lg:hidden">
-        {events.map((event) => {
-          const department = event.users?.departments;
-
-          return (
-            <Link
-              key={event.id}
-              href={`/dashboard/events/${event.id}?from=list`}
-              className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {Object.entries(groupedEvents).map(([month, monthEvents]) => (
+            <div
+              key={month}
+              className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-bold text-[var(--color-primary)]">
-                    {formatDate(event.date)}
-                  </p>
-                  <h2 className="mt-1 font-bold">{event.title}</h2>
-                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                    {getCustomerName(event)}
-                  </p>
-                </div>
-
-                <StatusBadge label={getStatusLabel(event.status)} />
+              <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-4">
+                <h2 className="font-bold text-[var(--color-primary)]">
+                  {formatMonth(`${month}-01`)}
+                </h2>
               </div>
 
-              <div className="mt-4 grid gap-2 text-sm text-[var(--color-text-muted)]">
-                <p>Personen: {getPersonCount(event)}</p>
-                <p>
-                  Bereich:{" "}
-                  {department ? (
-                    <span className="inline-flex items-center gap-2 text-[var(--color-text)]">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: department.color }}
-                      />
-                      {department.name}
-                    </span>
-                  ) : (
-                    "—"
-                  )}
-                </p>
+              <div className="divide-y divide-[var(--color-border)]">
+                {monthEvents.map((event) => {
+                  const department = event.users?.departments;
+
+                  return (
+                    <Link
+                      key={event.id}
+                      href={`/dashboard/events/${event.id}?from=list`}
+                      className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
+                    >
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-[var(--color-primary)]">
+                            {formatDate(event.date)}
+                          </p>
+                          <h3 className="mt-1 font-bold">{event.title}</h3>
+                          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                            {getCustomerName(event)}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-text-muted)]">
+                          <StatusBadge label={getStatusLabel(event.status)} />
+                          <span>Personen: {getPersonCount(event)}</span>
+
+                          {department ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span
+                                className="h-2.5 w-2.5 rounded-full"
+                                style={{ backgroundColor: department.color }}
+                              />
+                              {department.name}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            </Link>
-          );
-        })}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {filteredEvents.length > EVENTS_PER_PAGE ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Seite {currentPage} von {totalPages}
+          </p>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-semibold transition hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Zurück
+            </button>
+
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((page) => Math.min(totalPages, page + 1))
+              }
+              className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm font-semibold transition hover:bg-[var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Weiter
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
