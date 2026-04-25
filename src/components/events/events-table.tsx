@@ -342,159 +342,160 @@ const hasActiveFilters =
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <input
-            value={searchTerm}
-            onChange={(event) => {
-              setSearchTerm(event.target.value);
-              setCurrentPage(1);
-            }}
-            placeholder="Suche nach Titel oder Auftraggeber"
-            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-          />
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-3 lg:grid-cols-[minmax(260px,2fr)_repeat(4,minmax(140px,1fr))]">
+            <input
+              value={searchTerm}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Suche nach Titel oder Auftraggeber"
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            />
 
-          <select
-            value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(event.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-          >
-            <option value="all">Alle Status</option>
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={monthFilter}
-            onChange={(event) => {
-              setMonthFilter(event.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-          >
-            <option value="all">Alle Monate</option>
-            {MONTHS.map((month, index) => {
-              const value = String(index + 1).padStart(2, "0");
-
-              return (
-                <option key={month} value={value}>
-                  {month}
+            <select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            >
+              <option value="all">Alle Status</option>
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status}
                 </option>
-              );
-            })}
-          </select>
+              ))}
+            </select>
 
-          <select
-            value={yearFilter}
-            onChange={(event) => {
-              setYearFilter(event.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-          >
-            <option value="all">Alle Jahre</option>
-            {yearOptions.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+            <select
+              value={monthFilter}
+              onChange={(event) => {
+                setMonthFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            >
+              <option value="all">Alle Monate</option>
+              {MONTHS.map((month, index) => {
+                const value = String(index + 1).padStart(2, "0");
 
-          <select
-            value={departmentFilter}
-            onChange={(event) => {
-              setDepartmentFilter(event.target.value);
-              setCurrentPage(1);
-            }}
-            className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-          >
-            <option value="all">Alle Bereiche</option>
-            {departmentOptions.map((department) => (
-              <option key={department} value={department}>
-                {department}
-              </option>
-            ))}
-          </select>
-        </div>
+                return (
+                  <option key={month} value={value}>
+                    {month}
+                  </option>
+                );
+              })}
+            </select>
 
-        <div className="mt-4 flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+            <select
+              value={yearFilter}
+              onChange={(event) => {
+                setYearFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            >
+              <option value="all">Alle Jahre</option>
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={departmentFilter}
+              onChange={(event) => {
+                setDepartmentFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            >
+              <option value="all">Alle Bereiche</option>
+              {departmentOptions.map((department) => (
+                <option key={department} value={department}>
+                  {department}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-[var(--color-text-muted)]">
               {filteredEvents.length} Event
               {filteredEvents.length === 1 ? "" : "s"} gefunden
             </p>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--color-text-muted)]">
-              <input
-                type="checkbox"
-                checked={showPastEvents}
-                onChange={(event) => {
-                  setShowPastEvents(event.target.checked);
-                  setCurrentPage(1);
-                }}
-                className="sr-only"
-              />
-
-              <span className="relative h-6 w-11 rounded-full border-2 border-[var(--color-border)] bg-white transition">
-                <span
-                  className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full transition ${
-                    showPastEvents
-                      ? "left-5 bg-[var(--color-primary)] shadow-sm"
-                      : "left-0.5 bg-[var(--color-text-muted)]"
-                  }`}
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)]">
+                <input
+                  type="checkbox"
+                  checked={showPastEvents}
+                  onChange={(event) => {
+                    setShowPastEvents(event.target.checked);
+                    setCurrentPage(1);
+                  }}
+                  className="sr-only"
                 />
-              </span>
 
-              {showPastEvents ? "Vergangene ein" : "Vergangene aus"}
-            </label>
+                <span className="relative h-5 w-9 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] transition">
+                  <span
+                    className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition ${
+                      showPastEvents
+                        ? "left-4 bg-[var(--color-primary)]"
+                        : "left-0.5 bg-[var(--color-text-muted)]"
+                    }`}
+                  />
+                </span>
 
-            <div className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1">
+                Vergangene Events
+              </label>
+
+              <div className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode("table");
+                    setCurrentPage(1);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                    viewMode === "table"
+                      ? "bg-white text-[var(--color-primary)] shadow-sm"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  Tabelle
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode("months");
+                    setCurrentPage(1);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                    viewMode === "months"
+                      ? "bg-white text-[var(--color-primary)] shadow-sm"
+                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  Monatsgruppen
+                </button>
+              </div>
+
               <button
                 type="button"
-                onClick={() => {
-                  setViewMode("table");
-                  setCurrentPage(1);
-                }}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                  viewMode === "table"
-                    ? "bg-white text-[var(--color-primary)] shadow-sm"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                }`}
-              >
-                Tabelle
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode("months");
-                  setCurrentPage(1);
-                }}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-                  viewMode === "months"
-                    ? "bg-white text-[var(--color-primary)] shadow-sm"
-                    : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-                }`}
-              >
-                Monatsgruppen
-              </button>
-            </div>
-            {hasActiveFilters ? (
-              <button
-                type="button"
+                disabled={!hasActiveFilters}
+                title={hasActiveFilters ? "Filter löschen" : "Keine Filter aktiv"}
                 onClick={resetFilters}
-                className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+                className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:hover:bg-[var(--color-border)] disabled:hover:text-[var(--color-text-muted)]"
               >
                 Filter löschen
               </button>
-            ) : null}
+            </div>
           </div>
         </div>
       </div>
