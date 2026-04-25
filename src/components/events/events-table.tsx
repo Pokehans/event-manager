@@ -94,6 +94,22 @@ export default function EventsTable({ events }: EventsTableProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [currentPage, setCurrentPage] = useState(1);
 
+  function resetFilters() {
+  setSearchTerm("");
+  setStatusFilter("all");
+  setMonthFilter("all");
+  setDepartmentFilter("all");
+  setShowPastEvents(false);
+  setCurrentPage(1);
+}
+
+const hasActiveFilters =
+  searchTerm.trim().length > 0 ||
+  statusFilter !== "all" ||
+  monthFilter !== "all" ||
+  departmentFilter !== "all" ||
+  showPastEvents;
+
   const statusOptions = useMemo(() => {
     return Array.from(
       new Set(events.map((event) => getStatusLabel(event.status)))
@@ -329,6 +345,15 @@ export default function EventsTable({ events }: EventsTableProps) {
                 Monatsgruppen
               </button>
             </div>
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+              >
+                Filter löschen
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
