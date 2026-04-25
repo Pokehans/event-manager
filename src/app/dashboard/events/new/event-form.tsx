@@ -102,7 +102,9 @@ export function EventForm({
       adults: dismissedErrors.adults ? undefined : state.errors?.adults,
       children: dismissedErrors.children ? undefined : state.errors?.children,
       room: dismissedErrors.room ? undefined : state.errors?.room,
-      payment_type: dismissedErrors.payment_type ? undefined : state.errors?.payment_type,
+      payment_type: dismissedErrors.payment_type
+        ? undefined
+        : state.errors?.payment_type,
       general: state.errors?.general,
     };
   }, [state, dismissedErrors]);
@@ -128,8 +130,10 @@ export function EventForm({
   const titleValue = state.values?.title ?? initialData?.title ?? "";
   const dateValue = state.values?.date ?? initialData?.date ?? "";
   const statusValue = state.values?.status ?? initialData?.status ?? "Anfrage";
-  const companyValue = state.values?.company_name ?? initialData?.company_name ?? "";
-  const firstnameValue = state.values?.firstname ?? initialData?.firstname ?? "";
+  const companyValue =
+    state.values?.company_name ?? initialData?.company_name ?? "";
+  const firstnameValue =
+    state.values?.firstname ?? initialData?.firstname ?? "";
   const lastnameValue = state.values?.lastname ?? initialData?.lastname ?? "";
   const phoneValue = state.values?.phone ?? initialData?.phone ?? "";
   const emailValue = state.values?.email ?? initialData?.email ?? "";
@@ -146,9 +150,9 @@ export function EventForm({
     state.values?.infrastructure ?? initialData?.infrastructure ?? "";
   const scheduleValue = state.values?.schedule ?? initialData?.schedule ?? "";
   const foodValue = state.values?.food ?? initialData?.food ?? "";
-const drinksValue = state.values?.drinks ?? initialData?.drinks ?? "";
-const paymentTypeValue =
-  state.values?.payment_type ?? initialData?.payment_type ?? "";
+  const drinksValue = state.values?.drinks ?? initialData?.drinks ?? "";
+  const paymentTypeValue =
+    state.values?.payment_type ?? initialData?.payment_type ?? "";
   const notesValue = state.values?.notes ?? initialData?.notes ?? "";
 
   return (
@@ -171,9 +175,9 @@ const paymentTypeValue =
 
       <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
         <div className="space-y-1">
-          <h2 className="section-title">Event Infos</h2>
+          <h2 className="section-title">Eventdaten</h2>
           <p className="section-text">
-            Basisdaten für die Erfassung des Events.
+            Basisinformationen zum Event und aktueller Bearbeitungsstatus.
           </p>
         </div>
 
@@ -241,10 +245,7 @@ const paymentTypeValue =
               ))}
             </select>
             {visibleErrors.status ? (
-              <p
-                id="status-error"
-                className="mt-1 text-sm text-[var(--color-danger)]"
-              >
+              <p id="status-error" className="mt-1 text-sm text-[var(--color-danger)]">
                 {visibleErrors.status}
               </p>
             ) : null}
@@ -254,18 +255,15 @@ const paymentTypeValue =
 
       <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
         <div className="space-y-1">
-          <h2 className="section-title">Kontakt</h2>
+          <h2 className="section-title">Auftraggeber / Kontakt</h2>
           <p className="section-text">
-            Ansprechpartner und ergänzende Kontaktdaten.
+            Kontaktperson, Firma und Rechnungs- oder Korrespondenzadresse.
           </p>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div>
-            <label
-              htmlFor="company_name"
-              className="mb-1 block text-sm font-medium"
-            >
+            <label htmlFor="company_name" className="mb-1 block text-sm font-medium">
               Firma
             </label>
             <input
@@ -311,10 +309,7 @@ const paymentTypeValue =
               onChange={() => clearFieldError("contact")}
             />
             {visibleErrors.contact ? (
-              <p
-                id="contact-error"
-                className="mt-1 text-sm text-[var(--color-danger)]"
-              >
+              <p id="contact-error" className="mt-1 text-sm text-[var(--color-danger)]">
                 {visibleErrors.contact}
               </p>
             ) : null}
@@ -356,62 +351,6 @@ const paymentTypeValue =
             ) : null}
           </div>
 
-          <div>
-            <label htmlFor="adults" className="mb-1 block text-sm font-medium">
-              Erwachsene
-            </label>
-            <input
-              id="adults"
-              name="adults"
-              type="number"
-              min="0"
-              step="1"
-              defaultValue={adultsValue}
-              placeholder="z. B. 40"
-              aria-invalid={!!visibleErrors.adults}
-              aria-describedby={visibleErrors.adults ? "adults-error" : undefined}
-              className={fieldClass(visibleErrors.adults)}
-              onChange={() => clearFieldError("adults")}
-            />
-            {visibleErrors.adults ? (
-              <p
-                id="adults-error"
-                className="mt-1 text-sm text-[var(--color-danger)]"
-              >
-                {visibleErrors.adults}
-              </p>
-            ) : null}
-          </div>
-
-          <div>
-            <label htmlFor="children" className="mb-1 block text-sm font-medium">
-              Kinder
-            </label>
-            <input
-              id="children"
-              name="children"
-              type="number"
-              min="0"
-              step="1"
-              defaultValue={childrenValue}
-              placeholder="z. B. 8"
-              aria-invalid={!!visibleErrors.children}
-              aria-describedby={
-                visibleErrors.children ? "children-error" : undefined
-              }
-              className={fieldClass(visibleErrors.children)}
-              onChange={() => clearFieldError("children")}
-            />
-            {visibleErrors.children ? (
-              <p
-                id="children-error"
-                className="mt-1 text-sm text-[var(--color-danger)]"
-              >
-                {visibleErrors.children}
-              </p>
-            ) : null}
-          </div>
-
           <div className="md:col-span-2">
             <label htmlFor="address" className="mb-1 block text-sm font-medium">
               Adresse
@@ -430,13 +369,63 @@ const paymentTypeValue =
 
       <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
         <div className="space-y-1">
-          <h2 className="section-title">Raum</h2>
+          <h2 className="section-title">Personen & Raum</h2>
           <p className="section-text">
-            Vorläufige Raumauswahl mit festen Optionen.
+            Gästeanzahl und vorgesehener Raum für die Durchführung.
           </p>
         </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div>
+            <label htmlFor="adults" className="mb-1 block text-sm font-medium">
+              Erwachsene
+            </label>
+            <input
+              id="adults"
+              name="adults"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={adultsValue}
+              placeholder="z. B. 40"
+              aria-invalid={!!visibleErrors.adults}
+              aria-describedby={visibleErrors.adults ? "adults-error" : undefined}
+              className={fieldClass(visibleErrors.adults)}
+              onChange={() => clearFieldError("adults")}
+            />
+            {visibleErrors.adults ? (
+              <p id="adults-error" className="mt-1 text-sm text-[var(--color-danger)]">
+                {visibleErrors.adults}
+              </p>
+            ) : null}
+          </div>
+
+          <div>
+            <label htmlFor="children" className="mb-1 block text-sm font-medium">
+              Kinder
+            </label>
+            <input
+              id="children"
+              name="children"
+              type="number"
+              min="0"
+              step="1"
+              defaultValue={childrenValue}
+              placeholder="z. B. 8"
+              aria-invalid={!!visibleErrors.children}
+              aria-describedby={visibleErrors.children ? "children-error" : undefined}
+              className={fieldClass(visibleErrors.children)}
+              onChange={() => clearFieldError("children")}
+            />
+            {visibleErrors.children ? (
+              <p id="children-error" className="mt-1 text-sm text-[var(--color-danger)]">
+                {visibleErrors.children}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
           {ROOM_OPTIONS.map((option) => (
             <label
               key={option.value}
@@ -465,7 +454,7 @@ const paymentTypeValue =
           </p>
         ) : null}
       </section>
-      
+
       <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
         <div className="space-y-1">
           <h2 className="section-title">Organisation & Ablauf</h2>
@@ -490,10 +479,7 @@ const paymentTypeValue =
           </div>
 
           <div>
-            <label
-              htmlFor="infrastructure"
-              className="mb-1 block text-sm font-medium"
-            >
+            <label htmlFor="infrastructure" className="mb-1 block text-sm font-medium">
               Infrastruktur
             </label>
             <textarea
@@ -560,10 +546,7 @@ const paymentTypeValue =
           </div>
 
           <div>
-            <label
-              htmlFor="payment_type"
-              className="mb-1 block text-sm font-medium"
-            >
+            <label htmlFor="payment_type" className="mb-1 block text-sm font-medium">
               Zahlungsart
             </label>
             <select
@@ -598,9 +581,9 @@ const paymentTypeValue =
 
       <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
         <div className="space-y-1">
-          <h2 className="section-title">Notizen</h2>
+          <h2 className="section-title">Interne Notizen</h2>
           <p className="section-text">
-            Zusätzliche Informationen zum Event.
+            Zusätzliche interne Hinweise, Sonderwünsche oder Absprachen.
           </p>
         </div>
 
@@ -613,23 +596,28 @@ const paymentTypeValue =
             name="notes"
             rows={6}
             defaultValue={notesValue}
-            placeholder="Besondere Wünsche, Ablauf, Hinweise..."
+            placeholder="Besondere Wünsche, interne Hinweise, Absprachen..."
             className={fieldClass()}
           />
         </div>
       </section>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-[var(--color-text-muted)]">
           {mode === "edit"
             ? "Änderungen werden direkt beim Event gespeichert."
             : "Nach dem Speichern erscheint das Event im Dashboard."}
         </p>
 
-      <SubmitButton
-        label={submitLabel ?? (mode === "edit" ? "Änderungen speichern" : "Event erstellen")}
-        pendingLabel={mode === "edit" ? "Speichert Änderungen..." : "Erstellt Event..."}
-      />  
+        <SubmitButton
+          label={
+            submitLabel ??
+            (mode === "edit" ? "Änderungen speichern" : "Event erstellen")
+          }
+          pendingLabel={
+            mode === "edit" ? "Speichert Änderungen..." : "Erstellt Event..."
+          }
+        />
       </div>
     </form>
   );
