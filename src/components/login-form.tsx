@@ -2,12 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/button";
 import Card from "@/components/ui/card";
 import Input from "@/components/ui/input";
-import LegalModal from "@/components/legal-modal";
 
 const REMEMBER_EMAIL_KEY = "event-manager-remember-email";
 
@@ -45,7 +43,6 @@ export default function LoginForm({ reason }: LoginFormProps) {
   const [formSuccess, setFormSuccess] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [legalModalOpen, setLegalModalOpen] = useState(false);
 
   const title = useMemo(() => {
     return mode === "login" ? "Login" : "Passwort zurücksetzen";
@@ -207,24 +204,10 @@ export default function LoginForm({ reason }: LoginFormProps) {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-10">
-      <div className="w-full max-w-md">
-        <Card>
+  <div className="flex w-full">
+    <div className="flex w-full">
+      <Card className="flex w-full flex-col justify-center rounded-3xl p-8 shadow-xl sm:p-10">
           <div className="mb-8">
-            <div className="mb-5 flex items-center gap-3">
-              <Image
-                src="/logo.png"
-                alt="Event Manager Logo"
-                width={141}
-                height={44}
-              />
-              <div>
-                <div className="inline-flex rounded-full bg-[rgba(26,103,123,0.1)] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
-                  Event Manager
-                </div>
-              </div>
-            </div>
-
             <h1 className="page-title text-[2rem]">{title}</h1>
             <p className="page-subtitle">{subtitle}</p>
           </div>
@@ -346,26 +329,7 @@ export default function LoginForm({ reason }: LoginFormProps) {
             )}
           </form>
         </Card>
-
-        <footer className="mt-6 text-center text-xs leading-6 text-[var(--color-text-muted)]">
-          <span>© 2026 Event Manager</span>
-          <span className="mx-2">·</span>
-          <span>Max Mustermann</span>
-          <span className="mx-2">·</span>
-          <button
-            type="button"
-            onClick={() => setLegalModalOpen(true)}
-            className="font-medium text-[var(--color-primary)] transition hover:text-[var(--color-primary-hover)]"
-          >
-            Rechtliches
-          </button>
-        </footer>
       </div>
-
-      <LegalModal
-        open={legalModalOpen}
-        onClose={() => setLegalModalOpen(false)}
-      />
-    </main>
+    </div>
   );
 }
