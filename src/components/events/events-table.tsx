@@ -93,6 +93,8 @@ export default function EventsTable({ events }: EventsTableProps) {
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<"date" | "title" | "status">("date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); 
 
   function resetFilters() {
   setSearchTerm("");
@@ -100,6 +102,17 @@ export default function EventsTable({ events }: EventsTableProps) {
   setMonthFilter("all");
   setDepartmentFilter("all");
   setShowPastEvents(false);
+  setCurrentPage(1);
+}
+
+function handleSort(field: "date" | "title" | "status") {
+  if (sortField === field) {
+    setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+  } else {
+    setSortField(field);
+    setSortDirection("asc");
+  }
+
   setCurrentPage(1);
 }
 
@@ -181,6 +194,32 @@ const hasActiveFilters =
     showPastEvents,
   ]);
 
+  const sortedEvents = useMemo(() => {
+    const sorted = [...filteredEvents];
+
+    sorted.sort((a, b) => {
+      let compare = 0;
+
+      if (sortField === "date") {
+        compare = a.date.localeCompare(b.date);
+      }
+
+      if (sortField === "title") {
+        compare = a.title.localeCompare(b.title);
+      }
+
+      if (sortField === "status") {
+        compare = getStatusLabel(a.status).localeCompare(
+          getStatusLabel(b.status)
+        );
+      }
+
+      return sortDirection === "asc" ? compare : -compare;
+    });
+
+    return sorted;
+  }, [filteredEvents, sortField, sortDirection]);
+
   const totalPages = Math.max(
     1,
     Math.ceil(filteredEvents.length / EVENTS_PER_PAGE)
@@ -188,8 +227,8 @@ const hasActiveFilters =
 
   const paginatedEvents = useMemo(() => {
     const start = (currentPage - 1) * EVENTS_PER_PAGE;
-    return filteredEvents.slice(start, start + EVENTS_PER_PAGE);
-  }, [filteredEvents, currentPage]);
+    return sortedEvents.slice(start, start + EVENTS_PER_PAGE);
+  }, [sortedEvents, currentPage]);
 
   const groupedEvents = useMemo(() => {
     return paginatedEvents.reduce<Record<string, EventListItem[]>>(
@@ -371,9 +410,26 @@ const hasActiveFilters =
             <table className="w-full min-w-[900px] border-collapse text-left text-sm">
               <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <tr>
-                  <th className="px-5 py-4 font-bold">Datum</th>
-                  <th className="px-5 py-4 font-bold">Status</th>
-                  <th className="px-5 py-4 font-bold">Titel</th>
+                  <th
+                    onClick={() => handleSort("date")}
+                    className="cursor-pointer px-5 py-4 font-bold select-none hover:text-[var(--color-primary)]"
+                  >
+                    Datum {sortField === "date" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+                  </th>
+
+                  <th
+                    onClick={() => handleSort("status")}
+                    className="cursor-pointer px-5 py-4 font-bold select-none hover:text-[var(--color-primary)]"
+                  >
+                    Status {sortField === "status" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+                  </th>
+
+                  <th
+                    onClick={() => handleSort("title")}
+                    className="cursor-pointer px-5 py-4 font-bold select-none hover:text-[var(--color-primary)]"
+                  >
+                    Titel {sortField === "title" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+                  </th>
                   <th className="px-5 py-4 font-bold">Auftraggeber</th>
                   <th className="px-5 py-4 font-bold">Personen</th>
                   <th className="px-5 py-4 font-bold">Bereich</th>
