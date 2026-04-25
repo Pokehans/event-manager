@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import MonthNavigation from "@/components/calendar/month-navigation";
 import MonthGrid from "@/components/calendar/month-grid";
 import type { CalendarEvent } from "@/lib/events/get-events-for-month";
+import DepartmentLegend from "@/components/calendar/department-legend";
 
 type Props = {
   initialDate: string;
@@ -51,14 +52,18 @@ export default function CalendarDashboard({ initialDate, events }: Props) {
 
   return (
     <main className="space-y-6">
-      <MonthNavigation
-        currentDate={currentDate}
-        onPrev={handlePrev}
-        onNext={handleNext}
-        onToday={handleToday}
-        onMonthChange={handleMonthChange}
-        onYearChange={handleYearChange}
-      />
+      <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
+        <MonthNavigation
+          currentDate={currentDate}
+          onPrev={handlePrev}
+          onNext={handleNext}
+          onToday={handleToday}
+          onMonthChange={handleMonthChange}
+          onYearChange={handleYearChange}
+        />
+
+        <DepartmentLegend events={events} />
+      </div>
 
       <MonthGrid currentDate={currentDate} events={events} />
     </main>
