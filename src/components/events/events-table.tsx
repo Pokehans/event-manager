@@ -85,6 +85,20 @@ function getStatusLabel(status: string) {
   }
 }
 
+function escapeCsvValue(value: string | number) {
+  const stringValue = String(value);
+
+  if (
+    stringValue.includes(";") ||
+    stringValue.includes('"') ||
+    stringValue.includes("\n")
+  ) {
+    return `"${stringValue.replaceAll('"', '""')}"`;
+  }
+
+  return stringValue;
+}
+
 export default function EventsTable({ events }: EventsTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -219,6 +233,45 @@ const hasActiveFilters =
 
     return sorted;
   }, [filteredEvents, sortField, sortDirection]);
+
+  const monthlyForecastEvents = useMemo(() => {
+    if (monthFilter === "all") return [];
+
+    return sortedEvents.filter((event) => event.date.slice(0, 7) === monthFilter);
+  }, [sortedEvents, monthFilter]);
+
+  function handleExportMonthlyForecast() {
+    if (monthFilter === "all" || monthlyForecastEvents.length === 0) return;
+
+    const rows = [
+      ["Datum", "Status", "Titel", "Auftraggeber", "Personen", "Bereich"],
+      ...monthlyForecastEvents.map((event) => [
+        formatDate(event.date),
+        getStatusLabel(event.status),
+        event.title,
+        getCustomerName(event),
+        getPersonCount(event),
+        event.users?.departments?.name ?? "—",
+      ]),
+    ];
+
+    const csvContent = rows
+      .map((row) => row.map(escapeCsvValue).join(";"))
+      .join("\n");
+
+    const blob = new Blob([`\uFEFF${csvContent}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `monatsforecast-${monthFilter}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  }
 
   const totalPages = Math.max(
     1,
@@ -619,8 +672,8 @@ const hasActiveFilters =
         </div>
       )}
 
-      {filteredEvents.length > EVENTS_PER_PAGE ? (
-        <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <p className="text-sm text-[var(--color-text-muted)]">
             Seite {currentPage} von {totalPages}
           </p>
@@ -647,7 +700,17 @@ const hasActiveFilters =
             </button>
           </div>
         </div>
-      ) : null}
+
+        <button
+          type="button"
+          disabled={monthFilter === "all" || monthlyForecastEvents.length === 0}
+          title={monthFilter === "all" ? "Monat wählen" : "Monatsforecast exportieren"}
+          onClick={handleExportMonthlyForecast}
+          className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
+        >
+          Monatsforecast exportieren
+        </button>
+      </div>
     </div>
   );
 }
