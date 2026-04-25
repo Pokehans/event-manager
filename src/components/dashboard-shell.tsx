@@ -75,6 +75,23 @@ function EventsIcon() {
   );
 }
 
+function EventListIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-none stroke-current"
+      strokeWidth="2"
+    >
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+      <path d="M4 6h.01" />
+      <path d="M4 12h.01" />
+      <path d="M4 18h.01" />
+    </svg>
+  );
+}
+
 function ArchiveIcon() {
   return (
     <svg
@@ -300,7 +317,7 @@ export default function DashboardShell({
                 <SidebarLink
                   href="/dashboard/events"
                   label="Eventliste"
-                  icon={<EventsIcon />}
+                  icon={<EventListIcon />}
                   collapsed={sidebarCollapsed}
                 />
                 <SidebarLink
@@ -380,7 +397,7 @@ export default function DashboardShell({
                   <SidebarLink
                     href="/dashboard/events"
                     label="Eventliste"
-                    icon={<EventsIcon />}
+                    icon={<EventListIcon />}
                   />
                   <SidebarLink
                     href="#"

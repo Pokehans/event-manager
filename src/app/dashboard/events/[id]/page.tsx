@@ -12,6 +12,7 @@ type Props = {
   searchParams?: Promise<{
     month?: string;
     year?: string;
+    from?: string;
   }>;
 };
 
@@ -199,11 +200,19 @@ export default async function EventDetailPage({
 
   const month = query?.month;
   const year = query?.year;
+  const from = query?.from;
 
   const backHref =
-    month && year
-      ? `/dashboard?month=${month}&year=${year}`
-      : "/dashboard";
+    from === "list"
+      ? "/dashboard/events"
+      : month && year
+        ? `/dashboard?month=${month}&year=${year}`
+        : "/dashboard";
+
+  const backLabel =
+    from === "list"
+      ? "Zurück zur Eventliste"
+      : "Zurück zum Dashboard";
   const event = await getEventById(id);
 
   if (!event) {
@@ -247,7 +256,7 @@ export default async function EventDetailPage({
               href={backHref}
               className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
             >
-              Zurück zum Dashboard
+              {backLabel}
             </Link>
 
             {canEdit ? (

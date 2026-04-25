@@ -84,37 +84,37 @@ export default function EventsTable({ events }: EventsTableProps) {
                   className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
                 >
                   <td className="whitespace-nowrap px-5 py-4 font-medium">
-                    <Link href={`/dashboard/events/${event.id}`} className="block">
+                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
                       {formatDate(event.date)}
                     </Link>
                   </td>
 
                   <td className="px-5 py-4">
-                    <Link href={`/dashboard/events/${event.id}`} className="block">
+                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
                       <StatusBadge label={getStatusLabel(event.status)} />
                     </Link>
                   </td>
 
                   <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
-                    <Link href={`/dashboard/events/${event.id}`} className="block">
+                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
                       {event.title}
                     </Link>
                   </td>
 
                   <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                    <Link href={`/dashboard/events/${event.id}`} className="block">
+                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
                       {getCustomerName(event)}
                     </Link>
                   </td>
 
                   <td className="px-5 py-4">
-                    <Link href={`/dashboard/events/${event.id}`} className="block">
+                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
                       {getPersonCount(event)}
                     </Link>
                   </td>
 
                   <td className="px-5 py-4">
-                    <Link href={`/dashboard/events/${event.id}`} className="block">
+                    <Link href={`/dashboard/events/${event.id}?from=list`} className="block">
                       {department ? (
                         <span className="inline-flex items-center gap-2">
                           <span
@@ -141,7 +141,7 @@ export default function EventsTable({ events }: EventsTableProps) {
           return (
             <Link
               key={event.id}
-              href={`/dashboard/events/${event.id}`}
+              href={`/dashboard/events/${event.id}?from=list`}
               className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
             >
               <div className="flex items-start justify-between gap-4">
