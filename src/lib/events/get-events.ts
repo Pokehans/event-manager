@@ -10,6 +10,7 @@ export type EventListItem = {
   lastname: string | null;
   adults: number | null;
   children: number | null;
+  room: string | null;
   users:
     | {
         id: string;
@@ -68,6 +69,7 @@ export async function getEvents(): Promise<EventListItem[]> {
       lastname,
       adults,
       children,
+      room,
       users:created_by (
         id,
         departments:department_id (
