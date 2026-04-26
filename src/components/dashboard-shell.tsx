@@ -60,6 +60,21 @@ function DashboardIcon() {
   );
 }
 
+function CockpitIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-none stroke-current"
+      strokeWidth="2"
+    >
+      <path d="M4 19V5" />
+      <path d="M4 19h16" />
+      <path d="M8 15l3-3 3 2 5-6" />
+      <path d="M18 8h1v1" />
+    </svg>
+  );
+}
+
 function EventsIcon() {
   return (
     <svg
@@ -306,6 +321,12 @@ export default function DashboardShell({
                   icon={<DashboardIcon />}
                   collapsed={sidebarCollapsed}
                 />
+                <SidebarLink
+                  href="/dashboard/cockpit"
+                  label="Cockpit"
+                  icon={<CockpitIcon />}
+                  collapsed={sidebarCollapsed}
+                />
                 {canCreateEvent ? (
                   <SidebarLink
                     href="/dashboard/events/new"
@@ -386,6 +407,11 @@ export default function DashboardShell({
                     href="/dashboard"
                     label="Dashboard"
                     icon={<DashboardIcon />}
+                  />
+                  <SidebarLink
+                    href="/dashboard/cockpit"
+                    label="Cockpit"
+                    icon={<CockpitIcon />}
                   />
                   {canCreateEvent ? (
                     <SidebarLink

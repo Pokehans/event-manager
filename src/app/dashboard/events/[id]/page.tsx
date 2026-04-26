@@ -203,16 +203,20 @@ export default async function EventDetailPage({
   const from = query?.from;
 
   const backHref =
-    from === "list"
-      ? "/dashboard/events"
-      : month && year
-        ? `/dashboard?month=${month}&year=${year}`
-        : "/dashboard";
+    from === "cockpit"
+      ? "/dashboard/cockpit"
+      : from === "list"
+        ? "/dashboard/events"
+        : month && year
+          ? `/dashboard?month=${month}&year=${year}`
+          : "/dashboard";
 
   const backLabel =
-    from === "list"
-      ? "Zurück zur Eventliste"
-      : "Zurück zum Dashboard";
+    from === "cockpit"
+      ? "Zurück zum Cockpit"
+      : from === "list"
+        ? "Zurück zur Eventliste"
+        : "Zurück zum Dashboard";
   const event = await getEventById(id);
 
   if (!event) {
