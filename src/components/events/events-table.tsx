@@ -9,6 +9,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 type EventsTableProps = {
   events: EventListItem[];
   from?: "list" | "archive";
+  variant?: "events" | "archive";
 };
 
 type ViewMode = "table" | "months";
@@ -116,21 +117,30 @@ function escapeCsvValue(value: string | number) {
   return stringValue;
 }
 
-export default function EventsTable({ events, from = "list" }: EventsTableProps) {
+export default function EventsTable({
+  events,
+  from = "list",
+  variant = "events",
+}: EventsTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const getEventHref = (eventId: string) =>
     `/dashboard/events/${eventId}?from=${from}`;
 
+  const isArchive = variant === "archive";
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
+  const [statusFilter, setStatusFilter] = useState(
+    isArchive ? "all" : searchParams.get("status") ?? "all"
+  );
   const [monthFilter, setMonthFilter] = useState(searchParams.get("month") ?? "all");
   const [yearFilter, setYearFilter] = useState(searchParams.get("year") ?? "all");
   const [departmentFilter, setDepartmentFilter] = useState(
     searchParams.get("department") ?? "all"
   );
-  const [showPastEvents, setShowPastEvents] = useState(searchParams.get("past") === "1");
+  const [showPastEvents, setShowPastEvents] = useState(
+    isArchive ? true : searchParams.get("past") === "1"
+  );
   const [viewMode, setViewMode] = useState<ViewMode>(
     searchParams.get("view") === "months" ? "months" : "table"
   );
@@ -141,11 +151,11 @@ export default function EventsTable({ events, from = "list" }: EventsTableProps)
     const params = new URLSearchParams();
 
     if (searchTerm.trim()) params.set("search", searchTerm.trim());
-    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (!isArchive && statusFilter !== "all") params.set("status", statusFilter);
     if (monthFilter !== "all") params.set("month", monthFilter);
     if (yearFilter !== "all") params.set("year", yearFilter);
     if (departmentFilter !== "all") params.set("department", departmentFilter);
-    if (showPastEvents) params.set("past", "1");
+    if (!isArchive && showPastEvents) params.set("past", "1");
     if (viewMode !== "table") params.set("view", viewMode);
 
     const query = params.toString();
@@ -163,15 +173,16 @@ export default function EventsTable({ events, from = "list" }: EventsTableProps)
     viewMode,
     pathname,
     router,
+    isArchive,
   ]);
 
   function resetFilters() {
   setSearchTerm("");
-  setStatusFilter("all");
+  if (!isArchive) setStatusFilter("all");
   setMonthFilter("all");
   setYearFilter("all");
   setDepartmentFilter("all");
-  setShowPastEvents(false);
+  setShowPastEvents(isArchive);
   setCurrentPage(1);
 }
 
@@ -188,11 +199,11 @@ function handleSort(field: "date" | "title" | "status") {
 
 const hasActiveFilters =
   searchTerm.trim().length > 0 ||
-  statusFilter !== "all" ||
+  (!isArchive && statusFilter !== "all") ||
   monthFilter !== "all" ||
   yearFilter !== "all" ||
   departmentFilter !== "all" ||
-  showPastEvents;
+  (!isArchive && showPastEvents);
 
   const statusOptions = useMemo(() => {
     return Array.from(
@@ -244,7 +255,7 @@ const hasActiveFilters =
       const matchesDepartment =
         departmentFilter === "all" || departmentName === departmentFilter;
 
-      const matchesTime = showPastEvents || event.date >= today;
+      const matchesTime = isArchive || showPastEvents || event.date >= today;
 
       return (
         matchesSearch &&
@@ -263,6 +274,7 @@ const hasActiveFilters =
     yearFilter,
     departmentFilter,
     showPastEvents,
+    isArchive,
   ]);
 
   const sortedEvents = useMemo(() => {
@@ -382,7 +394,13 @@ const hasActiveFilters =
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-4">
-          <div className="grid gap-3 lg:grid-cols-[minmax(260px,2fr)_repeat(4,minmax(140px,1fr))]">
+          <div
+            className={`grid gap-3 ${
+              isArchive
+                ? "lg:grid-cols-[minmax(260px,2fr)_repeat(3,minmax(140px,1fr))]"
+                : "lg:grid-cols-[minmax(260px,2fr)_repeat(4,minmax(140px,1fr))]"
+            }`}
+          >
             <input
               value={searchTerm}
               onChange={(event) => {
@@ -393,21 +411,23 @@ const hasActiveFilters =
               className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
             />
 
-            <select
-              value={statusFilter}
-              onChange={(event) => {
-                setStatusFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            >
-              <option value="all">Alle Status</option>
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
+            {!isArchive ? (
+              <select
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              >
+                <option value="all">Alle Status</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            ) : null}
 
             <select
               value={monthFilter}
@@ -469,29 +489,31 @@ const hasActiveFilters =
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)]">
-                <input
-                  type="checkbox"
-                  checked={showPastEvents}
-                  onChange={(event) => {
-                    setShowPastEvents(event.target.checked);
-                    setCurrentPage(1);
-                  }}
-                  className="sr-only"
-                />
-
-                <span className="relative h-5 w-9 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] transition">
-                  <span
-                    className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition ${
-                      showPastEvents
-                        ? "left-4 bg-[var(--color-primary)]"
-                        : "left-0.5 bg-[var(--color-text-muted)]"
-                    }`}
+              {!isArchive ? (
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)]">
+                  <input
+                    type="checkbox"
+                    checked={showPastEvents}
+                    onChange={(event) => {
+                      setShowPastEvents(event.target.checked);
+                      setCurrentPage(1);
+                    }}
+                    className="sr-only"
                   />
-                </span>
 
-                Vergangene Events
-              </label>
+                  <span className="relative h-5 w-9 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] transition">
+                    <span
+                      className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition ${
+                        showPastEvents
+                          ? "left-4 bg-[var(--color-primary)]"
+                          : "left-0.5 bg-[var(--color-text-muted)]"
+                      }`}
+                    />
+                  </span>
+
+                  Vergangene Events
+                </label>
+              ) : null}
 
               <div className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1">
                 <button
@@ -790,23 +812,25 @@ const hasActiveFilters =
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled={
-            monthFilter === "all" ||
-            yearFilter === "all" ||
-            monthlyForecastEvents.length === 0
-          }
-          title={
-            monthFilter === "all" || yearFilter === "all"
-              ? "Monat und Jahr wählen"
-              : "Monatsforecast exportieren"
-          }
-          onClick={handleExportMonthlyForecast}
-          className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
-        >
-          Monatsforecast exportieren
-        </button>
+        {!isArchive ? (
+          <button
+            type="button"
+            disabled={
+              monthFilter === "all" ||
+              yearFilter === "all" ||
+              monthlyForecastEvents.length === 0
+            }
+            title={
+              monthFilter === "all" || yearFilter === "all"
+                ? "Monat und Jahr wählen"
+                : "Monatsforecast exportieren"
+            }
+            onClick={handleExportMonthlyForecast}
+            className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
+          >
+            Monatsforecast exportieren
+          </button>
+        ) : null}
       </div>
     </div>
   );
