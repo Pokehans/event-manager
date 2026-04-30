@@ -240,16 +240,20 @@ export default async function EventDetailPage({
       ]);
 
   const today = new Date().toISOString().slice(0, 10);
+  const isPastEvent = event.date < today;
+  const isArchived = event.status === "Archiviert";
 
-const canArchive =
-  currentUser &&
+  const canEditActiveEvent = canEdit && !isPastEvent && !isArchived;
+
+  const canArchive =
+    currentUser &&
     hasRole(currentUser.role, [
       ROLES.EDITOR,
       ROLES.ADMIN,
       ROLES.SYSTEMADMIN,
     ]) &&
-    event.status !== "Archiviert" &&
-    event.date < today;
+    isPastEvent &&
+    !isArchived;
 
   const creatorEmail = event.users?.email ?? "—";
   const creatorDepartment = event.users?.departments?.name ?? "—";
@@ -278,7 +282,7 @@ const canArchive =
               {backLabel}
             </Link>
 
-            {canEdit && event.status !== "Archiviert" ? (
+            {canEditActiveEvent ? (
               <Link
                 href={`/dashboard/events/${event.id}/edit`}
                 className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
