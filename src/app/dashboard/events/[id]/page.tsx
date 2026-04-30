@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
 import { deleteEvent } from "@/app/dashboard/events/new/actions";
 import DeleteEventButton from "@/components/events/delete-event-button";
+import { ArchiveEventButton } from "./archive-event-button";
+import { archiveEvent } from "./archive-event";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -231,11 +233,23 @@ export default async function EventDetailPage({
 
   const canEdit =
     currentUser &&
+      hasRole(currentUser.role, [
+        ROLES.EDITOR,
+        ROLES.ADMIN,
+        ROLES.SYSTEMADMIN,
+      ]);
+
+  const today = new Date().toISOString().slice(0, 10);
+
+const canArchive =
+  currentUser &&
     hasRole(currentUser.role, [
       ROLES.EDITOR,
       ROLES.ADMIN,
       ROLES.SYSTEMADMIN,
-    ]);
+    ]) &&
+    event.status !== "Archiviert" &&
+    event.date < today;
 
   const creatorEmail = event.users?.email ?? "—";
   const creatorDepartment = event.users?.departments?.name ?? "—";
@@ -263,7 +277,7 @@ export default async function EventDetailPage({
               {backLabel}
             </Link>
 
-            {canEdit ? (
+            {canEdit && event.status !== "Archiviert" ? (
               <Link
                 href={`/dashboard/events/${event.id}/edit`}
                 className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
@@ -274,6 +288,10 @@ export default async function EventDetailPage({
 
             {canDelete ? (
               <DeleteEventButton action={deleteEvent} eventId={event.id} />
+            ) : null}
+
+            {canArchive ? (
+              <ArchiveEventButton eventId={event.id} action={archiveEvent} />
             ) : null}
           </div>
         </div>
