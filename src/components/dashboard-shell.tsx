@@ -342,7 +342,7 @@ export default function DashboardShell({
                   collapsed={sidebarCollapsed}
                 />
                 <SidebarLink
-                  href="#"
+                  href="/dashboard/archive"
                   label="Archiv"
                   icon={<ArchiveIcon />}
                   collapsed={sidebarCollapsed}
@@ -426,7 +426,7 @@ export default function DashboardShell({
                     icon={<EventListIcon />}
                   />
                   <SidebarLink
-                    href="#"
+                    href="/dashboard/archive"
                     label="Archiv"
                     icon={<ArchiveIcon />}
                   />
