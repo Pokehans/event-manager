@@ -46,16 +46,36 @@ export async function archiveEvent(formData: FormData) {
     redirect(`/dashboard/events/${eventId}`);
   }
 
-  await supabase.from("event_debriefings").insert({
-    event_id: eventId,
-    user_id: currentUser.id,
-    text: debriefing,
-  });
+  const { error: debriefingInsertError } = await supabase
+    .from("event_debriefings")
+    .insert({
+        event_id: eventId,
+        user_id: currentUser.id,
+        text: debriefing,
+    });
 
-  await supabase
+    if (debriefingInsertError) {
+    console.error(
+        "Fehler beim Speichern des Debriefings:",
+        debriefingInsertError.message,
+    );
+
+    redirect(`/dashboard/events/${eventId}?archiveError=debriefing`);
+    }
+
+    const { error: archiveUpdateError } = await supabase
     .from("events")
     .update({ status: "Archiviert" })
     .eq("id", eventId);
+
+    if (archiveUpdateError) {
+    console.error(
+        "Fehler beim Archivieren des Events:",
+        archiveUpdateError.message,
+    );
+
+    redirect(`/dashboard/events/${eventId}?archiveError=status`);
+    }
 
   await supabase.from("event_logs").insert({
     event_id: eventId,

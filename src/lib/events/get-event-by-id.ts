@@ -13,6 +13,19 @@ export type EventLogEntry = {
     | null;
 };
 
+export type EventDebriefing = {
+  id: string;
+  text: string;
+  created_at: string | null;
+  user_id: string | null;
+  users:
+    | {
+        id: string;
+        email: string | null;
+      }
+    | null;
+};
+
 export type EventDetail = {
   id: string;
   title: string;
@@ -50,6 +63,7 @@ export type EventDetail = {
           | null;
       }
     | null;
+    debriefing: EventDebriefing | null;
   logs: EventLogEntry[];
 };
 
@@ -176,6 +190,30 @@ export async function getEventById(id: string): Promise<EventDetail | null> {
     console.error("Fehler beim Laden der Event-Logs:", logError.message);
   }
 
+const { data: debriefingData, error: debriefingError } = await supabase
+  .from("event_debriefings")
+  .select(`
+    id,
+    text,
+    created_at,
+    user_id,
+    users:user_id (
+      id,
+      email
+    )
+  `)
+  .eq("event_id", id)
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+if (debriefingError) {
+  console.error(
+    "Fehler beim Laden des Event-Debriefings:",
+    debriefingError.message,
+  );
+}
+
   const rawEvent = eventData as RawEventData;
   const rawUser = pickOne(rawEvent.users);
   const rawDepartment = pickOne(rawUser?.departments);
@@ -215,6 +253,15 @@ export async function getEventById(id: string): Promise<EventDetail | null> {
                 color: rawDepartment.color,
               }
             : null,
+        }
+      : null,
+    debriefing: debriefingData
+      ? {
+          id: debriefingData.id,
+          text: debriefingData.text,
+          created_at: debriefingData.created_at,
+          user_id: debriefingData.user_id,
+          users: pickOne(debriefingData.users),
         }
       : null,
     logs: ((logData ?? []) as RawLogData[]).map((log) => {

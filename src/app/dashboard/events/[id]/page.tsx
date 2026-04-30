@@ -255,6 +255,7 @@ const canArchive =
   const creatorDepartment = event.users?.departments?.name ?? "—";
 
   const logs = event.logs ?? [];
+  const debriefing = event.debriefing;
   const latestLogs = logs.slice(0, 3);
   const olderLogs = logs.slice(3);
   const hasLogs = logs.length > 0;
@@ -384,6 +385,23 @@ const canArchive =
               value={getPaymentTypeLabel(event.payment_type)}
             />
           </DetailSection>
+          {debriefing ? (
+            <DetailSection
+              title="Debriefing"
+              description="Nachbereitung und Abschlussnotizen zu diesem Event."
+            >
+              <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
+                <p className="whitespace-pre-wrap text-sm leading-6">
+                  {debriefing.text}
+                </p>
+
+                <p className="mt-4 text-xs text-[var(--color-text-muted)]">
+                  Erstellt am {formatDateTime(debriefing.created_at)}
+                  {debriefing.users?.email ? ` von ${debriefing.users.email}` : ""}
+                </p>
+              </div>
+            </DetailSection>
+          ) : null}
         </div>
 
         <aside className="space-y-6">
