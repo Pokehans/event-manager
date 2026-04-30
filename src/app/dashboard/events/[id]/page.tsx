@@ -205,8 +205,10 @@ export default async function EventDetailPage({
   const from = query?.from;
 
   const backHref =
-    from === "cockpit"
-      ? "/dashboard/cockpit"
+  from === "cockpit"
+    ? "/dashboard/cockpit"
+    : from === "archive"
+      ? "/dashboard/archive"
       : from === "list"
         ? "/dashboard/events"
         : month && year
@@ -214,8 +216,10 @@ export default async function EventDetailPage({
           : "/dashboard";
 
   const backLabel =
-    from === "cockpit"
-      ? "Zurück zum Cockpit"
+  from === "cockpit"
+    ? "Zurück zum Cockpit"
+    : from === "archive"
+      ? "Zurück zum Archiv"
       : from === "list"
         ? "Zurück zur Eventliste"
         : "Zurück zum Dashboard";

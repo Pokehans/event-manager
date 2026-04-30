@@ -13,7 +13,7 @@ export default async function ArchivePage() {
         </p>
       </div>
 
-      <EventsTable events={events} />
+      <EventsTable events={events} from="archive" />
     </div>
   );
 }

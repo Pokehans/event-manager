@@ -8,6 +8,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type EventsTableProps = {
   events: EventListItem[];
+  from?: "list" | "archive";
 };
 
 type ViewMode = "table" | "months";
@@ -115,10 +116,12 @@ function escapeCsvValue(value: string | number) {
   return stringValue;
 }
 
-export default function EventsTable({ events }: EventsTableProps) {
+export default function EventsTable({ events, from = "list" }: EventsTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const getEventHref = (eventId: string) =>
+    `/dashboard/events/${eventId}?from=${from}`;
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "all");
@@ -586,7 +589,7 @@ const hasActiveFilters =
                     >
                       <td className="whitespace-nowrap px-5 py-4 font-medium">
                         <Link
-                          href={`/dashboard/events/${event.id}?from=list`}
+                          href={`/dashboard/events/${event.id}?from=${from === "archive" ? "archive" : "list"}`}
                           className="block"
                         >
                           {formatDate(event.date)}
@@ -595,7 +598,7 @@ const hasActiveFilters =
 
                       <td className="px-5 py-4">
                         <Link
-                          href={`/dashboard/events/${event.id}?from=list`}
+                          href={`/dashboard/events/${event.id}?from=${from === "archive" ? "archive" : "list"}`}
                           className="block"
                         >
                           <StatusBadge label={getStatusLabel(event.status)} />
@@ -604,7 +607,7 @@ const hasActiveFilters =
 
                       <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
                         <Link
-                          href={`/dashboard/events/${event.id}?from=list`}
+                          href={getEventHref(event.id)}
                           className="block"
                         >
                           {event.title}
@@ -613,7 +616,7 @@ const hasActiveFilters =
 
                       <td className="px-5 py-4 text-[var(--color-text-muted)]">
                         <Link
-                          href={`/dashboard/events/${event.id}?from=list`}
+                          href={getEventHref(event.id)}
                           className="block"
                         >
                           {getCustomerName(event)}
@@ -622,7 +625,7 @@ const hasActiveFilters =
 
                       <td className="px-5 py-4">
                         <Link
-                          href={`/dashboard/events/${event.id}?from=list`}
+                          href={getEventHref(event.id)}
                           className="block"
                         >
                           {getPersonCount(event)}
@@ -631,7 +634,7 @@ const hasActiveFilters =
 
                       <td className="px-5 py-4">
                         <Link
-                          href={`/dashboard/events/${event.id}?from=list`}
+                          href={getEventHref(event.id)}
                           className="block"
                         >
                           {department ? (
@@ -661,7 +664,7 @@ const hasActiveFilters =
               return (
                 <Link
                   key={event.id}
-                  href={`/dashboard/events/${event.id}?from=list`}
+                  href={getEventHref(event.id)}
                   className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -720,7 +723,7 @@ const hasActiveFilters =
                   return (
                     <Link
                       key={event.id}
-                      href={`/dashboard/events/${event.id}?from=list`}
+                      href={getEventHref(event.id)}
                       className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
                     >
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
