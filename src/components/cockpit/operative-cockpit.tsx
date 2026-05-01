@@ -200,9 +200,9 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
   );
 
   const importantHintCount =
-    requestReviewEvents.length +
     openDebriefingEvents.length +
-    eventsWithoutRoom.length;
+    eventsWithoutRoom.length +
+    requestReviewEvents.length;
 
   return (
     <div className="space-y-4">
@@ -217,28 +217,24 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
             </p>
           </div>
 
-          <div
-            className={`rounded-xl p-4 ${
-              requestReviewEvents.length > 0
-                ? "border border-red-200 bg-red-50 shadow-sm"
-                : "bg-[var(--color-surface-muted)]"
-            }`}
-          >
-            <p className="text-sm font-semibold text-[var(--color-text)]">
-              {requestReviewEvents.length} Anfrage prüfen
-            </p>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Events mit Status Anfrage innerhalb der nächsten 14 Tage.
-            </p>
+          {requestReviewEvents.length > 0 && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-semibold text-[var(--color-text)]">
+                {requestReviewEvents.length} Anfrage prüfen
+              </p>
+              <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                Events mit Status Anfrage innerhalb der nächsten 14 Tage.
+              </p>
 
-            <div className="mt-3">
-              <ExpandableEventList
-                events={requestReviewEvents}
-                emptyText="Keine kurzfristigen offenen Anfragen."
-                actionLabel="Anfrage prüfen"
-              />
+              <div className="mt-3">
+                <ExpandableEventList
+                  events={requestReviewEvents}
+                  emptyText="Keine kurzfristigen offenen Anfragen."
+                  actionLabel="Anfrage prüfen"
+                />
+              </div>
             </div>
-          </div>
+          )}
           
           <div className="mt-5 space-y-4">
             <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
