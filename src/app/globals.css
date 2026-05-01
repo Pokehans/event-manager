@@ -101,3 +101,28 @@ textarea {
   background: rgba(192, 57, 43, 0.12);
   color: var(--color-danger);
 }
+
+.participant-range {
+  pointer-events: none;
+}
+
+.participant-range::-webkit-slider-thumb {
+  pointer-events: auto;
+  width: 20px;
+  height: 20px;
+  appearance: none;
+  border-radius: 9999px;
+  border: 2px solid var(--color-primary);
+  background: white;
+  cursor: pointer;
+}
+
+.participant-range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  border: 2px solid var(--color-primary);
+  background: white;
+  cursor: pointer;
+}

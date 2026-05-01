@@ -139,18 +139,39 @@ export default function EventsTable({
     searchParams.get("department") ?? "all"
   );
   const [roomFilter, setRoomFilter] = useState(searchParams.get("room") ?? "all");
-  const [paymentFilter, setPaymentFilter] = useState(
-    searchParams.get("payment") ?? "all"
-  );
-  const [participantMinFilter, setParticipantMinFilter] = useState(
-    searchParams.get("participantsMin") ?? ""
-  );
+
+const [paymentFilter, setPaymentFilter] = useState(
+  searchParams.get("payment") ?? "all"
+);
+
+const [participantMinFilter, setParticipantMinFilter] = useState(
+  searchParams.get("participantsMin") ?? ""
+);
+
   const [participantMaxFilter, setParticipantMaxFilter] = useState(
     searchParams.get("participantsMax") ?? ""
   );
+
   const [timeRangeFilter, setTimeRangeFilter] = useState(
     searchParams.get("timeRange") ?? "all"
   );
+
+  const minParticipantsValue = participantMinFilter
+    ? Number(participantMinFilter)
+    : 0;
+
+  const maxParticipantsValue = participantMaxFilter
+    ? Number(participantMaxFilter)
+    : 200;
+
+  const participantSliderMax = 200;
+
+  const participantMinPercent =
+    (minParticipantsValue / participantSliderMax) * 100;
+
+  const participantMaxPercent =
+    (maxParticipantsValue / participantSliderMax) * 100;
+
   const [showPastEvents, setShowPastEvents] = useState(
     isArchive ? true : searchParams.get("past") === "1"
   );
@@ -285,7 +306,7 @@ const hasActiveFilters =
     return Array.from(
       new Set(
         events
-          .map((event) => event.room)
+          .map((event) => event.room?.trim())
           .filter((room): room is string => Boolean(room))
       )
     ).sort();
@@ -334,7 +355,10 @@ const hasActiveFilters =
       const matchesDepartment =
         departmentFilter === "all" || departmentName === departmentFilter;
 
-      const matchesRoom = roomFilter === "all" || roomName === roomFilter;
+      const matchesRoom =
+        roomFilter === "all" ||
+        (roomFilter === "__none__" && !roomName.trim()) ||
+        roomName.trim() === roomFilter;
 
       const matchesPayment =
         paymentFilter === "all" ||
@@ -618,6 +642,7 @@ const hasActiveFilters =
               className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
             >
               <option value="all">Alle Räume</option>
+              <option value="__none__">Ohne Raum</option>
               {roomOptions.map((room) => (
                 <option key={room} value={room}>
                   {room}
@@ -655,33 +680,67 @@ const hasActiveFilters =
               <option value="next7">Nächste 7 Tage</option>
               <option value="next30">Nächste 30 Tage</option>
             </select>
+          </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                min="0"
-                value={participantMinFilter}
-                onChange={(event) => {
-                  setParticipantMinFilter(event.target.value);
-                  setCurrentPage(1);
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-[var(--color-text)]">
+                Teilnehmer
+              </span>
+
+              <span className="text-xs text-[var(--color-text-muted)]">
+                {minParticipantsValue} – {maxParticipantsValue} Personen
+              </span>
+            </div>
+
+            <div className="relative h-8">
+              <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-white" />
+
+              <div
+                className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--color-primary)]"
+                style={{
+                  left: `${participantMinPercent}%`,
+                  right: `${100 - participantMaxPercent}%`,
                 }}
-                placeholder="Pers. von"
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
               />
 
               <input
-                type="number"
-                min="0"
-                value={participantMaxFilter}
+                type="range"
+                min={0}
+                max={participantSliderMax}
+                value={minParticipantsValue}
                 onChange={(event) => {
-                  setParticipantMaxFilter(event.target.value);
-                  setCurrentPage(1);
+                  const value = Number(event.target.value);
+
+                  if (value <= maxParticipantsValue) {
+                    setParticipantMinFilter(String(value));
+                    setCurrentPage(1);
+                  }
                 }}
-                placeholder="Pers. bis"
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                className="participant-range participant-range-min absolute left-0 top-1/2 z-30 h-0 w-full -translate-y-1/2 appearance-none bg-transparent"
+              />
+
+              <input
+                type="range"
+                min={0}
+                max={participantSliderMax}
+                value={maxParticipantsValue}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+
+                  if (value >= minParticipantsValue) {
+                    setParticipantMaxFilter(String(value));
+                    setCurrentPage(1);
+                  }
+                }}
+                className="participant-range participant-range-max absolute left-0 top-1/2 z-20 h-0 w-full -translate-y-1/2 appearance-none bg-transparent"
               />
             </div>
 
+            <div className="mt-1 flex justify-between text-[11px] text-[var(--color-text-muted)]">
+              <span>0</span>
+              <span>{participantSliderMax}+</span>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">
