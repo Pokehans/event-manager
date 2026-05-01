@@ -38,7 +38,13 @@ function hasDebriefing(event: EventListItem) {
   return (event.event_debriefings?.length ?? 0) > 0;
 }
 
-function EventMiniCard({ event }: { event: EventListItem }) {
+function EventMiniCard({
+  event,
+  actionLabel = "Anzeigen",
+}: {
+  event: EventListItem;
+  actionLabel?: string;
+}) {
   return (
     <Link
       href={`/dashboard/events/${event.id}?from=cockpit`}
@@ -54,8 +60,8 @@ function EventMiniCard({ event }: { event: EventListItem }) {
           </p>
         </div>
 
-        <span className="text-sm font-semibold text-[var(--color-primary)]">
-          Anzeigen
+        <span className="shrink-0 text-sm font-semibold text-[var(--color-primary)]">
+          {actionLabel}
         </span>
       </div>
     </Link>
@@ -65,9 +71,11 @@ function EventMiniCard({ event }: { event: EventListItem }) {
 function ExpandableEventList({
   events,
   emptyText,
+  actionLabel = "Anzeigen",
 }: {
   events: EventListItem[];
   emptyText: string;
+  actionLabel?: string;
 }) {
   const [showAll, setShowAll] = useState(false);
 
@@ -85,7 +93,11 @@ function ExpandableEventList({
   return (
     <div className="space-y-2">
       {visibleEvents.map((event) => (
-        <EventMiniCard key={event.id} event={event} />
+        <EventMiniCard
+          key={event.id}
+          event={event}
+          actionLabel={actionLabel}
+        />
       ))}
 
       {events.length > PREVIEW_LIMIT ? (
@@ -188,13 +200,14 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
                 {openDebriefingEvents.length} Nachbereitung offen
               </p>
               <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                Vergangene Events ohne Debriefing.
+                Vergangene Events zum archivieren.
               </p>
 
               <div className="mt-3">
                 <ExpandableEventList
                   events={openDebriefingEvents}
                   emptyText="Keine offenen Nachbereitungen."
+                  actionLabel="archivieren"
                 />
               </div>
             </div>
@@ -211,6 +224,7 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
                 <ExpandableEventList
                   events={eventsWithoutRoom}
                   emptyText="Alle kommenden Events haben eine Raumzuteilung."
+                  actionLabel="Raum prüfen"
                 />
               </div>
             </div>
