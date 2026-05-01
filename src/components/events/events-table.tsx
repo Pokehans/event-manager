@@ -266,6 +266,19 @@ function getPaymentTypeLabel(value: string | null) {
   }
 }
 
+function getTimeRangeLabel(value: string) {
+  switch (value) {
+    case "today":
+      return "Heute";
+    case "next7":
+      return "Nächste 7 Tage";
+    case "next30":
+      return "Nächste 30 Tage";
+    default:
+      return "";
+  }
+}
+
 const hasActiveFilters =
   searchTerm.trim().length > 0 ||
   (!isArchive && statusFilter !== "all") ||
@@ -278,6 +291,69 @@ const hasActiveFilters =
   participantMaxFilter.trim().length > 0 ||
   timeRangeFilter !== "all" ||
   (!isArchive && showPastEvents);
+
+  const activeChips = [
+    searchTerm && {
+      label: `Suche: ${searchTerm}`,
+      onRemove: () => setSearchTerm(""),
+    },
+
+    !isArchive && statusFilter !== "all" && {
+      label: `Status: ${statusFilter}`,
+      onRemove: () => setStatusFilter("all"),
+    },
+
+    roomFilter !== "all" && {
+      label:
+        roomFilter === "__none__"
+          ? "Raum: Ohne Raum"
+          : `Raum: ${roomFilter}`,
+      onRemove: () => setRoomFilter("all"),
+    },
+
+    departmentFilter !== "all" && {
+      label: `Bereich: ${departmentFilter}`,
+      onRemove: () => setDepartmentFilter("all"),
+    },
+
+    paymentFilter !== "all" && {
+      label:
+        paymentFilter === "__none__"
+          ? "Zahlung: Ohne"
+          : `Zahlung: ${getPaymentTypeLabel(paymentFilter)}`,
+      onRemove: () => setPaymentFilter("all"),
+    },
+
+    timeRangeFilter !== "all" && {
+      label: `Zeitraum: ${getTimeRangeLabel(timeRangeFilter)}`,
+      onRemove: () => setTimeRangeFilter("all"),
+    },
+
+    (participantMinFilter || participantMaxFilter) && {
+      label: `Teilnehmer: ${minParticipantsValue}–${maxParticipantsValue}`,
+      onRemove: () => {
+        setParticipantMinFilter("");
+        setParticipantMaxFilter("");
+      },
+    },
+
+    monthFilter !== "all" && {
+      label: `Monat: ${MONTHS[Number(monthFilter) - 1]}`,
+      onRemove: () => setMonthFilter("all"),
+    },
+
+    yearFilter !== "all" && {
+      label: `Jahr: ${yearFilter}`,
+      onRemove: () => setYearFilter("all"),
+    },
+
+    !isArchive && showPastEvents && {
+      label: "Vergangene Events",
+      onRemove: () => setShowPastEvents(false),
+    },
+  ].filter(
+    (chip): chip is { label: string; onRemove: () => void } => Boolean(chip)
+  );
 
   const statusOptions = useMemo(() => {
     return Array.from(
@@ -749,6 +825,29 @@ const hasActiveFilters =
               <span>{participantSliderMax}+</span>
             </div>
           </div>
+
+          {activeChips.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {activeChips.map((chip, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs shadow-sm"
+                >
+                  <span>{chip.label}</span>
+
+                  <button
+                    onClick={() => {
+                      chip.onRemove();
+                      setCurrentPage(1);
+                    }}
+                    className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-[var(--color-text-muted)]">
