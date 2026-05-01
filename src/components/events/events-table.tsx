@@ -549,143 +549,147 @@ const hasActiveFilters =
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-4">
-          <div
-            className={`grid gap-3 ${
-              isArchive
-                ? "lg:grid-cols-[minmax(260px,2fr)_repeat(3,minmax(140px,1fr))]"
-                : "lg:grid-cols-[minmax(260px,2fr)_repeat(4,minmax(140px,1fr))]"
-            }`}
-          >
-            <input
-              value={searchTerm}
-              onChange={(event) => {
-                setSearchTerm(event.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Suche nach Titel oder Auftraggeber"
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            />
-
-            {!isArchive ? (
-              <select
-                value={statusFilter}
+          <div className="flex flex-col gap-3">
+            <div className="grid gap-3 lg:grid-cols-[minmax(260px,2fr)_minmax(180px,1fr)]">
+              <input
+                value={searchTerm}
                 onChange={(event) => {
-                  setStatusFilter(event.target.value);
+                  setSearchTerm(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Suche nach Titel oder Auftraggeber"
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              />
+
+              <select
+                value={timeRangeFilter}
+                onChange={(event) => {
+                  setTimeRangeFilter(event.target.value);
                   setCurrentPage(1);
                 }}
                 className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
               >
-                <option value="all">Alle Status</option>
-                {statusOptions.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
+                <option value="all">Alle Zeiträume</option>
+                <option value="today">Heute</option>
+                <option value="next7">Nächste 7 Tage</option>
+                <option value="next30">Nächste 30 Tage</option>
+              </select>
+            </div>
+
+            <div
+              className={`grid gap-3 ${
+                isArchive ? "lg:grid-cols-3" : "lg:grid-cols-4"
+              }`}
+            >
+              {!isArchive ? (
+                <select
+                  value={statusFilter}
+                  onChange={(event) => {
+                    setStatusFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                >
+                  <option value="all">Alle Status</option>
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+
+              <select
+                value={roomFilter}
+                onChange={(event) => {
+                  setRoomFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              >
+                <option value="all">Alle Räume</option>
+                <option value="__none__">Ohne Raum</option>
+                {roomOptions.map((room) => (
+                  <option key={room} value={room}>
+                    {room}
                   </option>
                 ))}
               </select>
-            ) : null}
 
-            <select
-              value={monthFilter}
-              onChange={(event) => {
-                setMonthFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            >
-              <option value="all">Alle Monate</option>
-              {MONTHS.map((month, index) => {
-                const value = String(index + 1).padStart(2, "0");
-
-                return (
-                  <option key={month} value={value}>
-                    {month}
+              <select
+                value={departmentFilter}
+                onChange={(event) => {
+                  setDepartmentFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              >
+                <option value="all">Alle Bereiche</option>
+                {departmentOptions.map((department) => (
+                  <option key={department} value={department}>
+                    {department}
                   </option>
-                );
-              })}
-            </select>
+                ))}
+              </select>
 
-            <select
-              value={yearFilter}
-              onChange={(event) => {
-                setYearFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            >
-              <option value="all">Alle Jahre</option>
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+              <select
+                value={paymentFilter}
+                onChange={(event) => {
+                  setPaymentFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              >
+                <option value="all">Alle Zahlungsarten</option>
+                <option value="__none__">Ohne Zahlungsart</option>
+                {paymentOptions.map((paymentType) => (
+                  <option key={paymentType} value={paymentType}>
+                    {getPaymentTypeLabel(paymentType)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <select
-              value={departmentFilter}
-              onChange={(event) => {
-                setDepartmentFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            >
-              <option value="all">Alle Bereiche</option>
-              {departmentOptions.map((department) => (
-                <option key={department} value={department}>
-                  {department}
-                </option>
-              ))}
-            </select>
+            <div className="grid gap-3 lg:grid-cols-2">
+              <select
+                value={monthFilter}
+                onChange={(event) => {
+                  setMonthFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              >
+                <option value="all">Alle Monate</option>
+                {MONTHS.map((month, index) => {
+                  const value = String(index + 1).padStart(2, "0");
 
-            <select
-              value={roomFilter}
-              onChange={(event) => {
-                setRoomFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            >
-              <option value="all">Alle Räume</option>
-              <option value="__none__">Ohne Raum</option>
-              {roomOptions.map((room) => (
-                <option key={room} value={room}>
-                  {room}
-                </option>
-              ))}
-            </select>
+                  return (
+                    <option key={month} value={value}>
+                      {month}
+                    </option>
+                  );
+                })}
+              </select>
 
-            <select
-              value={paymentFilter}
-              onChange={(event) => {
-                setPaymentFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            >
-              <option value="all">Alle Zahlungsarten</option>
-              <option value="__none__">Ohne Zahlungsart</option>
-              {paymentOptions.map((paymentType) => (
-                <option key={paymentType} value={paymentType}>
-                  {getPaymentTypeLabel(paymentType)}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={timeRangeFilter}
-              onChange={(event) => {
-                setTimeRangeFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-            >
-              <option value="all">Alle Zeiträume</option>
-              <option value="today">Heute</option>
-              <option value="next7">Nächste 7 Tage</option>
-              <option value="next30">Nächste 30 Tage</option>
-            </select>
+              <select
+                value={yearFilter}
+                onChange={(event) => {
+                  setYearFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              >
+                <option value="all">Alle Jahre</option>
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3">
+          <div className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-sm font-medium text-[var(--color-text)]">
                 Teilnehmer
@@ -697,7 +701,7 @@ const hasActiveFilters =
             </div>
 
             <div className="relative h-8">
-              <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-white" />
+              <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--color-surface-muted)]" />
 
               <div
                 className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--color-primary)]"
