@@ -138,6 +138,19 @@ export default function EventsTable({
   const [departmentFilter, setDepartmentFilter] = useState(
     searchParams.get("department") ?? "all"
   );
+  const [roomFilter, setRoomFilter] = useState(searchParams.get("room") ?? "all");
+  const [paymentFilter, setPaymentFilter] = useState(
+    searchParams.get("payment") ?? "all"
+  );
+  const [participantMinFilter, setParticipantMinFilter] = useState(
+    searchParams.get("participantsMin") ?? ""
+  );
+  const [participantMaxFilter, setParticipantMaxFilter] = useState(
+    searchParams.get("participantsMax") ?? ""
+  );
+  const [timeRangeFilter, setTimeRangeFilter] = useState(
+    searchParams.get("timeRange") ?? "all"
+  );
   const [showPastEvents, setShowPastEvents] = useState(
     isArchive ? true : searchParams.get("past") === "1"
   );
@@ -155,6 +168,15 @@ export default function EventsTable({
     if (monthFilter !== "all") params.set("month", monthFilter);
     if (yearFilter !== "all") params.set("year", yearFilter);
     if (departmentFilter !== "all") params.set("department", departmentFilter);
+    if (roomFilter !== "all") params.set("room", roomFilter);
+    if (paymentFilter !== "all") params.set("payment", paymentFilter);
+    if (participantMinFilter.trim()) {
+      params.set("participantsMin", participantMinFilter.trim());
+    }
+    if (participantMaxFilter.trim()) {
+      params.set("participantsMax", participantMaxFilter.trim());
+    }
+    if (timeRangeFilter !== "all") params.set("timeRange", timeRangeFilter);
     if (!isArchive && showPastEvents) params.set("past", "1");
     if (viewMode !== "table") params.set("view", viewMode);
 
@@ -169,6 +191,11 @@ export default function EventsTable({
     monthFilter,
     yearFilter,
     departmentFilter,
+    roomFilter,
+    paymentFilter,
+    participantMinFilter,
+    participantMaxFilter,
+    timeRangeFilter,
     showPastEvents,
     viewMode,
     pathname,
@@ -182,6 +209,11 @@ export default function EventsTable({
   setMonthFilter("all");
   setYearFilter("all");
   setDepartmentFilter("all");
+  setRoomFilter("all");
+  setPaymentFilter("all");
+  setParticipantMinFilter("");
+  setParticipantMaxFilter("");
+  setTimeRangeFilter("all");
   setShowPastEvents(isArchive);
   setCurrentPage(1);
 }
@@ -197,12 +229,30 @@ function handleSort(field: "date" | "title" | "status") {
   setCurrentPage(1);
 }
 
+function getPaymentTypeLabel(value: string | null) {
+  switch (value) {
+    case "intern_aktivierung":
+      return "Intern Aktivierung";
+    case "rechnung":
+      return "Rechnung";
+    case "bar":
+      return "Bar";
+    default:
+      return value ?? "";
+  }
+}
+
 const hasActiveFilters =
   searchTerm.trim().length > 0 ||
   (!isArchive && statusFilter !== "all") ||
   monthFilter !== "all" ||
   yearFilter !== "all" ||
   departmentFilter !== "all" ||
+  roomFilter !== "all" ||
+  paymentFilter !== "all" ||
+  participantMinFilter.trim().length > 0 ||
+  participantMaxFilter.trim().length > 0 ||
+  timeRangeFilter !== "all" ||
   (!isArchive && showPastEvents);
 
   const statusOptions = useMemo(() => {
@@ -231,6 +281,28 @@ const hasActiveFilters =
     ).sort();
   }, [events]);
 
+  const roomOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        events
+          .map((event) => event.room)
+          .filter((room): room is string => Boolean(room))
+      )
+    ).sort();
+  }, [events]);
+
+  const paymentOptions = useMemo(() => {
+    const values = Array.from(
+      new Set(events.map((event) => event.payment_type))
+    );
+
+    const cleaned = values
+      .filter((v): v is string => Boolean(v))
+      .sort();
+
+    return cleaned;
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
     const today = getTodayString();
 
@@ -242,6 +314,9 @@ const hasActiveFilters =
       const eventYear = event.date.slice(0, 4);
       const eventMonth = event.date.slice(5, 7);
       const departmentName = department?.name ?? "";
+      const roomName = event.room ?? "";
+      const paymentType = event.payment_type ?? "";
+      const participantCount = (event.adults ?? 0) + (event.children ?? 0);
       const search = searchTerm.toLowerCase().trim();
 
       const matchesSearch =
@@ -259,6 +334,46 @@ const hasActiveFilters =
       const matchesDepartment =
         departmentFilter === "all" || departmentName === departmentFilter;
 
+      const matchesRoom = roomFilter === "all" || roomName === roomFilter;
+
+      const matchesPayment =
+        paymentFilter === "all" ||
+        (paymentFilter === "__none__" && !paymentType) ||
+        paymentType === paymentFilter;
+
+      const minParticipants = participantMinFilter.trim()
+        ? Number(participantMinFilter)
+        : null;
+
+      const maxParticipants = participantMaxFilter.trim()
+        ? Number(participantMaxFilter)
+        : null;
+
+      const matchesParticipants =
+        (minParticipants === null || participantCount >= minParticipants) &&
+        (maxParticipants === null || participantCount <= maxParticipants);
+
+      const eventDate = new Date(`${event.date}T00:00:00`);
+      const now = new Date();
+
+      let matchesTimeRange = true;
+
+      if (timeRangeFilter === "today") {
+        matchesTimeRange = event.date === today;
+      }
+
+      if (timeRangeFilter === "next7") {
+        const next7 = new Date();
+        next7.setDate(now.getDate() + 7);
+        matchesTimeRange = eventDate >= now && eventDate <= next7;
+      }
+
+      if (timeRangeFilter === "next30") {
+        const next30 = new Date();
+        next30.setDate(now.getDate() + 30);
+        matchesTimeRange = eventDate >= now && eventDate <= next30;
+      }
+
       const matchesTime = isArchive || showPastEvents || event.date >= today;
 
       return (
@@ -267,6 +382,10 @@ const hasActiveFilters =
         matchesMonth &&
         matchesYear &&
         matchesDepartment &&
+        matchesRoom &&
+        matchesPayment &&
+        matchesParticipants &&
+        matchesTimeRange &&
         matchesTime
       );
     });
@@ -277,6 +396,11 @@ const hasActiveFilters =
     monthFilter,
     yearFilter,
     departmentFilter,
+    roomFilter,
+    paymentFilter,
+    participantMinFilter,
+    participantMaxFilter,
+    timeRangeFilter,
     showPastEvents,
     isArchive,
   ]);
@@ -484,6 +608,80 @@ const hasActiveFilters =
                 </option>
               ))}
             </select>
+
+            <select
+              value={roomFilter}
+              onChange={(event) => {
+                setRoomFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            >
+              <option value="all">Alle Räume</option>
+              {roomOptions.map((room) => (
+                <option key={room} value={room}>
+                  {room}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={paymentFilter}
+              onChange={(event) => {
+                setPaymentFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            >
+              <option value="all">Alle Zahlungsarten</option>
+              <option value="__none__">Ohne Zahlungsart</option>
+              {paymentOptions.map((paymentType) => (
+                <option key={paymentType} value={paymentType}>
+                  {getPaymentTypeLabel(paymentType)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={timeRangeFilter}
+              onChange={(event) => {
+                setTimeRangeFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+            >
+              <option value="all">Alle Zeiträume</option>
+              <option value="today">Heute</option>
+              <option value="next7">Nächste 7 Tage</option>
+              <option value="next30">Nächste 30 Tage</option>
+            </select>
+
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                min="0"
+                value={participantMinFilter}
+                onChange={(event) => {
+                  setParticipantMinFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Pers. von"
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              />
+
+              <input
+                type="number"
+                min="0"
+                value={participantMaxFilter}
+                onChange={(event) => {
+                  setParticipantMaxFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Pers. bis"
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+              />
+            </div>
+
           </div>
 
           <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">

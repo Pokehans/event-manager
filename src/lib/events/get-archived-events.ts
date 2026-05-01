@@ -37,6 +37,7 @@ export async function getArchivedEvents(): Promise<EventListItem[]> {
       adults,
       children,
       room,
+      payment_type,
       users:created_by (
         id,
         departments:department_id (
