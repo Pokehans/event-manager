@@ -38,6 +38,12 @@ function hasDebriefing(event: EventListItem) {
   return (event.event_debriefings?.length ?? 0) > 0;
 }
 
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 function EventMiniCard({
   event,
   actionLabel = "Anzeigen",
@@ -150,6 +156,10 @@ function StatusOverviewCard({
 export default function OperativeCockpit({ events }: OperativeCockpitProps) {
   const today = getTodayString();
 
+  const twoWeeksFromToday = addDays(new Date(), 14)
+    .toISOString()
+    .slice(0, 10);
+
   const activeEvents = events.filter((event) => event.status !== "Archiviert");
 
   const upcomingEvents = activeEvents
@@ -160,6 +170,13 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
 
   const requestEvents = activeEvents.filter(
     (event) => event.date >= today && event.status === "Anfrage"
+  );
+
+  const requestReviewEvents = activeEvents.filter(
+    (event) =>
+      event.status === "Anfrage" &&
+      event.date >= today &&
+      event.date <= twoWeeksFromToday
   );
 
   const progressEvents = activeEvents.filter(
@@ -175,11 +192,17 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
   );
 
   const openDebriefingEvents = activeEvents.filter(
-    (event) => event.date < today && !hasDebriefing(event)
+    (event) =>
+      event.date < today &&
+      event.status !== "Storniert" &&
+      event.status !== "Anfrage" &&
+      !hasDebriefing(event)
   );
 
   const importantHintCount =
-    openDebriefingEvents.length + eventsWithoutRoom.length;
+    requestReviewEvents.length +
+    openDebriefingEvents.length +
+    eventsWithoutRoom.length;
 
   return (
     <div className="space-y-4">
@@ -194,6 +217,29 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
             </p>
           </div>
 
+          <div
+            className={`rounded-xl p-4 ${
+              requestReviewEvents.length > 0
+                ? "border border-red-200 bg-red-50 shadow-sm"
+                : "bg-[var(--color-surface-muted)]"
+            }`}
+          >
+            <p className="text-sm font-semibold text-[var(--color-text)]">
+              {requestReviewEvents.length} Anfrage prüfen
+            </p>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+              Events mit Status Anfrage innerhalb der nächsten 14 Tage.
+            </p>
+
+            <div className="mt-3">
+              <ExpandableEventList
+                events={requestReviewEvents}
+                emptyText="Keine kurzfristigen offenen Anfragen."
+                actionLabel="Anfrage prüfen"
+              />
+            </div>
+          </div>
+          
           <div className="mt-5 space-y-4">
             <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
               <p className="text-sm font-semibold text-[var(--color-text)]">
