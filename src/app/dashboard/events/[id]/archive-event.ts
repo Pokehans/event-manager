@@ -33,7 +33,7 @@ export async function archiveEvent(formData: FormData) {
     redirect("/dashboard/events");
   }
 
-  if (!validRatings.includes(rating) || learnings.length < 10) {
+  if (!validRatings.includes(rating)) {
     redirect(`/dashboard/events/${eventId}?archiveError=debriefing`);
   }
 
@@ -76,7 +76,7 @@ export async function archiveEvent(formData: FormData) {
     issues || "Keine besonderen Probleme erfasst.",
     "",
     "Verbesserungen / Learnings:",
-    learnings,
+    learnings || "Keine Learnings erfasst.",
   ].join("\n");
 
   const { error: debriefingInsertError } = await supabase

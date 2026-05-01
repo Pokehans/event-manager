@@ -90,13 +90,11 @@ export function ArchiveEventButton({ eventId, action }: Props) {
                   id="learnings"
                   name="learnings"
                   rows={4}
-                  required
-                  minLength={10}
                   placeholder="Was nehmen wir für zukünftige Events mit?"
                   className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
                 />
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  Mindestens 10 Zeichen erforderlich.
+                  Optional – nur ausfüllen, wenn es relevante Learnings gibt.
                 </p>
               </div>
 
