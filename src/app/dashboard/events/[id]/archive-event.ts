@@ -6,15 +6,34 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
 
+const validRatings = ["sehr_gut", "gut", "neutral", "schlecht"];
+
+function getRatingLabel(rating: string) {
+  switch (rating) {
+    case "sehr_gut":
+      return "Sehr gut";
+    case "gut":
+      return "Gut";
+    case "neutral":
+      return "Neutral";
+    case "schlecht":
+      return "Schlecht";
+    default:
+      return rating;
+  }
+}
+
 export async function archiveEvent(formData: FormData) {
   const eventId = String(formData.get("eventId") ?? "");
-  const debriefing = String(formData.get("debriefing") ?? "").trim();
+  const rating = String(formData.get("rating") ?? "").trim();
+  const issues = String(formData.get("issues") ?? "").trim();
+  const learnings = String(formData.get("learnings") ?? "").trim();
 
   if (!eventId) {
     redirect("/dashboard/events");
   }
 
-  if (debriefing.length < 10) {
+  if (!validRatings.includes(rating) || learnings.length < 10) {
     redirect(`/dashboard/events/${eventId}?archiveError=debriefing`);
   }
 
@@ -50,36 +69,49 @@ export async function archiveEvent(formData: FormData) {
     redirect(`/dashboard/events/${eventId}`);
   }
 
+  const debriefingText = [
+    `Bewertung: ${getRatingLabel(rating)}`,
+    "",
+    "Probleme / Auffälligkeiten:",
+    issues || "Keine besonderen Probleme erfasst.",
+    "",
+    "Verbesserungen / Learnings:",
+    learnings,
+  ].join("\n");
+
   const { error: debriefingInsertError } = await supabase
     .from("event_debriefings")
     .insert({
-        event_id: eventId,
-        user_id: currentUser.id,
-        text: debriefing,
+      event_id: eventId,
+      user_id: currentUser.id,
+      text: debriefingText,
+      rating,
+      issues: issues || null,
+      learnings,
     });
 
-    if (debriefingInsertError) {
+  if (debriefingInsertError) {
     console.error(
-        "Fehler beim Speichern des Debriefings:",
-        debriefingInsertError.message,
+      "Fehler beim Speichern des Debriefings:",
+      debriefingInsertError.message,
     );
 
     redirect(`/dashboard/events/${eventId}?archiveError=debriefing`);
-    }
+  }
 
-    const { error: archiveUpdateError } = await supabase
+  const { error: archiveUpdateError } = await supabase
     .from("events")
     .update({ status: "Archiviert" })
     .eq("id", eventId);
 
-    if (archiveUpdateError) {
+  if (archiveUpdateError) {
     console.error(
-        "Fehler beim Archivieren des Events:",
-        archiveUpdateError.message,
+      "Fehler beim Archivieren des Events:",
+      archiveUpdateError.message,
     );
 
     redirect(`/dashboard/events/${eventId}?archiveError=status`);
-    }
+  }
 
   await supabase.from("event_logs").insert({
     event_id: eventId,
@@ -89,6 +121,7 @@ export async function archiveEvent(formData: FormData) {
 
   revalidatePath(`/dashboard/events/${eventId}`);
   revalidatePath("/dashboard/events");
+  revalidatePath("/dashboard/archive");
   revalidatePath("/dashboard");
 
   redirect(`/dashboard/events/${eventId}?from=archive`);

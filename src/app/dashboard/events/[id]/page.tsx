@@ -194,6 +194,21 @@ function AuditLogList({ logs }: AuditLogListProps) {
   );
 }
 
+function getDebriefingRatingLabel(rating: string | null | undefined) {
+  switch (rating) {
+    case "sehr_gut":
+      return "Sehr gut";
+    case "gut":
+      return "Gut";
+    case "neutral":
+      return "Neutral";
+    case "schlecht":
+      return "Schlecht";
+    default:
+      return "—";
+  }
+}
+
 export default async function EventDetailPage({
   params,
   searchParams,
@@ -410,12 +425,39 @@ export default async function EventDetailPage({
               title="Debriefing"
               description="Nachbereitung und Abschlussnotizen zu diesem Event."
             >
-              <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
-                <p className="whitespace-pre-wrap text-sm leading-6">
-                  {debriefing.text}
-                </p>
+              <div className="space-y-4 rounded-xl bg-[var(--color-surface-muted)] p-4">
+                {"rating" in debriefing && debriefing.rating ? (
+                  <>
+                    <DetailItem
+                      label="Wie lief das Event?"
+                      value={getDebriefingRatingLabel(debriefing.rating)}
+                    />
 
-                <p className="mt-4 text-xs text-[var(--color-text-muted)]">
+                    <DetailItem
+                      label="Probleme / Auffälligkeiten"
+                      value={
+                        <p className="whitespace-pre-wrap">
+                          {debriefing.issues?.trim() || "Keine besonderen Probleme erfasst."}
+                        </p>
+                      }
+                    />
+
+                    <DetailItem
+                      label="Verbesserungen / Learnings"
+                      value={
+                        <p className="whitespace-pre-wrap">
+                          {debriefing.learnings?.trim() || "—"}
+                        </p>
+                      }
+                    />
+                  </>
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm leading-6">
+                    {debriefing.text}
+                  </p>
+                )}
+
+                <p className="pt-2 text-xs text-[var(--color-text-muted)]">
                   Erstellt am {formatDateTime(debriefing.created_at)}
                   {debriefing.users?.email ? ` von ${debriefing.users.email}` : ""}
                 </p>

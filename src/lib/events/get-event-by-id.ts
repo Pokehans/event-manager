@@ -15,7 +15,10 @@ export type EventLogEntry = {
 
 export type EventDebriefing = {
   id: string;
-  text: string;
+  text: string | null;
+  rating: string | null;
+  issues: string | null;
+  learnings: string | null;
   created_at: string | null;
   user_id: string | null;
   users:
@@ -119,6 +122,17 @@ type RawLogData = {
   users?: RawLogUser | RawLogUser[] | null;
 };
 
+type RawDebriefingData = {
+  id: string;
+  text: string | null;
+  rating: string | null;
+  issues: string | null;
+  learnings: string | null;
+  created_at: string | null;
+  user_id: string | null;
+  users?: RawLogUser | RawLogUser[] | null;
+};
+
 function pickOne<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? value[0] ?? null : value;
@@ -197,6 +211,9 @@ const { data: debriefingData, error: debriefingError } = await supabase
     text,
     created_at,
     user_id,
+    rating,
+    issues,
+    learnings,
     users:user_id (
       id,
       email
@@ -257,11 +274,14 @@ if (debriefingError) {
       : null,
     debriefing: debriefingData
       ? {
-          id: debriefingData.id,
-          text: debriefingData.text,
-          created_at: debriefingData.created_at,
-          user_id: debriefingData.user_id,
-          users: pickOne(debriefingData.users),
+          id: (debriefingData as RawDebriefingData).id,
+          text: (debriefingData as RawDebriefingData).text,
+          rating: (debriefingData as RawDebriefingData).rating,
+          issues: (debriefingData as RawDebriefingData).issues,
+          learnings: (debriefingData as RawDebriefingData).learnings,
+          created_at: (debriefingData as RawDebriefingData).created_at,
+          user_id: (debriefingData as RawDebriefingData).user_id,
+          users: pickOne((debriefingData as RawDebriefingData).users),
         }
       : null,
     logs: ((logData ?? []) as RawLogData[]).map((log) => {
