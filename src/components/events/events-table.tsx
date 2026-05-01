@@ -182,6 +182,7 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
     searchParams.get("view") === "months" ? "months" : "table"
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortField, setSortField] = useState<"date" | "title" | "status">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); 
   useEffect(() => {
@@ -623,211 +624,262 @@ const hasActiveFilters =
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-4 shadow-sm backdrop-blur lg:sticky lg:top-4 lg:z-20">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3">
-            <div className="grid gap-3 lg:grid-cols-[minmax(260px,2fr)_minmax(180px,1fr)]">
-              <input
-                value={searchTerm}
-                onChange={(event) => {
-                  setSearchTerm(event.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Suche nach Titel oder Auftraggeber"
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-              />
-
-              <select
-                value={timeRangeFilter}
-                onChange={(event) => {
-                  setTimeRangeFilter(event.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-              >
-                <option value="all">Alle Zeiträume</option>
-                <option value="today">Heute</option>
-                <option value="next7">Nächste 7 Tage</option>
-                <option value="next30">Nächste 30 Tage</option>
-              </select>
+          <div className="flex items-center justify-between gap-3 lg:hidden">
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-text)]">
+                Filter
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                {activeChips.length > 0
+                  ? `${activeChips.length} Filter aktiv`
+                  : "Keine Filter aktiv"}
+              </p>
             </div>
 
-            <div
-              className={`grid gap-3 ${
-                isArchive ? "lg:grid-cols-3" : "lg:grid-cols-4"
-              }`}
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((prev) => !prev)}
+              className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
             >
-              {!isArchive ? (
-                <select
-                  value={statusFilter}
+              {filtersOpen ? "Filter ausblenden" : "Filter anzeigen"}
+            </button>
+          </div>
+
+          <div
+            className={`${filtersOpen ? "flex" : "hidden"} flex-col gap-4 lg:flex`}
+          >
+            <div className="flex flex-col gap-3">
+              <div className="grid gap-3 lg:grid-cols-[minmax(260px,2fr)_minmax(180px,1fr)]">
+                <input
+                  value={searchTerm}
                   onChange={(event) => {
-                    setStatusFilter(event.target.value);
+                    setSearchTerm(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Suche nach Titel oder Auftraggeber"
+                  className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                />
+
+                <select
+                  value={timeRangeFilter}
+                  onChange={(event) => {
+                    setTimeRangeFilter(event.target.value);
                     setCurrentPage(1);
                   }}
                   className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
                 >
-                  <option value="all">Alle Status</option>
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
+                  <option value="all">Alle Zeiträume</option>
+                  <option value="today">Heute</option>
+                  <option value="next7">Nächste 7 Tage</option>
+                  <option value="next30">Nächste 30 Tage</option>
+                </select>
+              </div>
+
+              <div
+                className={`grid gap-3 ${
+                  isArchive ? "lg:grid-cols-3" : "lg:grid-cols-4"
+                }`}
+              >
+                {!isArchive ? (
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => {
+                      setStatusFilter(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                  >
+                    <option value="all">Alle Status</option>
+                    {statusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+
+                <select
+                  value={roomFilter}
+                  onChange={(event) => {
+                    setRoomFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                >
+                  <option value="all">Alle Räume</option>
+                  <option value="__none__">Ohne Raum</option>
+                  {roomOptions.map((room) => (
+                    <option key={room} value={room}>
+                      {room}
                     </option>
                   ))}
                 </select>
-              ) : null}
 
-              <select
-                value={roomFilter}
-                onChange={(event) => {
-                  setRoomFilter(event.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-              >
-                <option value="all">Alle Räume</option>
-                <option value="__none__">Ohne Raum</option>
-                {roomOptions.map((room) => (
-                  <option key={room} value={room}>
-                    {room}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={departmentFilter}
-                onChange={(event) => {
-                  setDepartmentFilter(event.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-              >
-                <option value="all">Alle Bereiche</option>
-                {departmentOptions.map((department) => (
-                  <option key={department} value={department}>
-                    {department}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={paymentFilter}
-                onChange={(event) => {
-                  setPaymentFilter(event.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-              >
-                <option value="all">Alle Zahlungsarten</option>
-                <option value="__none__">Ohne Zahlungsart</option>
-                {paymentOptions.map((paymentType) => (
-                  <option key={paymentType} value={paymentType}>
-                    {getPaymentTypeLabel(paymentType)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid gap-3 lg:grid-cols-2">
-              <select
-                value={monthFilter}
-                onChange={(event) => {
-                  setMonthFilter(event.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-              >
-                <option value="all">Alle Monate</option>
-                {MONTHS.map((month, index) => {
-                  const value = String(index + 1).padStart(2, "0");
-
-                  return (
-                    <option key={month} value={value}>
-                      {month}
+                <select
+                  value={departmentFilter}
+                  onChange={(event) => {
+                    setDepartmentFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                >
+                  <option value="all">Alle Bereiche</option>
+                  {departmentOptions.map((department) => (
+                    <option key={department} value={department}>
+                      {department}
                     </option>
-                  );
-                })}
-              </select>
+                  ))}
+                </select>
 
-              <select
-                value={yearFilter}
-                onChange={(event) => {
-                  setYearFilter(event.target.value);
-                  setCurrentPage(1);
-                }}
-                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
-              >
-                <option value="all">Alle Jahre</option>
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 shadow-sm">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <span className="text-sm font-medium text-[var(--color-text)]">
-                Teilnehmer
-              </span>
-
-              <span className="text-xs text-[var(--color-text-muted)]">
-                {minParticipantsValue} – {maxParticipantsValue} Personen
-              </span>
-            </div>
-
-            <div className="relative h-8">
-              <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--color-surface-muted)]" />
-
-              <div
-                className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--color-primary)]"
-                style={{
-                  left: `${participantMinPercent}%`,
-                  right: `${100 - participantMaxPercent}%`,
-                }}
-              />
-
-              <input
-                type="range"
-                min={0}
-                max={participantSliderMax}
-                value={minParticipantsValue}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-
-                  if (value <= maxParticipantsValue) {
-                    setParticipantMinFilter(String(value));
+                <select
+                  value={paymentFilter}
+                  onChange={(event) => {
+                    setPaymentFilter(event.target.value);
                     setCurrentPage(1);
-                  }
-                }}
-                className="participant-range participant-range-min absolute left-0 top-1/2 z-30 h-0 w-full -translate-y-1/2 appearance-none bg-transparent"
-              />
+                  }}
+                  className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                >
+                  <option value="all">Alle Zahlungsarten</option>
+                  <option value="__none__">Ohne Zahlungsart</option>
+                  {paymentOptions.map((paymentType) => (
+                    <option key={paymentType} value={paymentType}>
+                      {getPaymentTypeLabel(paymentType)}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <input
-                type="range"
-                min={0}
-                max={participantSliderMax}
-                value={maxParticipantsValue}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-
-                  if (value >= minParticipantsValue) {
-                    setParticipantMaxFilter(String(value));
+              <div className="grid gap-3 lg:grid-cols-2">
+                <select
+                  value={monthFilter}
+                  onChange={(event) => {
+                    setMonthFilter(event.target.value);
                     setCurrentPage(1);
-                  }
-                }}
-                className="participant-range participant-range-max absolute left-0 top-1/2 z-20 h-0 w-full -translate-y-1/2 appearance-none bg-transparent"
-              />
+                  }}
+                  className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                >
+                  <option value="all">Alle Monate</option>
+                  {MONTHS.map((month, index) => {
+                    const value = String(index + 1).padStart(2, "0");
+
+                    return (
+                      <option key={month} value={value}>
+                        {month}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                <select
+                  value={yearFilter}
+                  onChange={(event) => {
+                    setYearFilter(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                >
+                  <option value="all">Alle Jahre</option>
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div className="mt-1 flex justify-between text-[11px] text-[var(--color-text-muted)]">
-              <span>0</span>
-              <span>{participantSliderMax}+</span>
+            <div className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 shadow-sm">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-[var(--color-text)]">
+                  Teilnehmer
+                </span>
+
+                <span className="text-xs text-[var(--color-text-muted)]">
+                  {minParticipantsValue} – {maxParticipantsValue} Personen
+                </span>
+              </div>
+
+              <div className="relative h-8">
+                <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--color-surface-muted)]" />
+
+                <div
+                  className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-[var(--color-primary)]"
+                  style={{
+                    left: `${participantMinPercent}%`,
+                    right: `${100 - participantMaxPercent}%`,
+                  }}
+                />
+
+                <input
+                  type="range"
+                  min={0}
+                  max={participantSliderMax}
+                  value={minParticipantsValue}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+
+                    if (value <= maxParticipantsValue) {
+                      setParticipantMinFilter(String(value));
+                      setCurrentPage(1);
+                    }
+                  }}
+                  className="participant-range participant-range-min absolute left-0 top-1/2 z-30 h-0 w-full -translate-y-1/2 appearance-none bg-transparent"
+                />
+
+                <input
+                  type="range"
+                  min={0}
+                  max={participantSliderMax}
+                  value={maxParticipantsValue}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+
+                    if (value >= minParticipantsValue) {
+                      setParticipantMaxFilter(String(value));
+                      setCurrentPage(1);
+                    }
+                  }}
+                  className="participant-range participant-range-max absolute left-0 top-1/2 z-20 h-0 w-full -translate-y-1/2 appearance-none bg-transparent"
+                />
+              </div>
+
+              <div className="mt-1 flex justify-between text-[11px] text-[var(--color-text-muted)]">
+                <span>0</span>
+                <span>{participantSliderMax}+</span>
+              </div>
             </div>
+
+            {!isArchive ? (
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] sm:w-fit">
+                <input
+                  type="checkbox"
+                  checked={showPastEvents}
+                  onChange={(event) => {
+                    setShowPastEvents(event.target.checked);
+                    setCurrentPage(1);
+                  }}
+                  className="sr-only"
+                />
+
+                <span className="relative h-5 w-9 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] transition">
+                  <span
+                    className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition ${
+                      showPastEvents
+                        ? "left-4 bg-[var(--color-primary)]"
+                        : "left-0.5 bg-[var(--color-text-muted)]"
+                    }`}
+                  />
+                </span>
+
+                Vergangene Events
+              </label>
+            ) : null}
           </div>
 
           {activeChips.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="mb-2 flex flex-wrap gap-2">
               {activeChips.map((chip, index) => (
                 <div
                   key={index}
@@ -836,6 +888,7 @@ const hasActiveFilters =
                   <span>{chip.label}</span>
 
                   <button
+                    type="button"
                     onClick={() => {
                       chip.onRemove();
                       setCurrentPage(1);
@@ -856,33 +909,7 @@ const hasActiveFilters =
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              {!isArchive ? (
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)]">
-                  <input
-                    type="checkbox"
-                    checked={showPastEvents}
-                    onChange={(event) => {
-                      setShowPastEvents(event.target.checked);
-                      setCurrentPage(1);
-                    }}
-                    className="sr-only"
-                  />
-
-                  <span className="relative h-5 w-9 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] transition">
-                    <span
-                      className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition ${
-                        showPastEvents
-                          ? "left-4 bg-[var(--color-primary)]"
-                          : "left-0.5 bg-[var(--color-text-muted)]"
-                      }`}
-                    />
-                  </span>
-
-                  Vergangene Events
-                </label>
-              ) : null}
-
-              <div className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1">
+              <div className="hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1 lg:inline-flex">
                 <button
                   type="button"
                   onClick={() => {
@@ -913,7 +940,6 @@ const hasActiveFilters =
                   Monatsgruppen
                 </button>
               </div>
-
               <button
                 type="button"
                 disabled={!hasActiveFilters}
