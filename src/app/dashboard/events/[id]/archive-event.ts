@@ -33,7 +33,10 @@ export async function archiveEvent(formData: FormData) {
     redirect("/dashboard/events");
   }
 
-  if (!validRatings.includes(rating)) {
+  if (
+    !validRatings.includes(rating) ||
+    (rating === "schlecht" && learnings.length < 10)
+  ) {
     redirect(`/dashboard/events/${eventId}?archiveError=debriefing`);
   }
 

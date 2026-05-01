@@ -16,6 +16,7 @@ const ratingOptions = [
 
 export function ArchiveEventButton({ eventId, action }: Props) {
   const [open, setOpen] = useState(false);
+  const [selectedRating, setSelectedRating] = useState("");
 
   return (
     <>
@@ -55,6 +56,8 @@ export function ArchiveEventButton({ eventId, action }: Props) {
                         name="rating"
                         value={option.value}
                         required
+                        checked={selectedRating === option.value}
+                        onChange={() => setSelectedRating(option.value)}
                         className="h-4 w-4 accent-[var(--color-primary)]"
                       />
                       <span>{option.label}</span>
@@ -90,11 +93,15 @@ export function ArchiveEventButton({ eventId, action }: Props) {
                   id="learnings"
                   name="learnings"
                   rows={4}
+                  required={selectedRating === "schlecht"}
+                  minLength={selectedRating === "schlecht" ? 10 : undefined}
                   placeholder="Was nehmen wir für zukünftige Events mit?"
                   className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]"
                 />
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  Optional – nur ausfüllen, wenn es relevante Learnings gibt.
+                  {selectedRating === "schlecht"
+                    ? "Pflichtfeld bei schlechter Bewertung – bitte mindestens 10 Zeichen erfassen."
+                    : "Optional – nur ausfüllen, wenn es relevante Learnings gibt."}
                 </p>
               </div>
 
