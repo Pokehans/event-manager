@@ -207,7 +207,11 @@ const hasActiveFilters =
 
   const statusOptions = useMemo(() => {
     return Array.from(
-      new Set(events.map((event) => getStatusLabel(event.status)))
+      new Set(
+        events
+          .map((event) => getStatusLabel(event.status))
+          .filter((status) => status !== "Archiviert")
+      )
     ).sort();
   }, [events]);
 
