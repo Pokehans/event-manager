@@ -10,8 +10,12 @@ export async function archiveEvent(formData: FormData) {
   const eventId = String(formData.get("eventId") ?? "");
   const debriefing = String(formData.get("debriefing") ?? "").trim();
 
-  if (!eventId || debriefing.length < 10) {
-    return;
+  if (!eventId) {
+    redirect("/dashboard/events");
+  }
+
+  if (debriefing.length < 10) {
+    redirect(`/dashboard/events/${eventId}?archiveError=debriefing`);
   }
 
   const currentUser = await getCurrentUser({ redirectTo: "/" });
@@ -87,5 +91,5 @@ export async function archiveEvent(formData: FormData) {
   revalidatePath("/dashboard/events");
   revalidatePath("/dashboard");
 
-  redirect(`/dashboard/events/${eventId}`);
+  redirect(`/dashboard/events/${eventId}?from=archive`);
 }

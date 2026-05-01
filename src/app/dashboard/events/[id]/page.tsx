@@ -15,6 +15,7 @@ type Props = {
     month?: string;
     year?: string;
     from?: string;
+    archiveError?: string;
   }>;
 };
 
@@ -203,6 +204,7 @@ export default async function EventDetailPage({
   const month = query?.month;
   const year = query?.year;
   const from = query?.from;
+  const archiveError = query?.archiveError;
 
   const backHref =
   from === "cockpit"
@@ -305,6 +307,16 @@ export default async function EventDetailPage({
           </div>
         </div>
       </div>
+      
+      {archiveError === "debriefing" ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-[var(--color-text)]">
+          <p className="font-semibold">Archivierung nicht möglich</p>
+          <p className="mt-1 text-[var(--color-text-muted)]">
+            Bitte erfasse ein Debriefing mit mindestens 10 Zeichen, bevor du den
+            Event archivierst.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
