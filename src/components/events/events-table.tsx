@@ -275,6 +275,10 @@ function getTimeRangeLabel(value: string) {
       return "Nächste 7 Tage";
     case "next30":
       return "Nächste 30 Tage";
+    case "last7":
+      return "Letzte 7 Tage";
+    case "last30":
+      return "Letzte 30 Tage";
     default:
       return "";
   }
@@ -478,6 +482,18 @@ const hasActiveFilters =
         matchesTimeRange = eventDate >= now && eventDate <= next30;
       }
 
+      if (timeRangeFilter === "last7") {
+        const last7 = new Date();
+        last7.setDate(now.getDate() - 7);
+        matchesTimeRange = eventDate >= last7 && eventDate <= now;
+      }
+
+      if (timeRangeFilter === "last30") {
+        const last30 = new Date();
+        last30.setDate(now.getDate() - 30);
+        matchesTimeRange = eventDate >= last30 && eventDate <= now;
+      }
+
       const matchesTime = isArchive || showPastEvents || event.date >= today;
 
       return (
@@ -672,8 +688,18 @@ const hasActiveFilters =
                 >
                   <option value="all">Alle Zeiträume</option>
                   <option value="today">Heute</option>
-                  <option value="next7">Nächste 7 Tage</option>
-                  <option value="next30">Nächste 30 Tage</option>
+
+                  {isArchive ? (
+                    <>
+                      <option value="last7">Letzte 7 Tage</option>
+                      <option value="last30">Letzte 30 Tage</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="next7">Nächste 7 Tage</option>
+                      <option value="next30">Nächste 30 Tage</option>
+                    </>
+                  )}
                 </select>
               </div>
 
