@@ -156,15 +156,18 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
     searchParams.get("timeRange") ?? "all"
   );
 
+  const participantSliderMax = Math.max(
+    50,
+    ...events.map((event) => (event.adults ?? 0) + (event.children ?? 0))
+  );
+
   const minParticipantsValue = participantMinFilter
     ? Number(participantMinFilter)
     : 0;
 
   const maxParticipantsValue = participantMaxFilter
     ? Number(participantMaxFilter)
-    : 200;
-
-  const participantSliderMax = 200;
+    : participantSliderMax;
 
   const participantMinPercent =
     (minParticipantsValue / participantSliderMax) * 100;
