@@ -250,6 +250,12 @@ export default function DashboardShell({
     ROLES.SYSTEMADMIN,
   ]);
 
+  const canAccessCockpit = hasRole(userRole, [
+    ROLES.EDITOR,
+    ROLES.ADMIN,
+    ROLES.SYSTEMADMIN,
+  ]);
+
   if (!passwordGuardChecked) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-6">
@@ -321,12 +327,14 @@ export default function DashboardShell({
                   icon={<DashboardIcon />}
                   collapsed={sidebarCollapsed}
                 />
-                <SidebarLink
-                  href="/dashboard/cockpit"
-                  label="Cockpit"
-                  icon={<CockpitIcon />}
-                  collapsed={sidebarCollapsed}
-                />
+                {canAccessCockpit ? (
+                  <SidebarLink
+                    href="/dashboard/cockpit"
+                    label="Cockpit"
+                    icon={<CockpitIcon />}
+                    collapsed={sidebarCollapsed}
+                  />
+                ) : null}
                 {canCreateEvent ? (
                   <SidebarLink
                     href="/dashboard/events/new"
@@ -416,12 +424,14 @@ export default function DashboardShell({
                     icon={<DashboardIcon />}
                     onClick={() => setMobileMenuOpen(false)}
                   />
-                  <SidebarLink
-                    href="/dashboard/cockpit"
-                    label="Cockpit"
-                    icon={<CockpitIcon />}
-                    onClick={() => setMobileMenuOpen(false)}
-                  />
+                  {canAccessCockpit ? (
+                    <SidebarLink
+                      href="/dashboard/cockpit"
+                      label="Cockpit"
+                      icon={<CockpitIcon />}
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                  ) : null}
                   {canCreateEvent ? (
                     <SidebarLink
                       href="/dashboard/events/new"

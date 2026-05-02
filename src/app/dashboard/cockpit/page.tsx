@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { requireRole } from "@/lib/auth/get-current-user";
 import { ROLES } from "@/lib/auth/roles";
 import OperativeCockpit from "@/components/cockpit/operative-cockpit";
 import { getEvents } from "@/lib/events/get-events";
@@ -112,9 +112,11 @@ export default async function CockpitPage({
 }: {
   searchParams: SearchParams;
 }) {
-  const user = await getCurrentUser({ redirectTo: "/" });
-
-  if (!user) return null;
+  const user = await requireRole([
+    ROLES.EDITOR,
+    ROLES.ADMIN,
+    ROLES.SYSTEMADMIN,
+    ]);
 
   const params = await searchParams;
     const qualityPeriod = getQualityPeriod(params.qualityPeriod);
@@ -123,7 +125,7 @@ export default async function CockpitPage({
         getPreviousQualityPeriodRange(qualityPeriodRange);
 
   const isAdminView =
-    user.role === ROLES.ADMIN || user.role === ROLES.SYSTEMADMIN;
+    user?.role === ROLES.ADMIN || user?.role === ROLES.SYSTEMADMIN;
 
   const supabase = await createClient();
 
