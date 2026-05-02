@@ -73,6 +73,24 @@ function getQualityPeriodRange(period: QualityPeriod) {
   };
 }
 
+function getPreviousQualityPeriodRange(range: { start: Date; end: Date }) {
+  const duration = range.end.getTime() - range.start.getTime();
+
+  return {
+    start: new Date(range.start.getTime() - duration),
+    end: new Date(range.end.getTime() - duration),
+  };
+}
+
+function getRatingTrend(
+  currentAverage: number | null,
+  previousAverage: number | null
+) {
+  if (currentAverage === null || previousAverage === null) return null;
+
+  return currentAverage - previousAverage;
+}
+
 function formatDateForSupabase(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -101,6 +119,8 @@ export default async function CockpitPage({
   const params = await searchParams;
     const qualityPeriod = getQualityPeriod(params.qualityPeriod);
     const qualityPeriodRange = getQualityPeriodRange(qualityPeriod);
+    const previousQualityPeriodRange =
+        getPreviousQualityPeriodRange(qualityPeriodRange);
 
   const isAdminView =
     user.role === ROLES.ADMIN || user.role === ROLES.SYSTEMADMIN;
@@ -122,11 +142,39 @@ export default async function CockpitPage({
             .lt("events.date", formatDateForSupabase(qualityPeriodRange.end))
         : { data: [] };
 
+    const { data: previousDebriefingRatings } = isAdminView
+        ? await supabase
+            .from("event_debriefings")
+            .select(`
+            rating,
+            events!inner (
+                date,
+                status
+            )
+            `)
+            .eq("events.status", "Archiviert")
+            .gte(
+            "events.date",
+            formatDateForSupabase(previousQualityPeriodRange.start)
+            )
+            .lt(
+            "events.date",
+            formatDateForSupabase(previousQualityPeriodRange.end)
+            )
+        : { data: [] };
+
     const validDebriefingRatings = (debriefingRatings ?? [])
-    .map((item) => item.rating)
-    .filter(isDebriefingRating);
+        .map((item) => item.rating)
+        .filter(isDebriefingRating);
 
     const averageRating = getAverageRating(validDebriefingRatings);
+    const previousValidDebriefingRatings = (previousDebriefingRatings ?? [])
+        .map((item) => item.rating)
+        .filter(isDebriefingRating);
+
+    const previousAverageRating = getAverageRating(previousValidDebriefingRatings);
+
+    const ratingTrend = getRatingTrend(averageRating, previousAverageRating);
 
     const poorRatingCount = validDebriefingRatings.filter(
         (rating) => rating === "schlecht"
@@ -229,9 +277,26 @@ export default async function CockpitPage({
                 <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
                     {averageRating ? averageRating.toFixed(1) : "Noch keine Daten vorhanden."}
                 </p>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                    Skala 1 bis 4
-                </p>
+                <div className="mt-1 space-y-1 text-xs text-[var(--color-text-muted)]">
+                    <p>Skala 1 bis 4</p>
+
+                    {ratingTrend !== null ? (
+                        <p
+                        className={
+                            ratingTrend > 0
+                            ? "font-semibold text-emerald-700"
+                            : ratingTrend < 0
+                                ? "font-semibold text-red-700"
+                                : "font-semibold text-[var(--color-text-muted)]"
+                        }
+                        >
+                        {ratingTrend > 0 ? "↑" : ratingTrend < 0 ? "↓" : "→"}{" "}
+                        {Math.abs(ratingTrend).toFixed(1)} zum vorherigen Zeitraum
+                        </p>
+                    ) : (
+                        <p>Keine Vergleichsdaten vorhanden.</p>
+                    )}
+                    </div>
                 </div>
 
                 <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
