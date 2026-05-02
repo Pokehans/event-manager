@@ -1,15 +1,23 @@
 import {
   Document,
+  Image,
   Page,
   StyleSheet,
   Text,
   View,
 } from "@react-pdf/renderer";
 import type { EventDetail } from "@/lib/events/get-event-by-id";
+import fs from "node:fs";
+import path from "node:path";
 
 type Props = {
   event: EventDetail;
 };
+
+const logoPath = path.join(process.cwd(), "public", "logo.png");
+const logoBase64 = `data:image/png;base64,${fs
+  .readFileSync(logoPath)
+  .toString("base64")}`;
 
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("de-CH", {
@@ -65,19 +73,8 @@ function getCreatorLabel(email: string | null | undefined) {
   return email.split("@")[0] || email;
 }
 
-function Field({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number | null | undefined;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value || "—"}</Text>
-    </View>
-  );
+function text(value: string | null | undefined, fallback = "Keine Angaben") {
+  return value?.trim() || fallback;
 }
 
 function Section({
@@ -89,8 +86,25 @@ function Section({
 }) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {children}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      <View style={styles.sectionBody}>{children}</View>
+    </View>
+  );
+}
+
+function InfoLine({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <View style={styles.infoLine}>
+      <Text style={styles.infoLabel}>{label}:</Text>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
@@ -105,81 +119,98 @@ export function EventRunSheetPdf({ event }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>{event.title}</Text>
-            <Text style={styles.date}>{formatDate(event.date)}</Text>
+        <View style={styles.document}>
+          <View style={styles.header}>
+            <View style={styles.logoBox}>
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                <Image src={logoBase64} style={styles.logo} />
+            </View>
+
+            <View style={styles.headerContent}>
+              <Text style={styles.title}>{event.title}</Text>
+              <Text style={styles.date}>{formatDate(event.date)}</Text>
+            </View>
+
+            <View style={styles.creatorBox}>
+              <Text style={styles.creatorText}>
+                Verfasst von: {getCreatorLabel(event.users?.email)}
+              </Text>
+            </View>
           </View>
 
-          <View style={styles.meta}>
-            <Text>Event-Laufzettel</Text>
-            <Text>Verfasst von: {getCreatorLabel(event.users?.email)}</Text>
-          </View>
-        </View>
-
-        <Section title="Kontakt">
-          <Text style={styles.text}>{event.company_name || ""}</Text>
-          <Text style={styles.text}>
-            {contactName || "Keine Kontaktperson erfasst"}
-          </Text>
-          <Text style={styles.text}>{event.address || "Keine Adresse erfasst"}</Text>
-          <Text style={styles.text}>
-            {event.email || "Keine E-Mail"} /{" "}
-            {event.phone || "Keine Telefonnummer"}
-          </Text>
-        </Section>
-
-        <View style={styles.twoColumns}>
-          <Section title="Gebuchte Räume">
-            <Text style={styles.text}>{getRoomLabel(event.room)}</Text>
-          </Section>
-
-          <Section title="Personenzahl">
-            <Field label="Erwachsene" value={event.adults ?? 0} />
-            <Field label="Kinder" value={event.children ?? 0} />
-            <Field label="Total" value={totalGuests} />
-          </Section>
-        </View>
-
-        <View style={styles.twoColumns}>
-          <Section title="Technischer Dienst">
-            <Text style={styles.text}>{event.tech?.trim() || "Keine Angaben"}</Text>
-          </Section>
-
-          <Section title="Infrastruktur">
+          <Section title="Kontaktdaten">
             <Text style={styles.text}>
-              {event.infrastructure?.trim() || "Keine Angaben"}
+              {event.company_name ? `${event.company_name}\n` : ""}
+              {contactName || "Keine Kontaktperson erfasst"}
+              {"\n"}
+              {text(event.address, "Keine Adresse erfasst")}
+              {"\n"}
+              {text(event.email, "Keine E-Mail")} /{" "}
+              {text(event.phone, "Keine Telefonnummer")}
             </Text>
           </Section>
-        </View>
 
-        <Section title="Zeitablauf">
-          <Text style={styles.text}>
-            {event.schedule?.trim() || "Ablauf noch offen"}
-          </Text>
-        </Section>
+          <View style={styles.twoColumnRow}>
+            <View style={styles.leftColumn}>
+              <Section title="Gebuchte Räume">
+                <Text style={styles.text}>{getRoomLabel(event.room)}</Text>
+              </Section>
+            </View>
 
-        <Section title="Essen & Getränke">
-          <Text style={styles.subLabel}>Essen:</Text>
-          <Text style={styles.text}>{event.food?.trim() || "Keine Angaben"}</Text>
+            <View style={styles.rightColumn}>
+              <Section title="Personenzahl">
+                <InfoLine label="Erwachsene" value={event.adults ?? 0} />
+                <InfoLine label="Kinder" value={event.children ?? 0} />
+                <InfoLine label="Total" value={totalGuests} />
+              </Section>
+            </View>
+          </View>
 
-          <Text style={styles.subLabel}>Getränke:</Text>
-          <Text style={styles.text}>{event.drinks?.trim() || "Keine Angaben"}</Text>
-        </Section>
+          <View style={styles.twoColumnRow}>
+            <View style={styles.leftColumn}>
+              <Section title="Technischer Dienst">
+                <Text style={styles.text}>{text(event.tech)}</Text>
+              </Section>
+            </View>
 
-        <Section title="Diverses">
-          <Text style={styles.text}>
-            {event.notes?.trim() || "Keine besonderen Hinweise erfasst"}
-          </Text>
-        </Section>
+            <View style={styles.rightColumn}>
+              <Section title="Infrastruktur">
+                <Text style={styles.text}>{text(event.infrastructure)}</Text>
+              </Section>
+            </View>
+          </View>
 
-        <Section title="Zahlungskonditionen">
-          <Text style={styles.text}>{getPaymentTypeLabel(event.payment_type)}</Text>
-        </Section>
+          <Section title="Zeitablauf">
+            <Text style={styles.text}>{text(event.schedule, "Ablauf noch offen")}</Text>
+          </Section>
 
-        <View style={styles.footer}>
-          <Text>Interner Laufzettel</Text>
-          <Text>Biffig AG | Biffig 1 | 6247 Schötz</Text>
+          <Section title="Essen & Getränke">
+            <Text style={styles.subTitle}>Essen:</Text>
+            <Text style={styles.text}>{text(event.food)}</Text>
+
+            <Text style={styles.subTitle}>Getränke:</Text>
+            <Text style={styles.text}>{text(event.drinks)}</Text>
+          </Section>
+
+          <Section title="Diverses">
+            <Text style={styles.text}>
+              {text(event.notes, "Keine besonderen Hinweise")}
+            </Text>
+          </Section>
+
+          <Section title="Zahlungskonditionen">
+            <Text style={styles.text}>{getPaymentTypeLabel(event.payment_type)}</Text>
+          </Section>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerCompany}>
+              Biffig AG | Biffig 1 | 6247 Schötz | 041 984 23 00 |
+              www.biffig.ch
+            </Text>
+            <Text style={styles.footerMeta}>
+              {new Date().toLocaleString("de-CH")} 1/1
+            </Text>
+          </View>
         </View>
       </Page>
     </Document>
@@ -188,81 +219,124 @@ export function EventRunSheetPdf({ event }: Props) {
 
 const styles = StyleSheet.create({
   page: {
-    padding: 36,
+    padding: 28,
     fontSize: 10,
     fontFamily: "Helvetica",
-    color: "#111827",
+    color: "#111111",
+    backgroundColor: "#FFFFFF",
+  },
+  document: {
+    borderWidth: 1,
+    borderColor: "#D6D6D6",
+    minHeight: "100%",
+    padding: 18,
   },
   header: {
-    marginBottom: 24,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#D1D5DB",
     flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 20,
+    alignItems: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "#111111",
+    paddingBottom: 12,
+    marginBottom: 14,
+  },
+  logoBox: {
+    width: 82,
+    marginRight: 14,
+  },
+  logo: {
+    width: 76,
+    height: 42,
+    objectFit: "contain",
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   date: {
     fontSize: 12,
-    color: "#374151",
   },
-  meta: {
+  creatorBox: {
+    width: 130,
+    alignItems: "flex-end",
+  },
+  creatorText: {
     fontSize: 9,
-    color: "#4B5563",
-    textAlign: "right",
-    gap: 3,
   },
   section: {
-    marginBottom: 14,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
+    borderWidth: 1,
+    borderColor: "#D8D8D8",
+    marginBottom: 8,
+  },
+  sectionHeader: {
+    backgroundColor: "#F1F1F1",
+    borderBottomWidth: 1,
+    borderBottomColor: "#D8D8D8",
+    paddingVertical: 4,
+    paddingHorizontal: 7,
   },
   sectionTitle: {
-    marginBottom: 6,
     fontSize: 9,
     fontWeight: "bold",
-    color: "#6B7280",
     textTransform: "uppercase",
+  },
+  sectionBody: {
+    paddingVertical: 7,
+    paddingHorizontal: 7,
+    minHeight: 28,
+  },
+  twoColumnRow: {
+    flexDirection: "row",
+    marginBottom: 0,
+  },
+  leftColumn: {
+    width: "62%",
+    paddingRight: 5,
+  },
+  rightColumn: {
+    width: "38%",
+    paddingLeft: 5,
   },
   text: {
     fontSize: 10,
-    lineHeight: 1.5,
+    lineHeight: 1.45,
+  },
+  subTitle: {
+    fontSize: 10,
+    fontWeight: "bold",
+    marginTop: 3,
     marginBottom: 2,
   },
-  twoColumns: {
+  infoLine: {
     flexDirection: "row",
-    gap: 18,
-  },
-  field: {
     marginBottom: 3,
   },
-  label: {
-    fontSize: 9,
-    color: "#6B7280",
-  },
-  value: {
-    fontSize: 10,
-  },
-  subLabel: {
-    marginTop: 4,
-    marginBottom: 2,
+  infoLabel: {
+    width: 72,
     fontSize: 10,
     fontWeight: "bold",
   },
+  infoValue: {
+    fontSize: 10,
+  },
   footer: {
-    marginTop: 18,
-    paddingTop: 8,
+    marginTop: "auto",
     borderTopWidth: 1,
-    borderTopColor: "#D1D5DB",
-    fontSize: 8,
-    color: "#6B7280",
+    borderTopColor: "#D8D8D8",
+    paddingTop: 7,
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  footerCompany: {
+    fontSize: 8,
+    width: "72%",
+  },
+  footerMeta: {
+    fontSize: 8,
+    width: "28%",
+    textAlign: "right",
   },
 });
