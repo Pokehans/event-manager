@@ -309,6 +309,14 @@ export default async function EventDetailPage({
               {backLabel}
             </Link>
 
+            <Link
+              href={`/dashboard/events/${event.id}/print`}
+              target="_blank"
+              className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
+            >
+              Drucken
+            </Link>
+
             {canEditActiveEvent ? (
               <Link
                 href={`/dashboard/events/${event.id}/edit`}
