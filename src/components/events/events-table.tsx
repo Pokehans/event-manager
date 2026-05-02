@@ -133,8 +133,13 @@ export default function EventsTable({
     `/dashboard/events/${eventId}?from=${from}`;
 
   const isArchive = variant === "archive";
-  const archiveFrom = isArchive ? searchParams.get("from") ?? "" : "";
-  const archiveTo = isArchive ? searchParams.get("to") ?? "" : "";
+  const [archiveFromFilter, setArchiveFromFilter] = useState(
+    isArchive ? searchParams.get("from") ?? "" : ""
+  );
+
+  const [archiveToFilter, setArchiveToFilter] = useState(
+    isArchive ? searchParams.get("to") ?? "" : ""
+  );
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState(
     isArchive ? "all" : searchParams.get("status") ?? "all"
@@ -198,8 +203,8 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
     const params = new URLSearchParams();
 
     if (isArchive && ratingFilter !== "all") params.set("rating", ratingFilter);
-    if (isArchive && archiveFrom) params.set("from", archiveFrom);
-    if (isArchive && archiveTo) params.set("to", archiveTo);
+    if (isArchive && archiveFromFilter) params.set("from", archiveFromFilter);
+    if (isArchive && archiveToFilter) params.set("to", archiveToFilter);
 
     if (searchTerm.trim()) params.set("search", searchTerm.trim());
     if (!isArchive && statusFilter !== "all") params.set("status", statusFilter);
@@ -239,8 +244,8 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
     viewMode,
     pathname,
     router,
-    archiveFrom,
-    archiveTo,
+    archiveFromFilter,
+    archiveToFilter,
     isArchive,
   ]);
 
@@ -248,6 +253,10 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
   setSearchTerm("");
   if (!isArchive) setStatusFilter("all");
   if (isArchive) setRatingFilter("all");
+  if (isArchive) {
+    setArchiveFromFilter("");
+    setArchiveToFilter("");
+  }
   setMonthFilter("all");
   setYearFilter("all");
   setDepartmentFilter("all");
@@ -320,6 +329,8 @@ const hasActiveFilters =
   searchTerm.trim().length > 0 ||
   (!isArchive && statusFilter !== "all") ||
   (isArchive && ratingFilter !== "all") ||
+  (isArchive && archiveFromFilter.trim().length > 0) ||
+  (isArchive && archiveToFilter.trim().length > 0) ||
   monthFilter !== "all" ||
   yearFilter !== "all" ||
   departmentFilter !== "all" ||
@@ -344,6 +355,16 @@ const hasActiveFilters =
     isArchive && ratingFilter !== "all" && {
       label: `Bewertung: ${getRatingLabel(ratingFilter)}`,
       onRemove: () => setRatingFilter("all"),
+    },
+
+    isArchive && (archiveFromFilter || archiveToFilter) && {
+      label: `Zeitraum: ${
+        archiveFromFilter ? formatDate(archiveFromFilter) : "offen"
+      } – ${archiveToFilter ? formatDate(archiveToFilter) : "offen"}`,
+      onRemove: () => {
+        setArchiveFromFilter("");
+        setArchiveToFilter("");
+      },
     },
 
     roomFilter !== "all" && {
@@ -464,8 +485,8 @@ const hasActiveFilters =
       const search = searchTerm.toLowerCase().trim();
       const matchesArchiveDateRange =
         !isArchive ||
-        ((!archiveFrom || event.date >= archiveFrom) &&
-          (!archiveTo || event.date < archiveTo));
+        ((!archiveFromFilter || event.date >= archiveFromFilter) &&
+          (!archiveToFilter || event.date < archiveToFilter));
 
       const matchesSearch =
         search.length === 0 ||
@@ -571,8 +592,8 @@ const hasActiveFilters =
     timeRangeFilter,
     showPastEvents,
     isArchive,
-    archiveFrom,
-    archiveTo,
+    archiveFromFilter,
+    archiveToFilter,
   ]);
 
   const sortedEvents = useMemo(() => {
