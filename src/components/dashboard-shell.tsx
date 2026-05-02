@@ -407,43 +407,51 @@ export default function DashboardShell({
                     href="/dashboard"
                     label="Dashboard"
                     icon={<DashboardIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                   <SidebarLink
                     href="/dashboard/cockpit"
                     label="Cockpit"
                     icon={<CockpitIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                   {canCreateEvent ? (
                     <SidebarLink
                       href="/dashboard/events/new"
                       label="Event erstellen"
                       icon={<EventsIcon />}
+                      onClick={() => setMobileMenuOpen(false)}
                     />
                   ) : null}
                   <SidebarLink
                     href="/dashboard/events"
                     label="Eventliste"
                     icon={<EventListIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                   <SidebarLink
                     href="/dashboard/archive"
                     label="Archiv"
                     icon={<ArchiveIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                   <SidebarLink
                     href="/dashboard/profile"
                     label="Profil"
                     icon={<ProfileIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                   <SidebarLink
                     href="#"
                     label="Räume"
                     icon={<RoomsIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                   <SidebarLink
                     href="#"
                     label="Benutzer"
                     icon={<UsersIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
                   />
                 </nav>
 

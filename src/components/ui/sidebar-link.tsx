@@ -10,6 +10,7 @@ type SidebarLinkProps = {
   icon: ReactNode;
   active?: boolean;
   collapsed?: boolean;
+  onClick?: () => void;
 };
 
 export default function SidebarLink({
@@ -18,6 +19,7 @@ export default function SidebarLink({
   icon,
   active,
   collapsed = false,
+  onClick,
 }: SidebarLinkProps) {
   const pathname = usePathname();
 
@@ -27,6 +29,7 @@ export default function SidebarLink({
     <Link
       href={href}
       title={collapsed ? label : undefined}
+      onClick={onClick}
       className={`group flex items-center rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
         collapsed ? "justify-center" : "gap-3"
       } ${
