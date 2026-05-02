@@ -285,6 +285,12 @@ export default async function EventDetailPage({
   const olderLogs = logs.slice(3);
   const hasLogs = logs.length > 0;
   const hasMoreLogs = logs.length > 3;
+  const hasBillingAddress =
+    !!event.billing_company_name ||
+    !!event.billing_firstname ||
+    !!event.billing_lastname ||
+    !!event.billing_address ||
+    !!event.billing_email;
 
   return (
     <div className="w-full space-y-6">
@@ -359,6 +365,34 @@ export default async function EventDetailPage({
               />
             </div>
           </DetailSection>
+
+          {hasBillingAddress ? (
+            <DetailSection title="Rechnungsadresse">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <DetailItem
+                  label="Firma"
+                  value={event.billing_company_name || "—"}
+                />
+                <DetailItem
+                  label="Vorname"
+                  value={event.billing_firstname || "—"}
+                />
+                <DetailItem
+                  label="Nachname"
+                  value={event.billing_lastname || "—"}
+                />
+                <DetailItem
+                  label="E-Mail"
+                  value={event.billing_email || "—"}
+                />
+                <DetailItem
+                  label="Adresse"
+                  value={event.billing_address || "—"}
+                  className="sm:col-span-2"
+                />
+              </div>
+            </DetailSection>
+          ) : null}
 
           <DetailSection title="Personenzahl">
             <div className="grid gap-4 sm:grid-cols-2">
