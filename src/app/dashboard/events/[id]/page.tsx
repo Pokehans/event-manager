@@ -353,15 +353,34 @@ export default async function EventDetailPage({
 
           <DetailSection title="Kontaktdaten">
             <div className="grid gap-4 sm:grid-cols-2">
-              <DetailItem label="Firma" value={event.company_name || "—"} />
-              <DetailItem label="Vorname" value={event.firstname || "—"} />
-              <DetailItem label="Nachname" value={event.lastname || "—"} />
-              <DetailItem label="Telefon" value={event.phone || "—"} />
-              <DetailItem label="E-Mail" value={event.email || "—"} />
+              <DetailItem
+                label="Firma"
+                value={event.company_name || "—"}
+                className="sm:col-span-2"
+              />
+
+              <DetailItem
+                label="Vorname"
+                value={event.firstname || "—"}
+              />
+              <DetailItem
+                label="Nachname"
+                value={event.lastname || "—"}
+              />
+
               <DetailItem
                 label="Adresse"
                 value={event.address || "—"}
                 className="sm:col-span-2"
+              />
+
+              <DetailItem
+                label="E-Mail"
+                value={event.email || "—"}
+              />
+              <DetailItem
+                label="Telefon"
+                value={event.phone || "—"}
               />
             </div>
           </DetailSection>
@@ -372,7 +391,9 @@ export default async function EventDetailPage({
                 <DetailItem
                   label="Firma"
                   value={event.billing_company_name || "—"}
+                  className="sm:col-span-2"
                 />
+
                 <DetailItem
                   label="Vorname"
                   value={event.billing_firstname || "—"}
@@ -381,6 +402,13 @@ export default async function EventDetailPage({
                   label="Nachname"
                   value={event.billing_lastname || "—"}
                 />
+
+                <DetailItem
+                  label="Adresse"
+                  value={event.billing_address || "—"}
+                  className="sm:col-span-2"
+                />
+
                 <DetailItem
                   label="E-Mail"
                   value={event.billing_email || "—"}
@@ -388,11 +416,6 @@ export default async function EventDetailPage({
                 <DetailItem
                   label="Telefon"
                   value={event.billing_phone || "—"}
-                />
-                <DetailItem
-                  label="Adresse"
-                  value={event.billing_address || "—"}
-                  className="sm:col-span-2"
                 />
               </div>
             </DetailSection>
