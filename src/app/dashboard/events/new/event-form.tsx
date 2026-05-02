@@ -71,7 +71,7 @@ const PAYMENT_TYPE_OPTIONS = [
   { value: "intern_vr", label: "Intern VR" },
 ] as const;
 
-const EVENT_CREATE_LEAD_TIME_DAYS = 7;
+const EVENT_CREATE_LEAD_TIME_DAYS = 7; // Sperrzeit
 
 function formatDateInputValue(date: Date) {
   const year = date.getFullYear();
