@@ -73,6 +73,10 @@ function getQualityPeriodRange(period: QualityPeriod) {
   };
 }
 
+function formatDateForSupabase(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 function isDebriefingRating(rating: string | null): rating is DebriefingRating {
   return rating === "sehr_gut" || rating === "gut" || rating === "neutral" || rating === "schlecht";
 }
@@ -104,12 +108,19 @@ export default async function CockpitPage({
   const supabase = await createClient();
 
     const { data: debriefingRatings } = isAdminView
-    ? await supabase
-        .from("event_debriefings")
-        .select("rating")
-        .gte("created_at", qualityPeriodRange.start.toISOString())
-        .lt("created_at", qualityPeriodRange.end.toISOString())
-    : { data: [] };
+        ? await supabase
+            .from("event_debriefings")
+            .select(`
+                rating,
+                events!inner (
+                date,
+                status
+                )
+            `)
+            .eq("events.status", "Archiviert")
+            .gte("events.date", formatDateForSupabase(qualityPeriodRange.start))
+            .lt("events.date", formatDateForSupabase(qualityPeriodRange.end))
+        : { data: [] };
 
     const validDebriefingRatings = (debriefingRatings ?? [])
     .map((item) => item.rating)
