@@ -133,6 +133,8 @@ export default function EventsTable({
     `/dashboard/events/${eventId}?from=${from}`;
 
   const isArchive = variant === "archive";
+  const archiveFrom = isArchive ? searchParams.get("from") ?? "" : "";
+  const archiveTo = isArchive ? searchParams.get("to") ?? "" : "";
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState(
     isArchive ? "all" : searchParams.get("status") ?? "all"
@@ -195,9 +197,12 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
   useEffect(() => {
     const params = new URLSearchParams();
 
+    if (isArchive && ratingFilter !== "all") params.set("rating", ratingFilter);
+    if (isArchive && archiveFrom) params.set("from", archiveFrom);
+    if (isArchive && archiveTo) params.set("to", archiveTo);
+
     if (searchTerm.trim()) params.set("search", searchTerm.trim());
     if (!isArchive && statusFilter !== "all") params.set("status", statusFilter);
-    if (isArchive && ratingFilter !== "all") params.set("rating", ratingFilter);
     if (monthFilter !== "all") params.set("month", monthFilter);
     if (yearFilter !== "all") params.set("year", yearFilter);
     if (departmentFilter !== "all") params.set("department", departmentFilter);
@@ -234,6 +239,8 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
     viewMode,
     pathname,
     router,
+    archiveFrom,
+    archiveTo,
     isArchive,
   ]);
 
@@ -455,6 +462,10 @@ const hasActiveFilters =
       const eventRating = event.event_debriefings?.[0]?.rating ?? "";
       const participantCount = (event.adults ?? 0) + (event.children ?? 0);
       const search = searchTerm.toLowerCase().trim();
+      const matchesArchiveDateRange =
+        !isArchive ||
+        ((!archiveFrom || event.date >= archiveFrom) &&
+          (!archiveTo || event.date < archiveTo));
 
       const matchesSearch =
         search.length === 0 ||
@@ -534,6 +545,7 @@ const hasActiveFilters =
         matchesSearch &&
         matchesStatus &&
         matchesRating &&
+        matchesArchiveDateRange &&
         matchesMonth &&
         matchesYear &&
         matchesDepartment &&
@@ -559,6 +571,8 @@ const hasActiveFilters =
     timeRangeFilter,
     showPastEvents,
     isArchive,
+    archiveFrom,
+    archiveTo,
   ]);
 
   const sortedEvents = useMemo(() => {

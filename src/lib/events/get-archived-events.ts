@@ -26,10 +26,17 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-export async function getArchivedEvents(): Promise<ArchivedEventListItem[]> {
+type GetArchivedEventsFilters = {
+  from?: string;
+  to?: string;
+};
+
+export async function getArchivedEvents(
+  filters: GetArchivedEventsFilters = {}
+): Promise<ArchivedEventListItem[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("events")
     .select(`
       id,
@@ -55,8 +62,17 @@ export async function getArchivedEvents(): Promise<ArchivedEventListItem[]> {
         )
       )
     `)
-    .eq("status", "Archiviert")
-    .order("date", { ascending: false });
+    .eq("status", "Archiviert");
+
+      if (filters.from) {
+        query = query.gte("date", filters.from);
+      }
+
+      if (filters.to) {
+        query = query.lt("date", filters.to);
+      }
+
+      const { data, error } = await query.order("date", { ascending: false });
 
   if (error) {
     console.error("Fehler beim Laden der archivierten Events:", error.message);

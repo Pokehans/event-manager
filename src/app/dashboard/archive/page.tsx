@@ -1,8 +1,20 @@
 import { getArchivedEvents } from "@/lib/events/get-archived-events";
 import EventsTable from "@/components/events/events-table";
 
-export default async function ArchivePage() {
-  const events = await getArchivedEvents();
+type ArchivePageProps = {
+  searchParams?: Promise<{
+    from?: string;
+    to?: string;
+  }>;
+};
+
+export default async function ArchivePage({ searchParams }: ArchivePageProps) {
+  const params = await searchParams;
+
+  const events = await getArchivedEvents({
+    from: params?.from,
+    to: params?.to,
+  });
 
   return (
     <div className="space-y-6">
