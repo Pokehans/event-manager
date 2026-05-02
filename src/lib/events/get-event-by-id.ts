@@ -53,6 +53,7 @@ export type EventDetail = {
   billing_firstname: string | null;
   billing_lastname: string | null;
   billing_address: string | null;
+  billing_phone: string | null;
   billing_email: string | null;
   notes: string | null;
   created_by: string | null;
@@ -117,6 +118,7 @@ type RawEventData = {
   billing_firstname: string | null;
   billing_lastname: string | null;
   billing_address: string | null;
+  billing_phone: string | null;
   billing_email: string | null;
   notes: string | null;
   created_by: string | null;
@@ -177,6 +179,7 @@ export async function getEventById(id: string): Promise<EventDetail | null> {
       billing_firstname,
       billing_lastname,
       billing_address,
+      billing_phone,
       billing_email,
       notes,
       created_by,
@@ -274,6 +277,7 @@ if (debriefingError) {
     billing_firstname: rawEvent.billing_firstname,
     billing_lastname: rawEvent.billing_lastname,
     billing_address: rawEvent.billing_address,
+    billing_phone: rawEvent.billing_phone,
     billing_email: rawEvent.billing_email,
     notes: rawEvent.notes,
     created_by: rawEvent.created_by,

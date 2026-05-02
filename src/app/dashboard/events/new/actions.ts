@@ -45,6 +45,7 @@ export type CreateEventState = {
     billing_firstname?: string;
     billing_lastname?: string;
     billing_address?: string;
+    billing_phone?: string;
     billing_email?: string;
     notes?: string;
   };
@@ -134,6 +135,7 @@ type EventFormValues = {
   billing_firstname: string;
   billing_lastname: string;
   billing_address: string;
+  billing_phone: string;
   billing_email: string;
   notes: string;
 };
@@ -162,6 +164,7 @@ type ExistingEvent = {
   billing_firstname: string | null;
   billing_lastname: string | null;
   billing_address: string | null;
+  billing_phone: string | null;
   billing_email: string | null;
   notes: string | null;
 };
@@ -190,6 +193,7 @@ function getFormValues(formData: FormData): EventFormValues {
     billing_firstname: String(formData.get("billing_firstname") ?? "").trim(),
     billing_lastname: String(formData.get("billing_lastname") ?? "").trim(),
     billing_address: String(formData.get("billing_address") ?? "").trim(),
+    billing_phone: String(formData.get("billing_phone") ?? "").trim(),
     billing_email: String(formData.get("billing_email") ?? "").trim(),
     notes: String(formData.get("notes") ?? "").trim(),
   };
@@ -364,6 +368,7 @@ function validateEventValues(values: EventFormValues) {
       values.billing_firstname ||
       values.billing_lastname ||
       values.billing_address ||
+      values.billing_phone ||
       values.billing_email;
 
     if (
@@ -428,6 +433,10 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
     billing_address:
       values.payment_type === "rechnung"
         ? normalizeOptionalString(values.billing_address)
+        : null,
+    billing_phone:
+      values.payment_type === "rechnung"
+        ? normalizeOptionalString(values.billing_phone)
         : null,
     billing_email:
       values.payment_type === "rechnung"
@@ -552,6 +561,7 @@ const billingAddressChanged =
   existingEvent.billing_firstname !== nextEvent.billing_firstname ||
   existingEvent.billing_lastname !== nextEvent.billing_lastname ||
   existingEvent.billing_address !== nextEvent.billing_address ||
+  existingEvent.billing_phone !== nextEvent.billing_phone ||
   existingEvent.billing_email !== nextEvent.billing_email;
 
 if (billingAddressChanged) {
@@ -653,6 +663,10 @@ export async function createEvent(
         values.payment_type === "rechnung"
           ? normalizeOptionalString(values.billing_address)
           : null,
+      billing_phone:
+        values.payment_type === "rechnung"
+          ? normalizeOptionalString(values.billing_phone)
+          : null,
       billing_email:
         values.payment_type === "rechnung"
           ? normalizeOptionalString(values.billing_email)
@@ -745,6 +759,7 @@ export async function updateEvent(
       billing_firstname,
       billing_lastname,
       billing_address,
+      billing_phone,
       billing_email,
       notes
     `)
@@ -788,6 +803,7 @@ export async function updateEvent(
       billing_firstname: nextEvent.billing_firstname,
       billing_lastname: nextEvent.billing_lastname,
       billing_address: nextEvent.billing_address,
+      billing_phone: nextEvent.billing_phone,
       billing_email: nextEvent.billing_email,
       notes: nextEvent.notes,
     })

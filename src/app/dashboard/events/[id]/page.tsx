@@ -386,6 +386,10 @@ export default async function EventDetailPage({
                   value={event.billing_email || "—"}
                 />
                 <DetailItem
+                  label="Telefon"
+                  value={event.billing_phone || "—"}
+                />
+                <DetailItem
                   label="Adresse"
                   value={event.billing_address || "—"}
                   className="sm:col-span-2"

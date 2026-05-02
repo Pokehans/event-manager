@@ -28,6 +28,7 @@ type EventFormInitialData = {
   billing_firstname?: string | null;
   billing_lastname?: string | null;
   billing_address?: string | null;
+  billing_phone?: string | null;
   billing_email?: string | null;
   notes?: string | null;
 };
@@ -154,7 +155,9 @@ const initialHasBillingAddress =
     state.values?.billing_address ??
     initialData?.billing_address ??
     state.values?.billing_email ??
-    initialData?.billing_email
+    initialData?.billing_email ??
+    state.values?.billing_phone ??
+    initialData?.billing_phone
   );
 
 const [selectedPaymentType, setSelectedPaymentType] =
@@ -256,6 +259,8 @@ const [hasBillingAddress, setHasBillingAddress] =
     state.values?.billing_lastname ?? initialData?.billing_lastname ?? "";
   const billingAddressValue =
     state.values?.billing_address ?? initialData?.billing_address ?? "";
+  const billingPhoneValue =
+    state.values?.billing_phone ?? initialData?.billing_phone ?? "";
   const billingEmailValue =
     state.values?.billing_email ?? initialData?.billing_email ?? "";
 
@@ -734,6 +739,13 @@ const [hasBillingAddress, setHasBillingAddress] =
                     type="email"
                     defaultValue={billingEmailValue}
                     placeholder="E-Mail"
+                    className={fieldClass()}
+                  />
+
+                  <input
+                    name="billing_phone"
+                    defaultValue={billingPhoneValue}
+                    placeholder="Telefon"
                     className={fieldClass()}
                   />
 
