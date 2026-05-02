@@ -24,6 +24,11 @@ type EventFormInitialData = {
   food?: string | null;
   drinks?: string | null;
   payment_type?: string | null;
+  billing_company_name?: string | null;
+  billing_firstname?: string | null;
+  billing_lastname?: string | null;
+  billing_address?: string | null;
+  billing_email?: string | null;
   notes?: string | null;
 };
 
@@ -134,6 +139,30 @@ export function EventForm({
     };
   }, [state, dismissedErrors, clientErrors]);
 
+ const initialPaymentType =
+  state.values?.payment_type ?? initialData?.payment_type ?? "";
+
+const initialHasBillingAddress =
+  initialPaymentType === "rechnung" &&
+  !!(
+    state.values?.billing_company_name ??
+    initialData?.billing_company_name ??
+    state.values?.billing_firstname ??
+    initialData?.billing_firstname ??
+    state.values?.billing_lastname ??
+    initialData?.billing_lastname ??
+    state.values?.billing_address ??
+    initialData?.billing_address ??
+    state.values?.billing_email ??
+    initialData?.billing_email
+  );
+
+const [selectedPaymentType, setSelectedPaymentType] =
+  useState(initialPaymentType);
+
+const [hasBillingAddress, setHasBillingAddress] =
+  useState(initialHasBillingAddress); 
+
   function clearFieldError(
     fieldName:
       | "title"
@@ -217,6 +246,16 @@ export function EventForm({
   const paymentTypeValue =
     state.values?.payment_type ?? initialData?.payment_type ?? "";
   const notesValue = state.values?.notes ?? initialData?.notes ?? "";
+  const billingCompanyValue =
+    state.values?.billing_company_name ?? initialData?.billing_company_name ?? "";
+  const billingFirstnameValue =
+    state.values?.billing_firstname ?? initialData?.billing_firstname ?? "";
+  const billingLastnameValue =
+    state.values?.billing_lastname ?? initialData?.billing_lastname ?? "";
+  const billingAddressValue =
+    state.values?.billing_address ?? initialData?.billing_address ?? "";
+  const billingEmailValue =
+    state.values?.billing_email ?? initialData?.billing_email ?? "";
 
   return (
     <form action={handleFormAction} className="space-y-6" noValidate>
@@ -621,7 +660,14 @@ export function EventForm({
                 visibleErrors.payment_type ? "payment-type-error" : undefined
               }
               className={fieldClass(visibleErrors.payment_type)}
-              onChange={() => clearFieldError("payment_type")}
+              onChange={(event) => {
+                clearFieldError("payment_type");
+                setSelectedPaymentType(event.target.value);
+
+                if (event.target.value !== "rechnung") {
+                  setHasBillingAddress(false);
+                }
+              }}
             >
               {PAYMENT_TYPE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -639,6 +685,66 @@ export function EventForm({
               </p>
             ) : null}
           </div>
+          {selectedPaymentType === "rechnung" ? (
+            <div className="md:col-span-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={hasBillingAddress}
+                  onChange={(event) => setHasBillingAddress(event.target.checked)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block text-sm font-medium">
+                    Abweichende Rechnungsadresse erfassen
+                  </span>
+                  <span className="block text-sm text-[var(--color-text-muted)]">
+                    Nur ausfüllen, wenn die Rechnung nicht an den Auftraggeber geht.
+                  </span>
+                </span>
+              </label>
+
+              {hasBillingAddress ? (
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <input
+                    name="billing_company_name"
+                    defaultValue={billingCompanyValue}
+                    placeholder="Firma"
+                    className={fieldClass()}
+                  />
+
+                  <input
+                    name="billing_firstname"
+                    defaultValue={billingFirstnameValue}
+                    placeholder="Vorname"
+                    className={fieldClass()}
+                  />
+
+                  <input
+                    name="billing_lastname"
+                    defaultValue={billingLastnameValue}
+                    placeholder="Nachname"
+                    className={fieldClass()}
+                  />
+
+                  <input
+                    name="billing_email"
+                    type="email"
+                    defaultValue={billingEmailValue}
+                    placeholder="E-Mail"
+                    className={fieldClass()}
+                  />
+
+                  <input
+                    name="billing_address"
+                    defaultValue={billingAddressValue}
+                    placeholder="Adresse"
+                    className={`md:col-span-2 ${fieldClass()}`}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </section>
 

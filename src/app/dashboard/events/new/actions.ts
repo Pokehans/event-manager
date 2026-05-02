@@ -18,6 +18,8 @@ export type CreateEventState = {
     children?: string;
     room?: string;
     payment_type?: string;
+    billing_contact?: string;
+    billing_email?: string;
     general?: string;
   };
   values?: {
@@ -39,6 +41,11 @@ export type CreateEventState = {
     food?: string;
     drinks?: string;
     payment_type?: string;
+    billing_company_name?: string;
+    billing_firstname?: string;
+    billing_lastname?: string;
+    billing_address?: string;
+    billing_email?: string;
     notes?: string;
   };
 };
@@ -123,6 +130,11 @@ type EventFormValues = {
   food: string;
   drinks: string;
   payment_type: string;
+  billing_company_name: string;
+  billing_firstname: string;
+  billing_lastname: string;
+  billing_address: string;
+  billing_email: string;
   notes: string;
 };
 
@@ -169,6 +181,11 @@ function getFormValues(formData: FormData): EventFormValues {
     food: String(formData.get("food") ?? "").trim(),
     drinks: String(formData.get("drinks") ?? "").trim(),
     payment_type: String(formData.get("payment_type") ?? "").trim(),
+    billing_company_name: String(formData.get("billing_company_name") ?? "").trim(),
+    billing_firstname: String(formData.get("billing_firstname") ?? "").trim(),
+    billing_lastname: String(formData.get("billing_lastname") ?? "").trim(),
+    billing_address: String(formData.get("billing_address") ?? "").trim(),
+    billing_email: String(formData.get("billing_email") ?? "").trim(),
     notes: String(formData.get("notes") ?? "").trim(),
   };
 }
@@ -333,6 +350,33 @@ function validateEventValues(values: EventFormValues) {
       )
     ) {
       errors.payment_type = "Ungültige Zahlungsart.";
+    }
+  }
+
+  if (values.payment_type === "rechnung") {
+    const hasBillingAddress =
+      values.billing_company_name ||
+      values.billing_firstname ||
+      values.billing_lastname ||
+      values.billing_address ||
+      values.billing_email;
+
+    if (
+      hasBillingAddress &&
+      !values.billing_company_name &&
+      !values.billing_lastname
+    ) {
+      errors.billing_contact =
+        "Bitte mindestens Rechnungsfirma oder Rechnungsnachname angeben.";
+    }
+
+    if (values.billing_email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!emailPattern.test(values.billing_email)) {
+        errors.billing_email =
+          "Bitte eine gültige Rechnungs-E-Mail-Adresse eingeben.";
+      }
     }
   }
 
@@ -557,6 +601,26 @@ export async function createEvent(
       food: values.food || null,
       drinks: values.drinks || null,
       payment_type: values.payment_type || null,
+      billing_company_name:
+        values.payment_type === "rechnung"
+          ? normalizeOptionalString(values.billing_company_name)
+          : null,
+      billing_firstname:
+        values.payment_type === "rechnung"
+          ? normalizeOptionalString(values.billing_firstname)
+          : null,
+      billing_lastname:
+        values.payment_type === "rechnung"
+          ? normalizeOptionalString(values.billing_lastname)
+          : null,
+      billing_address:
+        values.payment_type === "rechnung"
+          ? normalizeOptionalString(values.billing_address)
+          : null,
+      billing_email:
+        values.payment_type === "rechnung"
+          ? normalizeOptionalString(values.billing_email)
+          : null,
       notes: values.notes || null,
       created_by: user.id,
     },
