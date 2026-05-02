@@ -53,8 +53,15 @@ export default async function CockpitPage() {
     const averageRating = getAverageRating(validDebriefingRatings);
 
     const poorRatingCount = validDebriefingRatings.filter(
-    (rating) => rating === "schlecht"
-    ).length;
+        (rating) => rating === "schlecht"
+        ).length;
+
+    const ratingDistribution = {
+        sehr_gut: validDebriefingRatings.filter((rating) => rating === "sehr_gut").length,
+        gut: validDebriefingRatings.filter((rating) => rating === "gut").length,
+        neutral: validDebriefingRatings.filter((rating) => rating === "neutral").length,
+        schlecht: poorRatingCount,
+        };
 
   const events = await getEvents();
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -86,115 +93,192 @@ export default async function CockpitPage() {
 
       <OperativeCockpit events={events} />
 
-      {isAdminView ? (
-        <section className="space-y-4">
+        {isAdminView ? (
+  <>
+            <section className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                <h2 className="text-xl font-semibold text-[var(--color-text)]">
+                    Qualitätsmanagement
+                </h2>
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                    Übersicht über Eventbewertungen und Debriefing-Qualität der letzten 30 Tage.
+                </p>
+                </div>
+
+                {poorRatingCount > 0 ? (
+                <div className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                    {poorRatingCount} schlechte Bewertung
+                    {poorRatingCount === 1 ? "" : "en"} prüfen
+                </div>
+                ) : null}
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
+                <p className="text-sm text-[var(--color-text-muted)]">
+                    Ø Bewertung
+                </p>
+                <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                    {averageRating ? averageRating.toFixed(1) : "—"}
+                </p>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Skala 1 bis 4
+                </p>
+                </div>
+
+                <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
+                <p className="text-sm text-[var(--color-text-muted)]">
+                    Debriefings
+                </p>
+                <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                    {validDebriefingRatings.length}
+                </p>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Letzte 30 Tage
+                </p>
+                </div>
+
+                <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
+                <p className="text-sm text-[var(--color-text-muted)]">
+                    Schlechte Events
+                </p>
+                <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                    {poorRatingCount}
+                </p>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Kritische Nachbereitung
+                </p>
+                </div>
+
+                <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
+                <p className="text-sm font-semibold text-[var(--color-text)]">
+                    Verteilung
+                </p>
+
+                <div className="mt-3 space-y-2 text-sm text-[var(--color-text-muted)]">
+                    <div className="flex justify-between">
+                    <span>Sehr gut</span>
+                    <span className="font-semibold text-[var(--color-text)]">
+                        {ratingDistribution.sehr_gut}
+                    </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                    <span>Gut</span>
+                    <span className="font-semibold text-[var(--color-text)]">
+                        {ratingDistribution.gut}
+                    </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                    <span>Neutral</span>
+                    <span className="font-semibold text-[var(--color-text)]">
+                        {ratingDistribution.neutral}
+                    </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                    <span>Schlecht</span>
+                    <span className="font-semibold text-[var(--color-text)]">
+                        {ratingDistribution.schlecht}
+                    </span>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </section>
+
+            <section className="space-y-4">
             <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-[var(--color-text)]">
+                <h2 className="text-xl font-semibold text-[var(--color-text)]">
                 Kennzahlen
-            </h2>
-            <p className="text-sm text-[var(--color-text-muted)]">
+                </h2>
+                <p className="text-sm text-[var(--color-text-muted)]">
                 Übersicht für Administration und Planung.
-            </p>
+                </p>
             </div>
+
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                        <p className="text-sm text-[var(--color-text-muted)]">
-                            Event Qualität
-                        </p>
-                        <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
-                            {averageRating ? averageRating.toFixed(1) : "—"}
-                        </p>
-                        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
-                            Letzte 30 Tage · {validDebriefingRatings.length} Debriefing
-                            {validDebriefingRatings.length === 1 ? "" : "s"}
-                        </p>
-                        {poorRatingCount > 0 ? (
-                            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-                            {poorRatingCount} schlechte Bewertung
-                            {poorRatingCount === 1 ? "" : "en"}
-                            </p>
-                        ) : null}
-                        </div>
-                    </div>
-                    </div>
                 <Link
-                    href={`/dashboard/events?month=${currentMonth.slice(5, 7)}&year=${currentMonth.slice(0, 4)}`}
-                    className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
+                href={`/dashboard/events?month=${currentMonth.slice(5, 7)}&year=${currentMonth.slice(0, 4)}`}
+                className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
                 >
-                    <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3">
                     <div>
-                        <p className="text-sm text-[var(--color-text-muted)]">
+                    <p className="text-sm text-[var(--color-text-muted)]">
                         Events diesen Monat
-                        </p>
-                        <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
                         {monthlyEvents.length}
-                        </p>
+                    </p>
                     </div>
                     <span className="text-sm font-semibold text-[var(--color-primary)]">
-                        Anzeigen
+                    Anzeigen
                     </span>
-                    </div>
+                </div>
                 </Link>
 
                 <Link
-                    href={`/dashboard/events?status=Bestätigt&month=${currentMonth.slice(5, 7)}&year=${currentMonth.slice(0, 4)}`}
-                    className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
+                href={`/dashboard/events?status=Bestätigt&month=${currentMonth.slice(5, 7)}&year=${currentMonth.slice(0, 4)}`}
+                className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
                 >
-                    <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3">
                     <div>
-                        <p className="text-sm text-[var(--color-text-muted)]">Bestätigt</p>
-                        <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                        Bestätigt
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
                         {confirmedEvents.length}
-                        </p>
+                    </p>
                     </div>
                     <span className="text-sm font-semibold text-[var(--color-primary)]">
-                        Anzeigen
+                    Anzeigen
                     </span>
-                    </div>
+                </div>
                 </Link>
 
                 <Link
-                    href={`/dashboard/events?status=In%20Bearbeitung&month=${currentMonth.slice(5, 7)}&year=${currentMonth.slice(0, 4)}`}
-                    className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
+                href={`/dashboard/events?status=In%20Bearbeitung&month=${currentMonth.slice(5, 7)}&year=${currentMonth.slice(0, 4)}`}
+                className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
                 >
-                    <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3">
                     <div>
-                        <p className="text-sm text-[var(--color-text-muted)]">
+                    <p className="text-sm text-[var(--color-text-muted)]">
                         In Bearbeitung
-                        </p>
-                        <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
                         {progressEvents.length}
-                        </p>
+                    </p>
                     </div>
                     <span className="text-sm font-semibold text-[var(--color-primary)]">
-                        Anzeigen
+                    Anzeigen
                     </span>
-                    </div>
+                </div>
                 </Link>
 
                 <Link
-                    href="/dashboard/events?status=Archiviert&past=1"
-                    className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
+                href="/dashboard/events?status=Archiviert&past=1"
+                className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
                 >
-                    <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3">
                     <div>
-                        <p className="text-sm text-[var(--color-text-muted)]">
+                    <p className="text-sm text-[var(--color-text-muted)]">
                         Archiviert gesamt
-                        </p>
-                        <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
                         {archivedEvents.length}
-                        </p>
+                    </p>
                     </div>
                     <span className="text-sm font-semibold text-[var(--color-primary)]">
-                        Anzeigen
+                    Anzeigen
                     </span>
-                    </div>
+                </div>
                 </Link>
             </div>
-        </section>
+            </section>
+        </>
         ) : null}
     </div>
-  );
+ );
 }
