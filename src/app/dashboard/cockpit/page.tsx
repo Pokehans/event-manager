@@ -183,12 +183,13 @@ export default async function CockpitPage({
 
                         return (
                             <Link
-                            key={option.value}
-                            href={{
-                                pathname: "/dashboard/cockpit",
-                                query: { ...params, qualityPeriod: option.value },
-                            }}
-                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                                key={option.value}
+                                href={{
+                                    pathname: "/dashboard/cockpit",
+                                    query: { ...params, qualityPeriod: option.value },
+                                }}
+                                scroll={false}
+                                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
                                 isActive
                                 ? "bg-white text-[var(--color-primary)] shadow-sm"
                                 : "text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-text)]"
