@@ -49,6 +49,11 @@ export type EventDetail = {
   food: string | null;
   drinks: string | null;
   payment_type: string | null;
+  billing_company_name: string | null;
+  billing_firstname: string | null;
+  billing_lastname: string | null;
+  billing_address: string | null;
+  billing_email: string | null;
   notes: string | null;
   created_by: string | null;
   created_at: string | null;
@@ -108,6 +113,11 @@ type RawEventData = {
   food: string | null;
   drinks: string | null;
   payment_type: string | null;
+  billing_company_name: string | null;
+  billing_firstname: string | null;
+  billing_lastname: string | null;
+  billing_address: string | null;
+  billing_email: string | null;
   notes: string | null;
   created_by: string | null;
   created_at: string | null;
@@ -163,6 +173,11 @@ export async function getEventById(id: string): Promise<EventDetail | null> {
       food,
       drinks,
       payment_type,
+      billing_company_name,
+      billing_firstname,
+      billing_lastname,
+      billing_address,
+      billing_email,
       notes,
       created_by,
       created_at,
@@ -255,6 +270,11 @@ if (debriefingError) {
     food: rawEvent.food,
     drinks: rawEvent.drinks,
     payment_type: rawEvent.payment_type,
+    billing_company_name: rawEvent.billing_company_name,
+    billing_firstname: rawEvent.billing_firstname,
+    billing_lastname: rawEvent.billing_lastname,
+    billing_address: rawEvent.billing_address,
+    billing_email: rawEvent.billing_email,
     notes: rawEvent.notes,
     created_by: rawEvent.created_by,
     created_at: rawEvent.created_at,

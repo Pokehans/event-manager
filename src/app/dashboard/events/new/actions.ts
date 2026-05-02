@@ -158,6 +158,11 @@ type ExistingEvent = {
   food: string | null;
   drinks: string | null;
   payment_type: string | null;
+  billing_company_name: string | null;
+  billing_firstname: string | null;
+  billing_lastname: string | null;
+  billing_address: string | null;
+  billing_email: string | null;
   notes: string | null;
 };
 
@@ -408,6 +413,26 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
     food: normalizeOptionalString(values.food),
     drinks: normalizeOptionalString(values.drinks),
     payment_type: normalizeOptionalString(values.payment_type),
+    billing_company_name:
+      values.payment_type === "rechnung"
+        ? normalizeOptionalString(values.billing_company_name)
+        : null,
+    billing_firstname:
+      values.payment_type === "rechnung"
+        ? normalizeOptionalString(values.billing_firstname)
+        : null,
+    billing_lastname:
+      values.payment_type === "rechnung"
+        ? normalizeOptionalString(values.billing_lastname)
+        : null,
+    billing_address:
+      values.payment_type === "rechnung"
+        ? normalizeOptionalString(values.billing_address)
+        : null,
+    billing_email:
+      values.payment_type === "rechnung"
+        ? normalizeOptionalString(values.billing_email)
+        : null,
     notes: normalizeOptionalString(values.notes),
   };
 
@@ -521,6 +546,41 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
   if (existingEvent.notes !== nextEvent.notes) {
     changes.push("Notizen geändert");
   }
+
+  const billingCompanyChange = formatChangeText(
+    "Rechnungsfirma",
+    existingEvent.billing_company_name,
+    nextEvent.billing_company_name
+  );
+  if (billingCompanyChange) changes.push(billingCompanyChange);
+
+  const billingFirstnameChange = formatChangeText(
+    "Rechnung Vorname",
+    existingEvent.billing_firstname,
+    nextEvent.billing_firstname
+  );
+  if (billingFirstnameChange) changes.push(billingFirstnameChange);
+
+  const billingLastnameChange = formatChangeText(
+    "Rechnung Nachname",
+    existingEvent.billing_lastname,
+    nextEvent.billing_lastname
+  );
+  if (billingLastnameChange) changes.push(billingLastnameChange);
+
+  const billingAddressChange = formatChangeText(
+    "Rechnungsadresse",
+    existingEvent.billing_address,
+    nextEvent.billing_address
+  );
+  if (billingAddressChange) changes.push(billingAddressChange);
+
+  const billingEmailChange = formatChangeText(
+    "Rechnungs-E-Mail",
+    existingEvent.billing_email,
+    nextEvent.billing_email
+  );
+  if (billingEmailChange) changes.push(billingEmailChange);
 
   return {
     changes,
@@ -705,6 +765,11 @@ export async function updateEvent(
       food,
       drinks,
       payment_type,
+      billing_company_name,
+      billing_firstname,
+      billing_lastname,
+      billing_address,
+      billing_email,
       notes
     `)
     .eq("id", id)
@@ -743,6 +808,11 @@ export async function updateEvent(
       food: nextEvent.food,
       drinks: nextEvent.drinks,
       payment_type: nextEvent.payment_type,
+      billing_company_name: nextEvent.billing_company_name,
+      billing_firstname: nextEvent.billing_firstname,
+      billing_lastname: nextEvent.billing_lastname,
+      billing_address: nextEvent.billing_address,
+      billing_email: nextEvent.billing_email,
       notes: nextEvent.notes,
     })
     .eq("id", id);

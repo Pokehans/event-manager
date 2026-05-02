@@ -132,9 +132,9 @@ export function EventForm({
       adults: dismissedErrors.adults ? undefined : state.errors?.adults,
       children: dismissedErrors.children ? undefined : state.errors?.children,
       room: dismissedErrors.room ? undefined : state.errors?.room,
-      payment_type: dismissedErrors.payment_type
-        ? undefined
-        : state.errors?.payment_type,
+      payment_type: dismissedErrors.payment_type ? undefined : state.errors?.payment_type,
+      billing_contact: dismissedErrors.billing_contact ? undefined : state.errors?.billing_contact,
+      billing_email: dismissedErrors.billing_email ? undefined : state.errors?.billing_email,
       general: state.errors?.general,
     };
   }, [state, dismissedErrors, clientErrors]);
@@ -174,6 +174,8 @@ const [hasBillingAddress, setHasBillingAddress] =
       | "children"
       | "room"
       | "payment_type"
+      | "billing_contact"
+      | "billing_email"
   ) {
     setDismissedErrors((prev) => ({
       ...prev,
