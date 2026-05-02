@@ -311,10 +311,7 @@ export default async function CockpitPage({
                 </p>
                 </div>
 
-                <Link
-                    href={`/dashboard/archive?rating=schlecht&qualityPeriod=${qualityPeriod}`}
-                    className="rounded-xl bg-[var(--color-surface-muted)] p-4 transition hover:bg-[var(--color-surface-muted-hover)]"
-                    >
+                <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
                     <p className="text-sm text-[var(--color-text-muted)]">
                         Schlechte Events
                     </p>
@@ -323,12 +320,21 @@ export default async function CockpitPage({
                         {poorRatingCount}
                     </p>
 
-                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                        {poorRatingCount > 0
-                        ? "Klicken zum Anzeigen"
-                        : "Keine kritischen Events"}
-                    </p>
-                    </Link>
+                    <div className="mt-1 flex items-center justify-between gap-3">
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                        Kritische Nachbereitung
+                        </p>
+
+                        {poorRatingCount > 0 ? (
+                        <Link
+                            href={`/dashboard/archive?rating=schlecht&from=${qualityPeriodRange.start.toISOString().slice(0, 10)}&to=${qualityPeriodRange.end.toISOString().slice(0, 10)}`}
+                            className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-surface-muted)]"
+                        >
+                            Anzeigen
+                        </Link>
+                        ) : null}
+                    </div>
+                    </div>
 
                 <div className="rounded-xl bg-[var(--color-surface-muted)] p-4">
                 <p className="text-sm font-semibold text-[var(--color-text)]">
