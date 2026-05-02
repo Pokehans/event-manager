@@ -375,7 +375,7 @@ export default function DashboardShell({
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-white xl:hidden">
+          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-white xl:hidden">
             <div className="flex items-center justify-between px-4 py-4 md:px-6">
               <div className="flex items-center gap-3">
                 <Image
@@ -401,7 +401,14 @@ export default function DashboardShell({
             </div>
 
             {mobileMenuOpen && (
-              <div className="border-t border-[var(--color-border)] px-4 py-4 md:px-6">
+              <div
+                className="fixed inset-x-0 top-[73px] bottom-0 z-40 bg-black/20"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div
+                  className="border-t border-[var(--color-border)] bg-white px-4 py-4 shadow-lg md:px-6"
+                  onClick={(event) => event.stopPropagation()}
+                >
                 <nav className="space-y-2">
                   <SidebarLink
                     href="/dashboard"
@@ -458,6 +465,7 @@ export default function DashboardShell({
                 <div className="mt-4 border-t border-[var(--color-border)] pt-4">
                   <LogoutButton />
                 </div>
+              </div>
               </div>
             )}
           </header>
