@@ -71,6 +71,28 @@ const PAYMENT_TYPE_OPTIONS = [
   { value: "intern_vr", label: "Intern VR" },
 ] as const;
 
+const EVENT_CREATE_LEAD_TIME_DAYS = 7;
+
+function formatDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString("de-CH");
+}
+
+function getMinimumCreateEventDate() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + EVENT_CREATE_LEAD_TIME_DAYS - 1);
+
+  return formatDateInputValue(date);
+}
+
 function fieldClass(error?: string) {
   return [
     "w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition",
@@ -92,10 +114,13 @@ export function EventForm({
     {}
   );
 
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const visibleErrors = useMemo(() => {
     return {
       title: dismissedErrors.title ? undefined : state.errors?.title,
-      date: dismissedErrors.date ? undefined : state.errors?.date,
+      date:
+        clientErrors.date ??
+        (dismissedErrors.date ? undefined : state.errors?.date),
       status: dismissedErrors.status ? undefined : state.errors?.status,
       contact: dismissedErrors.contact ? undefined : state.errors?.contact,
       email: dismissedErrors.email ? undefined : state.errors?.email,
@@ -107,7 +132,7 @@ export function EventForm({
         : state.errors?.payment_type,
       general: state.errors?.general,
     };
-  }, [state, dismissedErrors]);
+  }, [state, dismissedErrors, clientErrors]);
 
   function clearFieldError(
     fieldName:
@@ -125,6 +150,44 @@ export function EventForm({
       ...prev,
       [fieldName]: true,
     }));
+  }
+
+  function validateDateInRealtime(value: string) {
+  if (mode !== "create") return;
+
+  if (!value) {
+    setClientErrors((prev) => {
+      const next = { ...prev };
+      delete next.date;
+      return next;
+    });
+    clearFieldError("date");
+    return;
+  }
+
+  const minimumDate = getMinimumCreateEventDate();
+
+  if (value < minimumDate) {
+    setClientErrors((prev) => ({
+      ...prev,
+      date: `Erster möglicher Termin um einen Event zu erstellen: ${formatDisplayDate(minimumDate)}.`,
+    }));
+    return;
+  }
+
+  setClientErrors((prev) => {
+    const next = { ...prev };
+    delete next.date;
+    return next;
+  });
+
+  clearFieldError("date");
+}
+
+  function handleFormAction(formData: FormData) {
+    setDismissedErrors({});
+    setClientErrors({});
+    dispatch(formData);
   }
 
   const titleValue = state.values?.title ?? initialData?.title ?? "";
@@ -156,7 +219,7 @@ export function EventForm({
   const notesValue = state.values?.notes ?? initialData?.notes ?? "";
 
   return (
-    <form action={dispatch} className="space-y-6">
+    <form action={handleFormAction} className="space-y-6" noValidate>
       {mode === "edit" && initialData?.id ? (
         <input type="hidden" name="id" value={initialData.id} />
       ) : null}
@@ -216,7 +279,7 @@ export function EventForm({
               aria-invalid={!!visibleErrors.date}
               aria-describedby={visibleErrors.date ? "date-error" : undefined}
               className={fieldClass(visibleErrors.date)}
-              onChange={() => clearFieldError("date")}
+              onChange={(event) => validateDateInRealtime(event.target.value)}
             />
             {visibleErrors.date ? (
               <p id="date-error" className="mt-1 text-sm text-[var(--color-danger)]">

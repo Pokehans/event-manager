@@ -69,6 +69,41 @@ const allowedPaymentTypes = [
   "intern_vr",
 ] as const;
 
+const EVENT_CREATE_LEAD_TIME_DAYS = 7;
+
+function formatDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString("de-CH");
+}
+
+function getMinimumCreateEventDate() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + EVENT_CREATE_LEAD_TIME_DAYS - 1);
+
+  return formatDateInputValue(date);
+}
+
+function validateCreateDateWindow(
+  values: EventFormValues,
+  errors: NonNullable<CreateEventState["errors"]>
+) {
+  if (!values.date) return;
+
+  const minimumDate = getMinimumCreateEventDate();
+
+  if (values.date < minimumDate) {
+    errors.date = `Erster möglicher Termin um einen Event zu erstellen: ${formatDisplayDate(minimumDate)}.`;
+  }
+}
+
 type EventFormValues = {
   title: string;
   date: string;
@@ -462,6 +497,7 @@ export async function createEvent(
 
   const values = getFormValues(formData);
   const errors = validateEventValues(values);
+  validateCreateDateWindow(values, errors);
 
    if (userError || !user) {
     return {
