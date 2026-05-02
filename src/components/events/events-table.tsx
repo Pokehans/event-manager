@@ -7,12 +7,16 @@ import type { EventListItem } from "@/lib/events/get-events";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type EventsTableProps = {
-  events: EventListItem[];
+  events: EventListItemWithDebriefing[];
   from?: "list" | "archive";
   variant?: "events" | "archive";
 };
 
 type ViewMode = "table" | "months";
+
+type EventListItemWithDebriefing = Omit<EventListItem, "event_debriefings"> & {
+  event_debriefings?: { id?: string | null; rating?: string | null }[] | null;
+};
 
 const EVENTS_PER_PAGE = 12;
 
@@ -68,12 +72,12 @@ function formatMonth(date: string) {
   return `${monthNames[monthIndex]} ${year}`;
 }
 
-function getCustomerName(event: EventListItem) {
+function getCustomerName(event: EventListItemWithDebriefing) {
   const fullName = [event.firstname, event.lastname].filter(Boolean).join(" ");
   return event.company_name || fullName || "—";
 }
 
-function getPersonCount(event: EventListItem) {
+function getPersonCount(event: EventListItemWithDebriefing) {
   const adults = event.adults ?? 0;
   const children = event.children ?? 0;
   const total = adults + children;
@@ -133,6 +137,9 @@ export default function EventsTable({
   const [statusFilter, setStatusFilter] = useState(
     isArchive ? "all" : searchParams.get("status") ?? "all"
   );
+  const [ratingFilter, setRatingFilter] = useState(
+    isArchive ? searchParams.get("rating") ?? "all" : "all"
+  );
   const [monthFilter, setMonthFilter] = useState(searchParams.get("month") ?? "all");
   const [yearFilter, setYearFilter] = useState(searchParams.get("year") ?? "all");
   const [departmentFilter, setDepartmentFilter] = useState(
@@ -190,6 +197,7 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
 
     if (searchTerm.trim()) params.set("search", searchTerm.trim());
     if (!isArchive && statusFilter !== "all") params.set("status", statusFilter);
+    if (isArchive && ratingFilter !== "all") params.set("rating", ratingFilter);
     if (monthFilter !== "all") params.set("month", monthFilter);
     if (yearFilter !== "all") params.set("year", yearFilter);
     if (departmentFilter !== "all") params.set("department", departmentFilter);
@@ -213,6 +221,7 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
   }, [
     searchTerm,
     statusFilter,
+    ratingFilter,
     monthFilter,
     yearFilter,
     departmentFilter,
@@ -231,6 +240,7 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
   function resetFilters() {
   setSearchTerm("");
   if (!isArchive) setStatusFilter("all");
+  if (isArchive) setRatingFilter("all");
   setMonthFilter("all");
   setYearFilter("all");
   setDepartmentFilter("all");
@@ -284,9 +294,25 @@ function getTimeRangeLabel(value: string) {
   }
 }
 
+function getRatingLabel(value: string) {
+  switch (value) {
+    case "sehr_gut":
+      return "Sehr gut";
+    case "gut":
+      return "Gut";
+    case "neutral":
+      return "Neutral";
+    case "schlecht":
+      return "Schlecht";
+    default:
+      return "";
+  }
+}
+
 const hasActiveFilters =
   searchTerm.trim().length > 0 ||
   (!isArchive && statusFilter !== "all") ||
+  (isArchive && ratingFilter !== "all") ||
   monthFilter !== "all" ||
   yearFilter !== "all" ||
   departmentFilter !== "all" ||
@@ -306,6 +332,11 @@ const hasActiveFilters =
     !isArchive && statusFilter !== "all" && {
       label: `Status: ${statusFilter}`,
       onRemove: () => setStatusFilter("all"),
+    },
+
+    isArchive && ratingFilter !== "all" && {
+      label: `Bewertung: ${getRatingLabel(ratingFilter)}`,
+      onRemove: () => setRatingFilter("all"),
     },
 
     roomFilter !== "all" && {
@@ -421,6 +452,7 @@ const hasActiveFilters =
       const departmentName = department?.name ?? "";
       const roomName = event.room ?? "";
       const paymentType = event.payment_type ?? "";
+      const eventRating = event.event_debriefings?.[0]?.rating ?? "";
       const participantCount = (event.adults ?? 0) + (event.children ?? 0);
       const search = searchTerm.toLowerCase().trim();
 
@@ -430,6 +462,8 @@ const hasActiveFilters =
         customerName.includes(search);
 
       const matchesStatus = statusFilter === "all" || status === statusFilter;
+      const matchesRating =
+       !isArchive || ratingFilter === "all" || eventRating === ratingFilter;
       const matchesMonth =
         monthFilter === "all" || eventMonth === monthFilter;
 
@@ -499,6 +533,7 @@ const hasActiveFilters =
       return (
         matchesSearch &&
         matchesStatus &&
+        matchesRating &&
         matchesMonth &&
         matchesYear &&
         matchesDepartment &&
@@ -513,6 +548,7 @@ const hasActiveFilters =
     events,
     searchTerm,
     statusFilter,
+    ratingFilter,
     monthFilter,
     yearFilter,
     departmentFilter,
@@ -612,7 +648,7 @@ const hasActiveFilters =
   }, [sortedEvents, currentPage]);
 
   const groupedEvents = useMemo(() => {
-    return paginatedEvents.reduce<Record<string, EventListItem[]>>(
+    return paginatedEvents.reduce<Record<string, EventListItemWithDebriefing[]>>(
       (groups, event) => {
         const month = event.date.slice(0, 7);
 
@@ -705,10 +741,25 @@ const hasActiveFilters =
 
               <div
                 className={`grid gap-3 ${
-                  isArchive ? "lg:grid-cols-3" : "lg:grid-cols-4"
+                  isArchive ? "lg:grid-cols-4" : "lg:grid-cols-4"
                 }`}
               >
-                {!isArchive ? (
+                {isArchive ? (
+                  <select
+                    value={ratingFilter}
+                    onChange={(event) => {
+                      setRatingFilter(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                  >
+                    <option value="all">Alle Bewertungen</option>
+                    <option value="sehr_gut">Sehr gut</option>
+                    <option value="gut">Gut</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="schlecht">Schlecht</option>
+                  </select>
+                ) : (
                   <select
                     value={statusFilter}
                     onChange={(event) => {
@@ -724,7 +775,7 @@ const hasActiveFilters =
                       </option>
                     ))}
                   </select>
-                ) : null}
+                )}
 
                 <select
                   value={roomFilter}

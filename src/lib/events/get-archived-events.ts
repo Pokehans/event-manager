@@ -12,8 +12,13 @@ type RawUser = {
   departments?: RawDepartment | RawDepartment[] | null;
 };
 
-type RawArchivedEvent = Omit<EventListItem, "users"> & {
+type RawArchivedEvent = Omit<EventListItem, "users" | "event_debriefings"> & {
   users?: RawUser | RawUser[] | null;
+  event_debriefings?: { rating: string | null }[] | null;
+};
+
+export type ArchivedEventListItem = Omit<EventListItem, "event_debriefings"> & {
+  event_debriefings: { rating: string | null }[] | null;
 };
 
 function pickOne<T>(value: T | T[] | null | undefined): T | null {
@@ -21,7 +26,7 @@ function pickOne<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-export async function getArchivedEvents(): Promise<EventListItem[]> {
+export async function getArchivedEvents(): Promise<ArchivedEventListItem[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -38,6 +43,9 @@ export async function getArchivedEvents(): Promise<EventListItem[]> {
       children,
       room,
       payment_type,
+      event_debriefings (
+        rating
+      ),
       users:created_by (
         id,
         departments:department_id (
@@ -61,6 +69,7 @@ export async function getArchivedEvents(): Promise<EventListItem[]> {
 
     return {
       ...event,
+      event_debriefings: event.event_debriefings ?? null,
       users: rawUser
         ? {
             id: rawUser.id,
