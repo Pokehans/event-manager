@@ -207,7 +207,7 @@ export default async function CockpitPage({
     );
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full max-w-full overflow-x-hidden space-y-6">
       <div className="space-y-1">
         <h1 className="page-title">Cockpit</h1>
         <p className="page-subtitle">
@@ -231,7 +231,7 @@ export default async function CockpitPage({
                 </div>
 
                 <div className="flex flex-col gap-3 sm:items-start lg:items-end">
-                    <div className="inline-flex rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1 shadow-sm">
+                    <div className="grid w-full grid-cols-2 gap-1 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-1 shadow-sm sm:inline-flex sm:w-auto">
                         {[
                         { value: "month", label: "Monat" },
                         { value: "quarter", label: "Quartal" },
@@ -248,7 +248,7 @@ export default async function CockpitPage({
                                     query: { ...params, qualityPeriod: option.value },
                                 }}
                                 scroll={false}
-                                className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                                className={`rounded-xl px-3 py-2 text-center text-sm font-semibold transition sm:px-4 ${
                                 isActive
                                 ? "bg-white text-[var(--color-primary)] shadow-sm"
                                 : "text-[var(--color-text-muted)] hover:bg-white/70 hover:text-[var(--color-text)]"
