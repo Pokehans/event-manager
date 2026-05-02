@@ -3,6 +3,28 @@ import { ROLES } from "@/lib/auth/roles";
 import OperativeCockpit from "@/components/cockpit/operative-cockpit";
 import { getEvents } from "@/lib/events/get-events";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+
+const ratingValues = {
+  sehr_gut: 4,
+  gut: 3,
+  neutral: 2,
+  schlecht: 1,
+} as const;
+
+type DebriefingRating = keyof typeof ratingValues;
+
+function isDebriefingRating(rating: string | null): rating is DebriefingRating {
+  return rating === "sehr_gut" || rating === "gut" || rating === "neutral" || rating === "schlecht";
+}
+
+function getAverageRating(ratings: DebriefingRating[]) {
+  if (ratings.length === 0) return null;
+
+  const total = ratings.reduce((sum, rating) => sum + ratingValues[rating], 0);
+
+  return total / ratings.length;
+}
 
 export default async function CockpitPage() {
   const user = await getCurrentUser({ redirectTo: "/" });
@@ -11,6 +33,28 @@ export default async function CockpitPage() {
 
   const isAdminView =
     user.role === ROLES.ADMIN || user.role === ROLES.SYSTEMADMIN;
+
+  const supabase = await createClient();
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data: debriefingRatings } = isAdminView
+    ? await supabase
+        .from("event_debriefings")
+        .select("rating")
+        .gte("created_at", thirtyDaysAgo.toISOString())
+    : { data: [] };
+
+    const validDebriefingRatings = (debriefingRatings ?? [])
+    .map((item) => item.rating)
+    .filter(isDebriefingRating);
+
+    const averageRating = getAverageRating(validDebriefingRatings);
+
+    const poorRatingCount = validDebriefingRatings.filter(
+    (rating) => rating === "schlecht"
+    ).length;
 
   const events = await getEvents();
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -53,6 +97,28 @@ export default async function CockpitPage() {
             </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                        <div>
+                        <p className="text-sm text-[var(--color-text-muted)]">
+                            Event Qualität
+                        </p>
+                        <p className="mt-2 text-3xl font-bold text-[var(--color-text)]">
+                            {averageRating ? averageRating.toFixed(1) : "—"}
+                        </p>
+                        <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                            Letzte 30 Tage · {validDebriefingRatings.length} Debriefing
+                            {validDebriefingRatings.length === 1 ? "" : "s"}
+                        </p>
+                        {poorRatingCount > 0 ? (
+                            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                            {poorRatingCount} schlechte Bewertung
+                            {poorRatingCount === 1 ? "" : "en"}
+                            </p>
+                        ) : null}
+                        </div>
+                    </div>
+                    </div>
                 <Link
                     href={`/dashboard/events?month=${currentMonth.slice(5, 7)}&year=${currentMonth.slice(0, 4)}`}
                     className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm transition hover:bg-[var(--color-surface-muted)]"
