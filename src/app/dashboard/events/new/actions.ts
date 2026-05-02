@@ -547,40 +547,16 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
     changes.push("Notizen geändert");
   }
 
-  const billingCompanyChange = formatChangeText(
-    "Rechnungsfirma",
-    existingEvent.billing_company_name,
-    nextEvent.billing_company_name
-  );
-  if (billingCompanyChange) changes.push(billingCompanyChange);
+const billingAddressChanged =
+  existingEvent.billing_company_name !== nextEvent.billing_company_name ||
+  existingEvent.billing_firstname !== nextEvent.billing_firstname ||
+  existingEvent.billing_lastname !== nextEvent.billing_lastname ||
+  existingEvent.billing_address !== nextEvent.billing_address ||
+  existingEvent.billing_email !== nextEvent.billing_email;
 
-  const billingFirstnameChange = formatChangeText(
-    "Rechnung Vorname",
-    existingEvent.billing_firstname,
-    nextEvent.billing_firstname
-  );
-  if (billingFirstnameChange) changes.push(billingFirstnameChange);
-
-  const billingLastnameChange = formatChangeText(
-    "Rechnung Nachname",
-    existingEvent.billing_lastname,
-    nextEvent.billing_lastname
-  );
-  if (billingLastnameChange) changes.push(billingLastnameChange);
-
-  const billingAddressChange = formatChangeText(
-    "Rechnungsadresse",
-    existingEvent.billing_address,
-    nextEvent.billing_address
-  );
-  if (billingAddressChange) changes.push(billingAddressChange);
-
-  const billingEmailChange = formatChangeText(
-    "Rechnungs-E-Mail",
-    existingEvent.billing_email,
-    nextEvent.billing_email
-  );
-  if (billingEmailChange) changes.push(billingEmailChange);
+if (billingAddressChanged) {
+  changes.push("Rechnungsadresse geändert");
+}
 
   return {
     changes,
