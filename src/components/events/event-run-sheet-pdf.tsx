@@ -77,15 +77,36 @@ function text(value: string | null | undefined, fallback = "Keine Angaben") {
   return value?.trim() || fallback;
 }
 
+function shouldBreakBeforeFood(event: EventDetail) {
+  const scheduleLength = event.schedule?.trim().length ?? 0;
+
+  return scheduleLength > 650;
+}
+
+function shouldBreakBeforeNotes(event: EventDetail) {
+  const foodLength = event.food?.trim().length ?? 0;
+  const drinksLength = event.drinks?.trim().length ?? 0;
+
+  return foodLength + drinksLength > 900;
+}
+
 function Section({
   title,
   children,
+  breakBefore = false,
+  keepTogether = false,
 }: {
   title: string;
   children: React.ReactNode;
+  breakBefore?: boolean;
+  keepTogether?: boolean;
 }) {
   return (
-    <View style={styles.section}>
+    <View
+      style={styles.section}
+      break={breakBefore}
+      wrap={!keepTogether}
+    >
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
@@ -115,6 +136,8 @@ export function EventRunSheetPdf({ event }: Props) {
     .join(" ");
 
   const totalGuests = (event.adults ?? 0) + (event.children ?? 0);
+  const breakBeforeFood = shouldBreakBeforeFood(event);
+  const breakBeforeNotes = shouldBreakBeforeNotes(event);
 
   return (
     <Document>
@@ -184,7 +207,7 @@ export function EventRunSheetPdf({ event }: Props) {
             <Text style={styles.text}>{text(event.schedule, "Ablauf noch offen")}</Text>
           </Section>
 
-          <Section title="Essen & Getränke">
+          <Section title="Essen & Getränke" breakBefore={breakBeforeFood}>
             <Text style={styles.subTitle}>Essen:</Text>
             <Text style={styles.text}>{text(event.food)}</Text>
 
@@ -192,7 +215,7 @@ export function EventRunSheetPdf({ event }: Props) {
             <Text style={styles.text}>{text(event.drinks)}</Text>
           </Section>
 
-          <Section title="Diverses">
+          <Section title="Diverses" breakBefore={breakBeforeNotes}>
             <Text style={styles.text}>
               {text(event.notes, "Keine besonderen Hinweise")}
             </Text>
