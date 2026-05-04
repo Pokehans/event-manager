@@ -225,14 +225,18 @@ export function EventRunSheetPdf({ event }: Props) {
             <Text style={styles.text}>{getPaymentTypeLabel(event.payment_type)}</Text>
           </Section>
 
-          <View style={styles.footer}>
+          <View fixed style={styles.footer}>
             <Text style={styles.footerCompany}>
               Biffig AG | Biffig 1 | 6247 Schötz | 041 984 23 00 |
               www.biffig.ch
             </Text>
-            <Text style={styles.footerMeta}>
-              {new Date().toLocaleString("de-CH")} 1/1
-            </Text>
+
+            <Text
+              style={styles.footerMeta}
+              render={({ pageNumber, totalPages }) =>
+                `${new Date().toLocaleString("de-CH")} ${pageNumber}/${totalPages}`
+              }
+            />
           </View>
         </View>
       </Page>
@@ -252,7 +256,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D6D6D6",
     minHeight: "100%",
-    padding: 18,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 34,
   },
   header: {
     flexDirection: "row",
@@ -346,7 +352,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   footer: {
-    marginTop: "auto",
+    position: "absolute",
+    left: 46,
+    right: 46,
+    bottom: 28,
     borderTopWidth: 1,
     borderTopColor: "#D8D8D8",
     paddingTop: 7,
