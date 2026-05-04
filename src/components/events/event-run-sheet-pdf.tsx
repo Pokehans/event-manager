@@ -83,31 +83,44 @@ function shouldBreakBeforeFood(event: EventDetail) {
   return scheduleLength > 650;
 }
 
-function shouldBreakBeforeNotes(event: EventDetail) {
-  const foodLength = event.food?.trim().length ?? 0;
-  const drinksLength = event.drinks?.trim().length ?? 0;
+function estimateTextLines(value: string | null | undefined, charsPerLine = 95) {
+  const normalized = value?.trim();
 
-  return foodLength + drinksLength > 900;
+  if (!normalized) {
+    return 0;
+  }
+
+  return normalized.split("\n").reduce((total, line) => {
+    const trimmedLine = line.trim();
+
+    if (!trimmedLine) {
+      return total + 1;
+    }
+
+    return total + Math.max(1, Math.ceil(trimmedLine.length / charsPerLine));
+  }, 0);
+}
+
+function shouldBreakBeforeNotes(event: EventDetail) {
+  const foodLines = estimateTextLines(event.food);
+  const drinksLines = estimateTextLines(event.drinks);
+  const notesLines = estimateTextLines(event.notes);
+
+  return foodLines + drinksLines >= 14 || notesLines >= 5;
 }
 
 function Section({
   title,
   children,
   breakBefore = false,
-  keepTogether = false,
 }: {
   title: string;
   children: React.ReactNode;
   breakBefore?: boolean;
-  keepTogether?: boolean;
 }) {
   return (
-    <View
-      style={styles.section}
-      break={breakBefore}
-      wrap={!keepTogether}
-    >
-      <View style={styles.sectionHeader}>
+    <View style={styles.section} break={breakBefore}>
+      <View style={styles.sectionHeader} wrap={false}>
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>
