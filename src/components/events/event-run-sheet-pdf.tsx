@@ -143,7 +143,11 @@ function InfoLine({
   );
 }
 
-export function EventRunSheetPdf({ event }: Props) {
+type MultiProps = {
+  events: EventDetail[];
+};
+
+function EventRunSheetPage({ event }: Props) {
   const contactName = [event.firstname, event.lastname]
     .filter(Boolean)
     .join(" ");
@@ -153,106 +157,126 @@ export function EventRunSheetPdf({ event }: Props) {
   const breakBeforeNotes = shouldBreakBeforeNotes(event);
 
   return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        <View style={styles.document}>
-          <View style={styles.header}>
-            <View style={styles.logoBox}>
-                {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                <Image src={logoBase64} style={styles.logo} />
-            </View>
-
-            <View style={styles.headerContent}>
-              <Text style={styles.title}>{event.title}</Text>
-              <Text style={styles.date}>{formatDate(event.date)}</Text>
-            </View>
-
-            <View style={styles.creatorBox}>
-              <Text style={styles.creatorText}>
-                Verfasst von: {getCreatorLabel(event.users?.email)}
-              </Text>
-            </View>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.document}>
+        <View style={styles.header}>
+          <View style={styles.logoBox}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            <Image src={logoBase64} style={styles.logo} />
           </View>
 
-          <Section title="Kontaktdaten">
-            <Text style={styles.text}>
-              {event.company_name ? `${event.company_name}\n` : ""}
-              {contactName || "Keine Kontaktperson erfasst"}
-              {"\n"}
-              {text(event.address, "Keine Adresse erfasst")}
-              {"\n"}
-              {text(event.email, "Keine E-Mail")} /{" "}
-              {text(event.phone, "Keine Telefonnummer")}
-            </Text>
-          </Section>
-
-          <View style={styles.twoColumnRow}>
-            <View style={styles.leftColumn}>
-              <Section title="Gebuchte Räume">
-                <Text style={styles.text}>{getRoomLabel(event.room)}</Text>
-              </Section>
-            </View>
-
-            <View style={styles.rightColumn}>
-              <Section title="Personenzahl">
-                <InfoLine label="Erwachsene" value={event.adults ?? 0} />
-                <InfoLine label="Kinder" value={event.children ?? 0} />
-                <InfoLine label="Total" value={totalGuests} />
-              </Section>
-            </View>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>{event.title}</Text>
+            <Text style={styles.date}>{formatDate(event.date)}</Text>
           </View>
 
-          <View style={styles.twoColumnRow}>
-            <View style={styles.leftColumn}>
-              <Section title="Technischer Dienst">
-                <Text style={styles.text}>{text(event.tech)}</Text>
-              </Section>
-            </View>
-
-            <View style={styles.rightColumn}>
-              <Section title="Infrastruktur">
-                <Text style={styles.text}>{text(event.infrastructure)}</Text>
-              </Section>
-            </View>
-          </View>
-
-          <Section title="Zeitablauf">
-            <Text style={styles.text}>{text(event.schedule, "Ablauf noch offen")}</Text>
-          </Section>
-
-          <Section title="Essen & Getränke" breakBefore={breakBeforeFood}>
-            <Text style={styles.subTitle}>Essen:</Text>
-            <Text style={styles.text}>{text(event.food)}</Text>
-
-            <Text style={styles.subTitle}>Getränke:</Text>
-            <Text style={styles.text}>{text(event.drinks)}</Text>
-          </Section>
-
-          <Section title="Diverses" breakBefore={breakBeforeNotes}>
-            <Text style={styles.text}>
-              {text(event.notes, "Keine besonderen Hinweise")}
+          <View style={styles.creatorBox}>
+            <Text style={styles.creatorText}>
+              Verfasst von: {getCreatorLabel(event.users?.email)}
             </Text>
-          </Section>
-
-          <Section title="Zahlungskonditionen">
-            <Text style={styles.text}>{getPaymentTypeLabel(event.payment_type)}</Text>
-          </Section>
-
-          <View fixed style={styles.footer}>
-            <Text style={styles.footerCompany}>
-              Biffig AG | Biffig 1 | 6247 Schötz | 041 984 23 00 |
-              www.biffig.ch
-            </Text>
-
-            <Text
-              style={styles.footerMeta}
-              render={({ pageNumber, totalPages }) =>
-                `${new Date().toLocaleString("de-CH")} ${pageNumber}/${totalPages}`
-              }
-            />
           </View>
         </View>
-      </Page>
+
+        <Section title="Kontaktdaten">
+          <Text style={styles.text}>
+            {event.company_name ? `${event.company_name}\n` : ""}
+            {contactName || "Keine Kontaktperson erfasst"}
+            {"\n"}
+            {text(event.address, "Keine Adresse erfasst")}
+            {"\n"}
+            {text(event.email, "Keine E-Mail")} /{" "}
+            {text(event.phone, "Keine Telefonnummer")}
+          </Text>
+        </Section>
+
+        <View style={styles.twoColumnRow}>
+          <View style={styles.leftColumn}>
+            <Section title="Gebuchte Räume">
+              <Text style={styles.text}>{getRoomLabel(event.room)}</Text>
+            </Section>
+          </View>
+
+          <View style={styles.rightColumn}>
+            <Section title="Personenzahl">
+              <InfoLine label="Erwachsene" value={event.adults ?? 0} />
+              <InfoLine label="Kinder" value={event.children ?? 0} />
+              <InfoLine label="Total" value={totalGuests} />
+            </Section>
+          </View>
+        </View>
+
+        <View style={styles.twoColumnRow}>
+          <View style={styles.leftColumn}>
+            <Section title="Technischer Dienst">
+              <Text style={styles.text}>{text(event.tech)}</Text>
+            </Section>
+          </View>
+
+          <View style={styles.rightColumn}>
+            <Section title="Infrastruktur">
+              <Text style={styles.text}>{text(event.infrastructure)}</Text>
+            </Section>
+          </View>
+        </View>
+
+        <Section title="Zeitablauf">
+          <Text style={styles.text}>
+            {text(event.schedule, "Ablauf noch offen")}
+          </Text>
+        </Section>
+
+        <Section title="Essen & Getränke" breakBefore={breakBeforeFood}>
+          <Text style={styles.subTitle}>Essen:</Text>
+          <Text style={styles.text}>{text(event.food)}</Text>
+
+          <Text style={styles.subTitle}>Getränke:</Text>
+          <Text style={styles.text}>{text(event.drinks)}</Text>
+        </Section>
+
+        <Section title="Diverses" breakBefore={breakBeforeNotes}>
+          <Text style={styles.text}>
+            {text(event.notes, "Keine besonderen Hinweise")}
+          </Text>
+        </Section>
+
+        <Section title="Zahlungskonditionen">
+          <Text style={styles.text}>
+            {getPaymentTypeLabel(event.payment_type)}
+          </Text>
+        </Section>
+
+        <View fixed style={styles.footer}>
+          <Text style={styles.footerCompany}>
+            Biffig AG | Biffig 1 | 6247 Schötz | 041 984 23 00 |
+            www.biffig.ch
+          </Text>
+
+          <Text
+            style={styles.footerMeta}
+            render={({ pageNumber, totalPages }) =>
+              `${new Date().toLocaleString("de-CH")} ${pageNumber}/${totalPages}`
+            }
+          />
+        </View>
+      </View>
+    </Page>
+  );
+}
+
+export function EventRunSheetPdf({ event }: Props) {
+  return (
+    <Document>
+      <EventRunSheetPage event={event} />
+    </Document>
+  );
+}
+
+export function EventRunSheetsPdf({ events }: MultiProps) {
+  return (
+    <Document>
+      {events.map((event) => (
+        <EventRunSheetPage key={event.id} event={event} />
+      ))}
     </Document>
   );
 }

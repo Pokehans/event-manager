@@ -196,6 +196,7 @@ const [participantMinFilter, setParticipantMinFilter] = useState(
     searchParams.get("view") === "months" ? "months" : "table"
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortField, setSortField] = useState<"date" | "title" | "status">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); 
@@ -682,6 +683,37 @@ const hasActiveFilters =
     return sortedEvents.slice(start, start + EVENTS_PER_PAGE);
   }, [sortedEvents, currentPage]);
 
+  const selectedCount = selectedEventIds.length;
+
+  const visibleEventIds = paginatedEvents.map((event) => event.id);
+
+  const allVisibleSelected =
+    visibleEventIds.length > 0 &&
+    visibleEventIds.every((id) => selectedEventIds.includes(id));
+
+  const printHref =
+    selectedCount > 0
+      ? `/dashboard/events/print?ids=${selectedEventIds.join(",")}`
+      : "#";
+
+  function toggleEventSelection(eventId: string) {
+    setSelectedEventIds((current) =>
+      current.includes(eventId)
+        ? current.filter((id) => id !== eventId)
+        : [...current, eventId]
+    );
+  }
+
+  function toggleVisibleEventsSelection() {
+    setSelectedEventIds((current) => {
+      if (allVisibleSelected) {
+        return current.filter((id) => !visibleEventIds.includes(id));
+      }
+
+      return Array.from(new Set([...current, ...visibleEventIds]));
+    });
+  }
+
   const groupedEvents = useMemo(() => {
     return paginatedEvents.reduce<Record<string, EventListItemWithDebriefing[]>>(
       (groups, event) => {
@@ -1052,6 +1084,7 @@ const hasActiveFilters =
                   Monatsgruppen
                 </button>
               </div>
+              
               <button
                 type="button"
                 disabled={!hasActiveFilters}
@@ -1079,6 +1112,17 @@ const hasActiveFilters =
             <table className="w-full min-w-[900px] border-collapse text-left text-sm">
               <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <tr>
+                  {!isArchive ? (
+                    <th className="w-12 px-5 py-4">
+                      <input
+                        type="checkbox"
+                        checked={allVisibleSelected}
+                        onChange={toggleVisibleEventsSelection}
+                        aria-label="Sichtbare Events auswählen"
+                        className="h-4 w-4 rounded border-[var(--color-border)]"
+                      />
+                    </th>
+                  ) : null}
                   <th
                     onClick={() => handleSort("date")}
                     className="cursor-pointer px-5 py-4 font-bold select-none hover:text-[var(--color-primary)]"
@@ -1114,6 +1158,17 @@ const hasActiveFilters =
                       key={event.id}
                       className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
                     >
+                      {!isArchive ? (
+                        <td className="px-5 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedEventIds.includes(event.id)}
+                            onChange={() => toggleEventSelection(event.id)}
+                            aria-label={`${event.title} auswählen`}
+                            className="h-4 w-4 rounded border-[var(--color-border)]"
+                          />
+                        </td>
+                      ) : null}
                       <td className="whitespace-nowrap px-5 py-4 font-medium">
                         <Link
                           href={`/dashboard/events/${event.id}?from=${from === "archive" ? "archive" : "list"}`}
@@ -1195,14 +1250,30 @@ const hasActiveFilters =
                   className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-bold text-[var(--color-primary)]">
-                        {formatDate(event.date)}
-                      </p>
-                      <h2 className="mt-1 font-bold">{event.title}</h2>
-                      <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                        {getCustomerName(event)}
-                      </p>
+                    <div className="flex items-start gap-3">
+                      {!isArchive ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedEventIds.includes(event.id)}
+                          onChange={(changeEvent) => {
+                            changeEvent.preventDefault();
+                            toggleEventSelection(event.id);
+                          }}
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
+                          aria-label={`${event.title} auswählen`}
+                          className="mt-1 h-4 w-4 rounded border-[var(--color-border)]"
+                        />
+                      ) : null}
+
+                      <div>
+                        <p className="text-sm font-bold text-[var(--color-primary)]">
+                          {formatDate(event.date)}
+                        </p>
+                        <h2 className="mt-1 font-bold">{event.title}</h2>
+                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                          {getCustomerName(event)}
+                        </p>
+                      </div>
                     </div>
 
                     <StatusBadge label={getStatusLabel(event.status)} />
@@ -1254,14 +1325,30 @@ const hasActiveFilters =
                       className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
                     >
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <p className="text-sm font-bold text-[var(--color-primary)]">
-                            {formatDate(event.date)}
-                          </p>
-                          <h3 className="mt-1 font-bold">{event.title}</h3>
-                          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                            {getCustomerName(event)}
-                          </p>
+                        <div className="flex items-start gap-3">
+                          {!isArchive ? (
+                            <input
+                              type="checkbox"
+                              checked={selectedEventIds.includes(event.id)}
+                              onChange={(changeEvent) => {
+                                changeEvent.preventDefault();
+                                toggleEventSelection(event.id);
+                              }}
+                              onClick={(clickEvent) => clickEvent.stopPropagation()}
+                              aria-label={`${event.title} auswählen`}
+                              className="mt-1 h-4 w-4 rounded border-[var(--color-border)]"
+                            />
+                          ) : null}
+
+                          <div>
+                            <p className="text-sm font-bold text-[var(--color-primary)]">
+                              {formatDate(event.date)}
+                            </p>
+                            <h3 className="mt-1 font-bold">{event.title}</h3>
+                            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                              {getCustomerName(event)}
+                            </p>
+                          </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-text-muted)]">
@@ -1318,23 +1405,46 @@ const hasActiveFilters =
         </div>
 
         {!isArchive ? (
-          <button
-            type="button"
-            disabled={
-              monthFilter === "all" ||
-              yearFilter === "all" ||
-              monthlyForecastEvents.length === 0
-            }
-            title={
-              monthFilter === "all" || yearFilter === "all"
-                ? "Monat und Jahr wählen"
-                : "Monatsforecast exportieren"
-            }
-            onClick={handleExportMonthlyForecast}
-            className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
-          >
-            Monatsforecast exportieren
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              disabled={
+                monthFilter === "all" ||
+                yearFilter === "all" ||
+                monthlyForecastEvents.length === 0
+              }
+              title={
+                monthFilter === "all" || yearFilter === "all"
+                  ? "Monat und Jahr wählen"
+                  : "Monatsforecast exportieren"
+              }
+              onClick={handleExportMonthlyForecast}
+              className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
+            >
+              Monatsforecast exportieren
+            </button>
+
+            <button
+              type="button"
+              disabled={selectedCount === 0}
+              onClick={() => {
+                window.open(printHref, "_blank", "noopener,noreferrer");
+              }}
+              className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
+            >
+              Laufzettel drucken ({selectedCount})
+            </button>
+
+            {selectedCount > 0 ? (
+              <button
+                type="button"
+                onClick={() => setSelectedEventIds([])}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+              >
+                Auswahl löschen
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </div>
