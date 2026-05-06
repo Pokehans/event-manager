@@ -362,7 +362,7 @@ export default function DashboardShell({
                   collapsed={sidebarCollapsed}
                 />
                 <SidebarLink
-                  href="#"
+                  href="/dashboard/rooms"
                   label="Räume"
                   icon={<RoomsIcon />}
                   collapsed={sidebarCollapsed}
@@ -459,7 +459,7 @@ export default function DashboardShell({
                     onClick={() => setMobileMenuOpen(false)}
                   />
                   <SidebarLink
-                    href="#"
+                    href="/dashboard/rooms"
                     label="Räume"
                     icon={<RoomsIcon />}
                     onClick={() => setMobileMenuOpen(false)}

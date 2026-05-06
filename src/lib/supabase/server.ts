@@ -18,7 +18,6 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // in Server Components teilweise erwartbar
           }
         },
       },
