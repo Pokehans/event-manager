@@ -94,6 +94,22 @@ export async function createRoom(
 
   const supabase = await createClient();
 
+  const { data: existing } = await supabase
+    .from("rooms")
+    .select("id")
+    .eq("name", values.name)
+    .maybeSingle();
+
+    if (existing) {
+    return {
+        message: "Raum existiert bereits.",
+        errors: {
+        name: "Ein Raum mit diesem Namen existiert bereits.",
+        },
+        values,
+    };
+    }
+
   const { data: room, error } = await supabase
     .from("rooms")
     .insert({
