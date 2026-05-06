@@ -4,6 +4,7 @@ import StatusBadge from "@/components/ui/status-badge";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
+import { RoomImageLightbox } from "./images/room-image-lightbox";
 
 type Room = {
   id: string;
@@ -292,39 +293,10 @@ export default async function RoomDetailPage({ params }: Props) {
             </p>
           </DetailSection>
 
-          <DetailSection
-            title="Bilder"
-          >
+          <DetailSection title="Bilder">
             <div className="space-y-6">
-
               {roomImages.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {roomImages.map((image) => (
-                    <div
-                      key={image.id}
-                      className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]"
-                    >
-                      {image.signedUrl ? (
-                        <>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={image.signedUrl}
-                            alt={image.alt_text || image.file_name}
-                            className="aspect-[4/3] w-full object-cover"
-                          />
-                        </>
-                      ) : (
-                        <div className="flex aspect-[4/3] items-center justify-center bg-white text-sm text-[var(--color-text-muted)]">
-                          Bild konnte nicht geladen werden.
-                        </div>
-                      )}
-
-                      <div className="space-y-3 p-3">
-                        <p className="truncate text-sm font-medium">{image.file_name}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <RoomImageLightbox images={roomImages} />
               ) : (
                 <p className="section-text">Noch keine Bilder erfasst.</p>
               )}

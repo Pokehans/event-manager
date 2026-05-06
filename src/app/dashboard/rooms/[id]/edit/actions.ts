@@ -228,75 +228,7 @@ export async function updateRoom(
       values,
     };
   }
-
-  const deleteImageIds = formData
-    .getAll("delete_image_ids")
-    .map((value) => String(value))
-    .filter(Boolean);
-
-  const deleteImagePaths = formData
-    .getAll("delete_image_paths")
-    .map((value) => String(value))
-    .filter(Boolean);
-
-  if (deleteImagePaths.length > 0) {
-    const { error: deleteStorageError } = await supabase.storage
-      .from(ROOM_IMAGES_BUCKET)
-      .remove(deleteImagePaths);
-
-    if (deleteStorageError) {
-      console.error(
-        "Fehler beim Löschen der Raumbilder aus Storage:",
-        deleteStorageError.message
-      );
-    }
-  }
-
-  if (deleteImageIds.length > 0) {
-    const { error: deleteImagesError } = await supabase
-      .from("room_images")
-      .delete()
-      .eq("room_id", roomId)
-      .in("id", deleteImageIds);
-
-    if (deleteImagesError) {
-      console.error(
-        "Fehler beim Löschen der Raumbilder aus der Datenbank:",
-        deleteImagesError.message
-      );
-    }
-  }
-
-  for (const file of files) {
-    const cleanFileName = sanitizeFileName(file.name);
-    const filePath = `rooms/${roomId}/${Date.now()}-${cleanFileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from(ROOM_IMAGES_BUCKET)
-      .upload(filePath, file, {
-        contentType: file.type,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Fehler beim Hochladen des Raumbildes:", uploadError.message);
-      continue;
-    }
-
-    const { error: imageInsertError } = await supabase.from("room_images").insert({
-      room_id: roomId,
-      file_path: filePath,
-      file_name: file.name,
-      alt_text: file.name,
-      sort_order: 0,
-    });
-
-    if (imageInsertError) {
-      console.error("Fehler beim Speichern des Raumbildes:", imageInsertError.message);
-      await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([filePath]);
-    }
-  }
-
+  
   const updatedRoom: RoomSnapshot = {
     name: values.name,
     capacity,
@@ -330,9 +262,110 @@ export async function updateRoom(
     };
   }
 
-  if (changeLogs.length > 0) {
+  const imageChangeLogs: string[] = [];
+
+  const deleteImageIds = formData
+    .getAll("delete_image_ids")
+    .map((value) => String(value))
+    .filter(Boolean);
+
+  const imagesToDelete =
+    deleteImageIds.length > 0
+      ? await supabase
+          .from("room_images")
+          .select("id, file_path, file_name")
+          .eq("room_id", roomId)
+          .in("id", deleteImageIds)
+      : { data: [], error: null };
+
+  if (imagesToDelete.error) {
+    console.error(
+      "Fehler beim Laden der zu löschenden Raumbilder:",
+      imagesToDelete.error.message
+    );
+  }
+
+  const deleteImagePaths = (imagesToDelete.data ?? []).map(
+    (image) => image.file_path
+  );
+
+  if (deleteImagePaths.length > 0) {
+    const { error: deleteStorageError } = await supabase.storage
+      .from(ROOM_IMAGES_BUCKET)
+      .remove(deleteImagePaths);
+
+    if (deleteStorageError) {
+      console.error(
+        "Fehler beim Löschen der Raumbilder aus Storage:",
+        deleteStorageError.message
+      );
+    }
+  }
+
+  if ((imagesToDelete.data ?? []).length > 0) {
+    const { error: deleteImagesError } = await supabase
+      .from("room_images")
+      .delete()
+      .eq("room_id", roomId)
+      .in(
+        "id",
+        (imagesToDelete.data ?? []).map((image) => image.id)
+      );
+
+    if (deleteImagesError) {
+      console.error(
+        "Fehler beim Löschen der Raumbilder aus der Datenbank:",
+        deleteImagesError.message
+      );
+    } else {
+      imageChangeLogs.push(
+        ...(imagesToDelete.data ?? []).map(
+          (image) => `Bild gelöscht Neu: ${image.file_name}`
+        )
+      );
+    }
+  }
+
+  for (const file of files) {
+    const cleanFileName = sanitizeFileName(file.name);
+    const filePath = `rooms/${roomId}/${Date.now()}-${cleanFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(ROOM_IMAGES_BUCKET)
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Fehler beim Hochladen des Raumbildes:", uploadError.message);
+      continue;
+    }
+
+    const { error: imageInsertError } = await supabase.from("room_images").insert({
+      room_id: roomId,
+      file_path: filePath,
+      file_name: file.name,
+      alt_text: file.name,
+      sort_order: 0,
+    });
+
+    if (imageInsertError) {
+      console.error(
+        "Fehler beim Speichern des Raumbildes:",
+        imageInsertError.message
+      );
+      await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([filePath]);
+    } else {
+      imageChangeLogs.push(`Bild hochgeladen Neu: ${file.name}`);
+    }
+  }
+
+  const allChangeLogs = [...changeLogs, ...imageChangeLogs];
+
+  if (allChangeLogs.length > 0) {
     const { error: logError } = await supabase.from("room_logs").insert(
-      changeLogs.map((change) => ({
+      allChangeLogs.map((change) => ({
         room_id: roomId,
         user_id: user.id,
         change,
