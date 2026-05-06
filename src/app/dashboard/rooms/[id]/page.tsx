@@ -4,8 +4,6 @@ import StatusBadge from "@/components/ui/status-badge";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
-import { RoomImageUpload } from "./images/room-image-upload";
-import { DeleteRoomImageButton } from "./images/delete-room-image-button";
 
 type Room = {
   id: string;
@@ -299,7 +297,6 @@ export default async function RoomDetailPage({ params }: Props) {
             description="Bilder des Raums für Planung, Verkauf und interne Orientierung."
           >
             <div className="space-y-6">
-              {canManageRooms ? <RoomImageUpload roomId={r.id} /> : null}
 
               {roomImages.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -325,14 +322,6 @@ export default async function RoomDetailPage({ params }: Props) {
 
                       <div className="space-y-3 p-3">
                         <p className="truncate text-sm font-medium">{image.file_name}</p>
-
-                        {canManageRooms ? (
-                          <DeleteRoomImageButton
-                            roomId={r.id}
-                            imageId={image.id}
-                            filePath={image.file_path}
-                          />
-                        ) : null}
                       </div>
                     </div>
                   ))}

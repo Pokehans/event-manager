@@ -58,6 +58,7 @@ export default async function EditRoomPage({ params }: Props) {
 
       <RoomForm
         mode="edit"
+        roomId={r.id}
         action={updateRoomWithId}
         submitLabel="Änderungen speichern"
         pendingLabel="Änderungen werden gespeichert..."

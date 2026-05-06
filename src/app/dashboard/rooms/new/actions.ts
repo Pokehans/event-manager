@@ -9,11 +9,12 @@ import { ROLES, hasRole } from "@/lib/auth/roles";
 export type RoomFormState = {
   message?: string;
   errors?: {
-    name?: string;
-    capacity?: string;
-    status?: string;
-    general?: string;
-  };
+  name?: string;
+  capacity?: string;
+  status?: string;
+  images?: string;
+  general?: string;
+};
   values?: {
     name?: string;
     capacity?: string;
@@ -25,6 +26,22 @@ export type RoomFormState = {
 };
 
 const allowedStatuses = ["active", "inactive", "blocked"] as const;
+const ROOM_IMAGES_BUCKET = "room-images";
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+
+function sanitizeFileName(fileName: string) {
+  return fileName
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9.-]/g, "");
+}
 
 function normalizeOptionalString(value: string) {
   return value.trim() ? value.trim() : null;
@@ -84,6 +101,22 @@ export async function createRoom(
     errors.capacity = "Bitte eine gültige Kapazität erfassen.";
   }
 
+  const files = formData
+    .getAll("images")
+    .filter((file): file is File => file instanceof File && file.size > 0);
+
+  for (const file of files) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      errors.images = "Es sind nur JPG, PNG, WEBP oder GIF erlaubt.";
+      break;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      errors.images = "Ein Bild darf maximal 5 MB gross sein.";
+      break;
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return {
       message: "Raum konnte nicht erstellt werden.",
@@ -133,6 +166,36 @@ export async function createRoom(
       },
       values,
     };
+  }
+
+  for (const file of files) {
+    const cleanFileName = sanitizeFileName(file.name);
+    const filePath = `rooms/${room.id}/${Date.now()}-${cleanFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(ROOM_IMAGES_BUCKET)
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Fehler beim Hochladen des Raumbildes:", uploadError.message);
+      continue;
+    }
+
+    const { error: imageInsertError } = await supabase.from("room_images").insert({
+      room_id: room.id,
+      file_path: filePath,
+      file_name: file.name,
+      alt_text: file.name,
+      sort_order: 0,
+    });
+
+    if (imageInsertError) {
+      console.error("Fehler beim Speichern des Raumbildes:", imageInsertError.message);
+      await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([filePath]);
+    }
   }
 
   const { error: logError } = await supabase.from("room_logs").insert({
