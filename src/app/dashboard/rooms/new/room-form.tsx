@@ -212,8 +212,10 @@ export function RoomForm({
                   )}
 
                   {imagesMarkedForDelete.includes(image.id) ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-sm font-semibold text-[var(--color-danger)]">
-                      Wird beim Speichern gelöscht
+                    <div className="absolute inset-0 flex items-center justify-center bg-red-500/80 text-center">
+                      <span className="px-4 py-2 text-base font-bold uppercase tracking-wide text-white">
+                        Wird beim Speichern gelöscht
+                      </span>
                     </div>
                   ) : null}
                 </button>
