@@ -3,6 +3,26 @@
 import { useActionState } from "react";
 import { createRoom, type RoomFormState } from "./actions";
 
+export type RoomFormValues = {
+  name?: string;
+  capacity?: string;
+  function_description?: string;
+  status?: string;
+  equipment?: string;
+  internal_notes?: string;
+};
+
+type RoomFormProps = {
+  action?: (
+    state: RoomFormState,
+    formData: FormData
+  ) => Promise<RoomFormState>;
+  submitLabel?: string;
+  pendingLabel?: string;
+  initialValues?: RoomFormValues;
+  mode?: "create" | "edit";
+};
+
 const initialState: RoomFormState = {
   message: "",
   errors: {},
@@ -18,8 +38,22 @@ function fieldClass(error?: string) {
   ].join(" ");
 }
 
-export function RoomForm() {
-  const [state, dispatch, pending] = useActionState(createRoom, initialState);
+export function RoomForm({
+  action = createRoom,
+  submitLabel = "Raum erstellen",
+  pendingLabel = "Raum wird erstellt...",
+  initialValues = {},
+  mode = "create",
+}: RoomFormProps) {
+  const [state, dispatch, pending] = useActionState(action, {
+    ...initialState,
+    values: initialValues,
+  });
+
+  const values = {
+    ...initialValues,
+    ...state.values,
+  };
 
   return (
     <form action={dispatch} className="space-y-6">
@@ -30,18 +64,25 @@ export function RoomForm() {
       ) : null}
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-bold">Basisdaten</h2>
+        <div className="space-y-1">
+            <h2 className="section-title">Basisdaten</h2>
+            <p className="section-text">
+                Grundinformationen zum Raum, zur Kapazität und zur Nutzung.
+            </p>
+            </div>
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium">Name des Raums *</span>
+            <span className="text-sm font-medium">Name des Raums</span>
             <input
               name="name"
-              defaultValue={state.values?.name ?? ""}
+              defaultValue={values.name ?? ""}
               className={fieldClass(state.errors?.name)}
             />
             {state.errors?.name ? (
-              <p className="text-sm text-[var(--color-danger)]">{state.errors.name}</p>
+              <p className="text-sm text-[var(--color-danger)]">
+                {state.errors.name}
+              </p>
             ) : null}
           </label>
 
@@ -51,19 +92,21 @@ export function RoomForm() {
               name="capacity"
               type="number"
               min="0"
-              defaultValue={state.values?.capacity ?? ""}
+              defaultValue={values.capacity ?? ""}
               className={fieldClass(state.errors?.capacity)}
             />
             {state.errors?.capacity ? (
-              <p className="text-sm text-[var(--color-danger)]">{state.errors.capacity}</p>
+              <p className="text-sm text-[var(--color-danger)]">
+                {state.errors.capacity}
+              </p>
             ) : null}
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium">Status *</span>
+            <span className="text-sm font-medium">Status</span>
             <select
               name="status"
-              defaultValue={state.values?.status ?? "active"}
+              defaultValue={values.status ?? "active"}
               className={fieldClass(state.errors?.status)}
             >
               <option value="active">Aktiv</option>
@@ -71,7 +114,9 @@ export function RoomForm() {
               <option value="blocked">Gesperrt</option>
             </select>
             {state.errors?.status ? (
-              <p className="text-sm text-[var(--color-danger)]">{state.errors.status}</p>
+              <p className="text-sm text-[var(--color-danger)]">
+                {state.errors.status}
+              </p>
             ) : null}
           </label>
 
@@ -80,7 +125,7 @@ export function RoomForm() {
             <textarea
               name="function_description"
               rows={4}
-              defaultValue={state.values?.function_description ?? ""}
+              defaultValue={values.function_description ?? ""}
               className={fieldClass()}
               placeholder="z. B. Seminare, Bankette, Sitzungen, Apéros ..."
             />
@@ -90,7 +135,7 @@ export function RoomForm() {
             <span className="text-sm font-medium">Ausstattung</span>
             <input
               name="equipment"
-              defaultValue={state.values?.equipment ?? ""}
+              defaultValue={values.equipment ?? ""}
               className={fieldClass()}
               placeholder="Beamer, WLAN, Mikrofon, Bühne ..."
             />
@@ -104,7 +149,7 @@ export function RoomForm() {
             <textarea
               name="internal_notes"
               rows={4}
-              defaultValue={state.values?.internal_notes ?? ""}
+              defaultValue={values.internal_notes ?? ""}
               className={fieldClass()}
               placeholder="Nur intern sichtbar"
             />
@@ -112,15 +157,21 @@ export function RoomForm() {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-[var(--color-text-muted)]">
+            {mode === "edit"
+                ? "Änderungen werden direkt beim Raum gespeichert."
+                : "Nach dem Speichern erscheint der Raum in der Raumverwaltung."}
+            </p>
+
         <button
-          type="submit"
-          disabled={pending}
-          className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
+            type="submit"
+            disabled={pending}
+            className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
         >
-          {pending ? "Raum wird erstellt..." : "Raum erstellen"}
+            {pending ? pendingLabel : submitLabel}
         </button>
-      </div>
+    </div>
     </form>
   );
 }
