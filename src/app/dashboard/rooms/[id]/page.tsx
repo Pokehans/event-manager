@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import StatusBadge from "@/components/ui/status-badge";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
-import Card from "@/components/ui/card";
 
 type Room = {
   id: string;
@@ -15,6 +15,34 @@ type Room = {
   internal_notes: string | null;
   created_at: string;
   updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+  users:
+    | {
+        id: string;
+        email: string | null;
+      }
+    | {
+        id: string;
+        email: string | null;
+      }[]
+    | null;
+};
+
+type RoomLog = {
+  id: string;
+  change: string;
+  created_at: string | null;
+  users:
+    | {
+        id: string;
+        email: string | null;
+      }
+    | null;
+};
+
+type Props = {
+  params: Promise<{ id: string }>;
 };
 
 function getStatusLabel(status: string) {
@@ -30,11 +58,77 @@ function getStatusLabel(status: string) {
   }
 }
 
-export default async function RoomDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+function formatDateTime(date: string | null) {
+  if (!date) return "—";
+  return new Date(date).toLocaleString("de-CH");
+}
+
+function pickOne<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? value[0] ?? null : value;
+}
+
+function getLogUserLabel(email: string | null) {
+  return email || "Unbekannter Benutzer";
+}
+
+type DetailItemProps = {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+};
+
+function DetailItem({ label, value, className = "" }: DetailItemProps) {
+  return (
+    <div className={className}>
+      <p className="text-sm font-medium text-[var(--color-text-muted)]">
+        {label}
+      </p>
+      <div className="mt-1 text-sm">{value}</div>
+    </div>
+  );
+}
+
+type DetailSectionProps = {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+};
+
+function DetailSection({ title, description, children }: DetailSectionProps) {
+  return (
+    <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+      <div className="space-y-1">
+        <h2 className="section-title">{title}</h2>
+        {description ? <p className="section-text">{description}</p> : null}
+      </div>
+
+      <div className="mt-6">{children}</div>
+    </section>
+  );
+}
+
+function AuditLogList({ logs }: { logs: RoomLog[] }) {
+  return (
+    <div className="space-y-3">
+      {logs.map((log) => (
+        <div
+          key={log.id}
+          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"
+        >
+          <p className="text-sm font-medium">{log.change}</p>
+
+          <div className="mt-3 space-y-1 text-xs text-[var(--color-text-muted)]">
+            <p>{formatDateTime(log.created_at)}</p>
+            <p>{getLogUserLabel(log.users?.email ?? null)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default async function RoomDetailPage({ params }: Props) {
   const { id } = await params;
 
   const currentUser = await getCurrentUser({ redirectTo: "/" });
@@ -46,7 +140,13 @@ export default async function RoomDetailPage({
 
   const { data: room, error } = await supabase
     .from("rooms")
-    .select("*")
+    .select(`
+        *,
+        users:created_by (
+            id,
+            email
+        )
+     `)
     .eq("id", id)
     .single();
 
@@ -54,108 +154,140 @@ export default async function RoomDetailPage({
     notFound();
   }
 
+  const { data: logs } = await supabase
+    .from("room_logs")
+    .select(`
+      id,
+      change,
+      created_at,
+      users:user_id (
+        id,
+        email
+      )
+    `)
+    .eq("room_id", id)
+    .order("created_at", { ascending: false });
+
   const r = room as Room;
+  const createdByUser = pickOne(r.users);
+  const roomLogs: RoomLog[] = (logs ?? []).map((log) => ({
+    ...log,
+    users: pickOne(log.users),
+    }));
+  const latestLogs = roomLogs.slice(0, 3);
+  const hasLogs = roomLogs.length > 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight text-[var(--color-primary)]">
-            {r.name}
-          </h1>
-          <p className="mt-2 text-base text-[var(--color-text-muted)]">
-            Raumdetails
-          </p>
+    <div className="w-full space-y-6">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="space-y-1">
+          <h1 className="page-title">{r.name}</h1>
+          <p className="page-subtitle">Detailansicht</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/dashboard/rooms"
-            className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
-          >
-            Zurück
-          </Link>
-
-          {canManageRooms ? (
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
-              href={`/dashboard/rooms/${r.id}/edit`}
-              className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
+              href="/dashboard/rooms"
+              className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
             >
-              Bearbeiten
+              Zurück zur Raumverwaltung
             </Link>
-          ) : null}
+
+            {canManageRooms ? (
+              <Link
+                href={`/dashboard/rooms/${r.id}/edit`}
+                className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
+              >
+                Bearbeiten
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <div className="p-6">
-            <h2 className="text-lg font-bold">Basisdaten</h2>
-
-            <div className="mt-4 space-y-3 text-sm">
-              <p>
-                <span className="font-semibold">Kapazität:</span>{" "}
-                {r.capacity ? `${r.capacity} Personen` : "—"}
-              </p>
-
-              <p>
-                <span className="font-semibold">Status:</span>{" "}
-                {getStatusLabel(r.status)}
-              </p>
-
-              <p>
-                <span className="font-semibold">Nutzung:</span>{" "}
-                {r.function_description || "—"}
-              </p>
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="space-y-6 xl:col-span-2">
+          <DetailSection title="Basisdaten">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DetailItem label="Name" value={r.name} />
+              <DetailItem
+                label="Status"
+                value={<StatusBadge label={getStatusLabel(r.status)} />}
+              />
+              <DetailItem
+                label="Kapazität"
+                value={r.capacity ? `${r.capacity} Personen` : "—"}
+              />
             </div>
-          </div>
-        </Card>
+          </DetailSection>
 
-        <Card>
-          <div className="p-6">
-            <h2 className="text-lg font-bold">Interne Informationen</h2>
+          <DetailSection title="Funktion / Nutzung">
+            <p className="whitespace-pre-wrap text-sm leading-6">
+              {r.function_description || "—"}
+            </p>
+          </DetailSection>
 
-            <div className="mt-4 space-y-3 text-sm">
-              <p>
-                <span className="font-semibold">Ausstattung:</span>{" "}
-                {r.equipment?.length ? r.equipment.join(", ") : "—"}
-              </p>
+          <DetailSection title="Ausstattung">
+            {r.equipment?.length ? (
+              <div className="flex flex-wrap gap-2">
+                {r.equipment.map((item) => (
+                  <span
+                    key={item}
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="section-text">Keine Ausstattung erfasst.</p>
+            )}
+          </DetailSection>
 
-              <p>
-                <span className="font-semibold">Notizen:</span>{" "}
-                {r.internal_notes || "—"}
-              </p>
+          <DetailSection title="Interne Notizen">
+            <p className="whitespace-pre-wrap text-sm leading-6">
+              {r.internal_notes || "Keine internen Notizen erfasst."}
+            </p>
+          </DetailSection>
 
-              <p className="text-[var(--color-text-muted)]">
-                Erstellt: {new Date(r.created_at).toLocaleString("de-CH")}
-              </p>
-
-              <p className="text-[var(--color-text-muted)]">
-                Zuletzt bearbeitet: {new Date(r.updated_at).toLocaleString("de-CH")}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <div className="p-6">
-            <h2 className="text-lg font-bold">Bilder</h2>
-            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
+          <DetailSection title="Bilder">
+            <p className="section-text">
               Bilder werden im nächsten Schritt ergänzt.
             </p>
-          </div>
-        </Card>
+          </DetailSection>
 
-        <Card>
-          <div className="p-6">
-            <h2 className="text-lg font-bold">Dokumente</h2>
-            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
+          <DetailSection title="Dokumente">
+            <p className="section-text">
               Dokumente wie Bestuhlungspläne werden im nächsten Schritt ergänzt.
             </p>
-          </div>
-        </Card>
+          </DetailSection>
+        </div>
+
+        <div className="space-y-6">
+            <DetailSection title="Interne Informationen">
+                <div className="grid gap-4">
+                <DetailItem label="Raum-ID" value={r.id} />
+
+                <DetailItem
+                    label="Erstellt von"
+                    value={createdByUser?.email || "Unbekannt"}
+                />
+
+                <DetailItem
+                    label="Erstellt am"
+                    value={formatDateTime(r.created_at)}
+                />
+                </div>
+            </DetailSection>
+
+            <DetailSection title="Änderungsverlauf">
+                {hasLogs ? (
+                <AuditLogList logs={latestLogs} />
+                ) : (
+                <p className="section-text">Noch keine Änderungen erfasst.</p>
+                )}
+            </DetailSection>
+            </div>
       </div>
     </div>
   );
