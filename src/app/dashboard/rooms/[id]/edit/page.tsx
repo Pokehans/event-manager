@@ -43,6 +43,27 @@ export default async function EditRoomPage({ params }: Props) {
   const r = room as Room;
   const updateRoomWithId = updateRoom.bind(null, r.id);
 
+  const { data: images } = await supabase
+    .from("room_images")
+    .select("id, file_path, file_name, alt_text, created_at")
+    .eq("room_id", r.id)
+    .order("created_at", { ascending: true });
+
+  const roomImages = await Promise.all(
+    (images ?? []).map(async (image) => {
+      const { data } = await supabase.storage
+        .from("room-images")
+        .createSignedUrl(image.file_path, 60 * 60);
+
+      return {
+        id: image.id,
+        file_name: image.file_name,
+        alt_text: image.alt_text,
+        signedUrl: data?.signedUrl ?? null,
+      };
+    })
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -61,6 +82,7 @@ export default async function EditRoomPage({ params }: Props) {
         action={updateRoomWithId}
         submitLabel="Änderungen speichern"
         pendingLabel="Änderungen werden gespeichert..."
+        images={roomImages}
         initialValues={{
           name: r.name,
           capacity: r.capacity?.toString() ?? "",

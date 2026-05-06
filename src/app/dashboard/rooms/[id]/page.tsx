@@ -294,7 +294,6 @@ export default async function RoomDetailPage({ params }: Props) {
 
           <DetailSection
             title="Bilder"
-            description="Bilder des Raums für Planung, Verkauf und interne Orientierung."
           >
             <div className="space-y-6">
 

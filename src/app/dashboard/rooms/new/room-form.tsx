@@ -12,6 +12,13 @@ export type RoomFormValues = {
   internal_notes?: string;
 };
 
+type RoomFormImage = {
+  id: string;
+  file_name: string;
+  alt_text: string | null;
+  signedUrl: string | null;
+};
+
 type RoomFormProps = {
   action?: (
     state: RoomFormState,
@@ -21,6 +28,7 @@ type RoomFormProps = {
   pendingLabel?: string;
   initialValues?: RoomFormValues;
   mode?: "create" | "edit";
+  images?: RoomFormImage[];
 };
 
 const initialState: RoomFormState = {
@@ -44,6 +52,7 @@ export function RoomForm({
   pendingLabel = "Raum wird erstellt...",
   initialValues = {},
   mode = "create",
+  images = [],
 }: RoomFormProps) {
   const [state, dispatch, pending] = useActionState(action, initialState);
 
@@ -158,10 +167,33 @@ export function RoomForm({
       <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
         <div className="space-y-1">
           <h2 className="section-title">Bilder</h2>
-          <p className="section-text">
-            Bilder für Darstellung und interne Planung.
-          </p>
         </div>
+
+        {images.length > 0 ? (
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {images.map((image) => (
+              <div
+                key={image.id}
+                className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white"
+              >
+                {image.signedUrl ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image.signedUrl}
+                      alt={image.alt_text || image.file_name}
+                      className="aspect-[4/3] w-full object-cover"
+                    />
+                  </>
+                ) : (
+                  <div className="flex aspect-[4/3] items-center justify-center text-sm text-[var(--color-text-muted)]">
+                    Bild konnte nicht geladen werden.
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-6 space-y-2">
           <input
@@ -198,8 +230,8 @@ export function RoomForm({
         >
             {pending ? pendingLabel : submitLabel}
         </button>
-            </div>
-              </form>
-            </div>
-          );
-        }
+      </div>
+    </form>
+  </div>
+);
+}
