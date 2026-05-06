@@ -32,6 +32,89 @@ function parseEquipment(value: string) {
     .filter(Boolean);
 }
 
+type RoomSnapshot = {
+  name: string;
+  capacity: number | null;
+  function_description: string | null;
+  status: string;
+  equipment: string[] | null;
+  internal_notes: string | null;
+};
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case "active":
+      return "Aktiv";
+    case "inactive":
+      return "Inaktiv";
+    case "blocked":
+      return "Gesperrt";
+    default:
+      return status;
+  }
+}
+
+function formatValue(value: string | number | null | undefined) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  return String(value);
+}
+
+function formatEquipment(value: string[] | null | undefined) {
+  if (!value || value.length === 0) {
+    return "—";
+  }
+
+  return value.join(", ");
+}
+
+function createRoomChangeLogs(
+  oldRoom: RoomSnapshot,
+  newRoom: RoomSnapshot
+) {
+  const changes: string[] = [];
+
+  if (oldRoom.name !== newRoom.name) {
+    changes.push(`Name geändert Neu: ${newRoom.name}`);
+  }
+
+  if (oldRoom.capacity !== newRoom.capacity) {
+    changes.push(
+      `Kapazität geändert Neu: ${
+        newRoom.capacity !== null ? `${newRoom.capacity} Personen` : "—"
+      }`
+    );
+  }
+
+  if (oldRoom.function_description !== newRoom.function_description) {
+    changes.push(
+      `Funktion / Nutzung geändert Neu: ${formatValue(
+        newRoom.function_description
+      )}`
+    );
+  }
+
+  if (oldRoom.status !== newRoom.status) {
+    changes.push(`Status geändert Neu: ${getStatusLabel(newRoom.status)}`);
+  }
+
+  if (formatEquipment(oldRoom.equipment) !== formatEquipment(newRoom.equipment)) {
+    changes.push(
+      `Ausstattung geändert Neu: ${formatEquipment(newRoom.equipment)}`
+    );
+  }
+
+  if (oldRoom.internal_notes !== newRoom.internal_notes) {
+    changes.push(
+      `Interne Notizen geändert Neu: ${formatValue(newRoom.internal_notes)}`
+    );
+  }
+
+  return changes;
+}
+
 export async function updateRoom(
   roomId: string,
   _state: RoomFormState,
@@ -95,15 +178,42 @@ export async function updateRoom(
     };
   }
 
+  const { data: currentRoom, error: currentRoomError } = await supabase
+    .from("rooms")
+    .select(
+      "name, capacity, function_description, status, equipment, internal_notes"
+    )
+    .eq("id", roomId)
+    .single();
+
+  if (currentRoomError || !currentRoom) {
+    return {
+      message: "Raum konnte nicht aktualisiert werden.",
+      errors: {
+        general: currentRoomError?.message ?? "Raum wurde nicht gefunden.",
+      },
+      values,
+    };
+  }
+
+  const updatedRoom: RoomSnapshot = {
+    name: values.name,
+    capacity,
+    function_description: normalizeOptionalString(values.function_description),
+    status: values.status,
+    equipment: parseEquipment(values.equipment),
+    internal_notes: normalizeOptionalString(values.internal_notes),
+  };
+
+  const changeLogs = createRoomChangeLogs(
+    currentRoom as RoomSnapshot,
+    updatedRoom
+  );
+
   const { error } = await supabase
     .from("rooms")
     .update({
-      name: values.name,
-      capacity,
-      function_description: normalizeOptionalString(values.function_description),
-      status: values.status,
-      equipment: parseEquipment(values.equipment),
-      internal_notes: normalizeOptionalString(values.internal_notes),
+      ...updatedRoom,
       updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
@@ -119,14 +229,18 @@ export async function updateRoom(
     };
   }
 
-  const { error: logError } = await supabase.from("room_logs").insert({
-    room_id: roomId,
-    user_id: user.id,
-    change: "Raum bearbeitet",
-  });
+  if (changeLogs.length > 0) {
+    const { error: logError } = await supabase.from("room_logs").insert(
+      changeLogs.map((change) => ({
+        room_id: roomId,
+        user_id: user.id,
+        change,
+      }))
+    );
 
-  if (logError) {
-    console.error("Fehler beim Schreiben des Raum-Logs:", logError.message);
+    if (logError) {
+      console.error("Fehler beim Schreiben des Raum-Logs:", logError.message);
+    }
   }
 
   revalidatePath("/dashboard/rooms");
