@@ -116,7 +116,18 @@ function AuditLogList({ logs }: { logs: RoomLog[] }) {
           key={log.id}
           className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4"
         >
-          <p className="text-sm font-medium">{log.change}</p>
+          <p className="text-sm font-medium">
+            {log.change.includes("Neu:") ? (
+              <>
+                {log.change.split("Neu:")[0]}
+                <span className="font-bold">
+                  Neu:{log.change.split("Neu:")[1]}
+                </span>
+              </>
+            ) : (
+              log.change
+            )}
+          </p>
 
           <div className="mt-3 space-y-1 text-xs text-[var(--color-text-muted)]">
             <p>{formatDateTime(log.created_at)}</p>
