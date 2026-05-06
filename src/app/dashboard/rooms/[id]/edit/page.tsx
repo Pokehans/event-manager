@@ -57,6 +57,7 @@ export default async function EditRoomPage({ params }: Props) {
 
       return {
         id: image.id,
+        file_path: image.file_path,
         file_name: image.file_name,
         alt_text: image.alt_text,
         signedUrl: data?.signedUrl ?? null,

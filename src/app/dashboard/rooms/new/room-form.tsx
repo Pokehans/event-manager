@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createRoom, type RoomFormState } from "./actions";
 
 export type RoomFormValues = {
@@ -14,6 +14,7 @@ export type RoomFormValues = {
 
 type RoomFormImage = {
   id: string;
+  file_path: string;
   file_name: string;
   alt_text: string | null;
   signedUrl: string | null;
@@ -55,6 +56,15 @@ export function RoomForm({
   images = [],
 }: RoomFormProps) {
   const [state, dispatch, pending] = useActionState(action, initialState);
+  const [imagesMarkedForDelete, setImagesMarkedForDelete] = useState<string[]>([]);
+
+  function toggleImageForDelete(imageId: string) {
+    setImagesMarkedForDelete((current) =>
+      current.includes(imageId)
+        ? current.filter((id) => id !== imageId)
+        : [...current, imageId]
+    );
+  }
 
   const values = {
     ...initialValues,
@@ -174,22 +184,46 @@ export function RoomForm({
             {images.map((image) => (
               <div
                 key={image.id}
-                className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-white"
+                className="space-y-2"
               >
-                {image.signedUrl ? (
+                <button
+                  type="button"
+                  onClick={() => toggleImageForDelete(image.id)}
+                  className={[
+                    "relative block w-full overflow-hidden rounded-xl border bg-white text-left transition",
+                    imagesMarkedForDelete.includes(image.id)
+                      ? "border-[var(--color-danger)] opacity-60 ring-2 ring-[var(--color-danger)]"
+                      : "border-[var(--color-border)] hover:opacity-90",
+                  ].join(" ")}
+                >
+                  {image.signedUrl ? (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={image.signedUrl}
+                        alt={image.alt_text || image.file_name}
+                        className="aspect-[4/3] w-full object-cover"
+                      />
+                    </>
+                  ) : (
+                    <div className="flex aspect-[4/3] items-center justify-center text-sm text-[var(--color-text-muted)]">
+                      Bild konnte nicht geladen werden.
+                    </div>
+                  )}
+
+                  {imagesMarkedForDelete.includes(image.id) ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-sm font-semibold text-[var(--color-danger)]">
+                      Wird beim Speichern gelöscht
+                    </div>
+                  ) : null}
+                </button>
+
+                {imagesMarkedForDelete.includes(image.id) ? (
                   <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={image.signedUrl}
-                      alt={image.alt_text || image.file_name}
-                      className="aspect-[4/3] w-full object-cover"
-                    />
+                    <input type="hidden" name="delete_image_ids" value={image.id} />
+                    <input type="hidden" name="delete_image_paths" value={image.file_path} />
                   </>
-                ) : (
-                  <div className="flex aspect-[4/3] items-center justify-center text-sm text-[var(--color-text-muted)]">
-                    Bild konnte nicht geladen werden.
-                  </div>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
@@ -210,7 +244,7 @@ export function RoomForm({
             </p>
           ) : (
             <p className="text-xs text-[var(--color-text-muted)]">
-              Erlaubt sind JPG, PNG, WEBP und GIF bis 5 MB pro Bild.
+              Erlaubt sind JPG, PNG, WEBP und GIF bis 5 MB pro Bild. Bild  anklicken zum löschen.
             </p>
           )}
         </div>
