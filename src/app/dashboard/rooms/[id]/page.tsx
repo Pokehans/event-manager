@@ -4,6 +4,8 @@ import StatusBadge from "@/components/ui/status-badge";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
+import { RoomImageUpload } from "./images/room-image-upload";
+import { DeleteRoomImageButton } from "./images/delete-room-image-button";
 
 type Room = {
   id: string;
@@ -39,6 +41,17 @@ type RoomLog = {
         email: string | null;
       }
     | null;
+};
+
+type RoomImage = {
+  id: string;
+  room_id: string;
+  file_path: string;
+  file_name: string;
+  alt_text: string | null;
+  sort_order: number | null;
+  created_at: string;
+  signedUrl: string | null;
 };
 
 type Props = {
@@ -179,6 +192,26 @@ export default async function RoomDetailPage({ params }: Props) {
     .eq("room_id", id)
     .order("created_at", { ascending: false });
 
+  const { data: images } = await supabase
+    .from("room_images")
+    .select("id, room_id, file_path, file_name, alt_text, sort_order, created_at")
+    .eq("room_id", id)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  const roomImages: RoomImage[] = await Promise.all(
+    (images ?? []).map(async (image) => {
+      const { data } = await supabase.storage
+        .from("room-images")
+        .createSignedUrl(image.file_path, 60 * 60);
+
+      return {
+        ...image,
+        signedUrl: data?.signedUrl ?? null,
+      };
+    })
+  );
+
   const r = room as Room;
   const createdByUser = pickOne(r.users);
   const roomLogs: RoomLog[] = (logs ?? []).map((log) => ({
@@ -261,10 +294,53 @@ export default async function RoomDetailPage({ params }: Props) {
             </p>
           </DetailSection>
 
-          <DetailSection title="Bilder">
-            <p className="section-text">
-              Bilder werden im nächsten Schritt ergänzt.
-            </p>
+          <DetailSection
+            title="Bilder"
+            description="Bilder des Raums für Planung, Verkauf und interne Orientierung."
+          >
+            <div className="space-y-6">
+              {canManageRooms ? <RoomImageUpload roomId={r.id} /> : null}
+
+              {roomImages.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {roomImages.map((image) => (
+                    <div
+                      key={image.id}
+                      className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]"
+                    >
+                      {image.signedUrl ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={image.signedUrl}
+                            alt={image.alt_text || image.file_name}
+                            className="aspect-[4/3] w-full object-cover"
+                          />
+                        </>
+                      ) : (
+                        <div className="flex aspect-[4/3] items-center justify-center bg-white text-sm text-[var(--color-text-muted)]">
+                          Bild konnte nicht geladen werden.
+                        </div>
+                      )}
+
+                      <div className="space-y-3 p-3">
+                        <p className="truncate text-sm font-medium">{image.file_name}</p>
+
+                        {canManageRooms ? (
+                          <DeleteRoomImageButton
+                            roomId={r.id}
+                            imageId={image.id}
+                            filePath={image.file_path}
+                          />
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="section-text">Noch keine Bilder erfasst.</p>
+              )}
+            </div>
           </DetailSection>
 
           <DetailSection title="Dokumente">
