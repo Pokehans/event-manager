@@ -50,26 +50,26 @@ export default async function RoomsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-  <div>
-    <h1 className="text-4xl font-bold tracking-tight text-[var(--color-primary)]">
-      Raumverwaltung
-    </h1>
-    <p className="mt-2 text-base text-[var(--color-text-muted)]">
-      Übersicht aller Räume
-    </p>
-  </div>
+        <div>
+            <h1 className="text-4xl font-bold tracking-tight text-[var(--color-primary)]">
+            Raumverwaltung
+            </h1>
+            <p className="mt-2 text-base text-[var(--color-text-muted)]">
+            Übersicht aller Räume
+            </p>
+        </div>
 
-  {canManageRooms ? (
-    <div className="flex flex-wrap items-center gap-2">
-      <Link
-        href="/dashboard/rooms/new"
-        className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)]"
-      >
-        Raum erstellen
-      </Link>
-    </div>
-  ) : null}
-</div>
+        {canManageRooms ? (
+            <div className="flex flex-wrap items-center gap-2">
+            <Link
+                href="/dashboard/rooms/new"
+                className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)]"
+            >
+                Raum erstellen
+            </Link>
+            </div>
+        ) : null}
+        </div>
 
       {roomList.length === 0 ? (
         <Card>
