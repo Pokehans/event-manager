@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import { createRoom, type RoomFormState } from "./actions";
-import { RoomImageUpload } from "../[id]/images/room-image-upload";
 
 export type RoomFormValues = {
   name?: string;
@@ -22,7 +21,6 @@ type RoomFormProps = {
   pendingLabel?: string;
   initialValues?: RoomFormValues;
   mode?: "create" | "edit";
-  roomId?: string;
 };
 
 const initialState: RoomFormState = {
@@ -46,7 +44,6 @@ export function RoomForm({
   pendingLabel = "Raum wird erstellt...",
   initialValues = {},
   mode = "create",
-  roomId,
 }: RoomFormProps) {
   const [state, dispatch, pending] = useActionState(action, initialState);
 
@@ -203,20 +200,41 @@ export function RoomForm({
             </div>
               </form>
 
-              {mode === "edit" && roomId ? (
-                <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-                  <div className="space-y-1">
-                    <h2 className="section-title">Bilder</h2>
-                    <p className="section-text">
-                      Lade Bilder hoch, die den Raum in der Detailansicht zeigen.
-                    </p>
+              <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+                <div className="space-y-1">
+                  <h2 className="section-title">Bilder</h2>
+                  <p className="section-text">
+                    Bilder für Darstellung und interne Planung.
+                  </p>
+                </div>
+
+                <div className="mt-6 space-y-6">
+
+                  {/* Upload (immer sichtbar) */}
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      name="images"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="block w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
+                    />
+
+                    {state.errors?.images ? (
+                      <p className="text-sm text-[var(--color-danger)]">
+                        {state.errors.images}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[var(--color-text-muted)]">
+                        JPG, PNG, WEBP, GIF bis 5 MB.
+                      </p>
+                    )}
                   </div>
 
-                  <div className="mt-6">
-                    <RoomImageUpload roomId={roomId} />
-                  </div>
+                  {/* Nur im Edit: bestehende Bilder */}
+                  
                 </div>
-              ) : null}
+              </div>
             </div>
           );
         }
