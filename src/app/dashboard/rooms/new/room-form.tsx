@@ -155,33 +155,34 @@ export function RoomForm({
         </div>
       </div>
 
-      {mode === "create" ? (
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-          <div className="space-y-1">
-            <h2 className="section-title">Bilder</h2>
-          </div>
-
-          <div className="mt-6 space-y-2">
-            <input
-              type="file"
-              name="images"
-              multiple
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="block w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
-            />
-
-            {state.errors?.images ? (
-              <p className="text-sm text-[var(--color-danger)]">
-                {state.errors.images}
-              </p>
-            ) : (
-              <p className="text-xs text-[var(--color-text-muted)]">
-                Erlaubt sind JPG, PNG, WEBP und GIF bis 5 MB pro Bild.
-              </p>
-            )}
-          </div>
+      <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+        <div className="space-y-1">
+          <h2 className="section-title">Bilder</h2>
+          <p className="section-text">
+            Bilder für Darstellung und interne Planung.
+          </p>
         </div>
-      ) : null}
+
+        <div className="mt-6 space-y-2">
+          <input
+            type="file"
+            name="images"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="block w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
+          />
+
+          {state.errors?.images ? (
+            <p className="text-sm text-[var(--color-danger)]">
+              {state.errors.images}
+            </p>
+          ) : (
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Erlaubt sind JPG, PNG, WEBP und GIF bis 5 MB pro Bild.
+            </p>
+          )}
+        </div>
+      </div>
 
       <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-[var(--color-text-muted)]">
@@ -199,42 +200,6 @@ export function RoomForm({
         </button>
             </div>
               </form>
-
-              <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-                <div className="space-y-1">
-                  <h2 className="section-title">Bilder</h2>
-                  <p className="section-text">
-                    Bilder für Darstellung und interne Planung.
-                  </p>
-                </div>
-
-                <div className="mt-6 space-y-6">
-
-                  {/* Upload (immer sichtbar) */}
-                  <div className="space-y-2">
-                    <input
-                      type="file"
-                      name="images"
-                      multiple
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      className="block w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
-                    />
-
-                    {state.errors?.images ? (
-                      <p className="text-sm text-[var(--color-danger)]">
-                        {state.errors.images}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-[var(--color-text-muted)]">
-                        JPG, PNG, WEBP, GIF bis 5 MB.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Nur im Edit: bestehende Bilder */}
-                  
-                </div>
-              </div>
             </div>
           );
         }
