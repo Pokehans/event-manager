@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Image = {
   id: string;
@@ -25,16 +25,72 @@ export function RoomImageLightbox({ images }: Props) {
   }
 
   function next() {
-    if (activeIndex === null) return;
-    setActiveIndex((activeIndex + 1) % images.length);
+    setActiveIndex((current) => {
+        if (current === null) return current;
+        return (current + 1) % images.length;
+    });
+    }
+
+    function prev() {
+    setActiveIndex((current) => {
+        if (current === null) return current;
+        return (current - 1 + images.length) % images.length;
+    });
+    }
+
+useEffect(() => {
+  if (activeIndex === null) return;
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      setActiveIndex(null);
+    }
+
+    if (event.key === "ArrowRight" && images.length > 1) {
+      setActiveIndex((current) => {
+        if (current === null) return current;
+        return (current + 1) % images.length;
+      });
+    }
+
+    if (event.key === "ArrowLeft" && images.length > 1) {
+      setActiveIndex((current) => {
+        if (current === null) return current;
+        return (current - 1 + images.length) % images.length;
+      });
+    }
   }
 
-  function prev() {
-    if (activeIndex === null) return;
-    setActiveIndex(
-      (activeIndex - 1 + images.length) % images.length
-    );
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [activeIndex, images.length]);
+
+useEffect(() => {
+  if (activeIndex === null) return;
+
+  const originalBodyOverflow = document.body.style.overflow;
+  const originalHtmlOverflow = document.documentElement.style.overflow;
+  const originalBodyPaddingRight = document.body.style.paddingRight;
+
+  const scrollbarWidth =
+    window.innerWidth - document.documentElement.clientWidth;
+
+  document.body.style.overflow = "hidden";
+  document.documentElement.style.overflow = "hidden";
+
+  if (scrollbarWidth > 0) {
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
   }
+
+  return () => {
+    document.body.style.overflow = originalBodyOverflow;
+    document.documentElement.style.overflow = originalHtmlOverflow;
+    document.body.style.paddingRight = originalBodyPaddingRight;
+  };
+}, [activeIndex]);
 
   return (
     <>
@@ -76,6 +132,7 @@ export function RoomImageLightbox({ images }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
           {/* Close */}
           <button
+            type="button"
             onClick={close}
             className="absolute right-6 top-6 text-white text-xl"
           >
@@ -85,6 +142,7 @@ export function RoomImageLightbox({ images }: Props) {
           {/* Prev */}
           {images.length > 1 && (
             <button
+              type="button"
               onClick={prev}
               className="absolute left-6 text-white text-3xl"
             >
@@ -114,6 +172,7 @@ export function RoomImageLightbox({ images }: Props) {
           {/* Next */}
           {images.length > 1 && (
             <button
+              type="button"
               onClick={next}
               className="absolute right-6 text-white text-3xl"
             >
