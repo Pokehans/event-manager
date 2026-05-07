@@ -15,6 +15,8 @@ type Props = {
 
 export function RoomImageLightbox({ images }: Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   function open(index: number) {
     setActiveIndex(index);
@@ -129,7 +131,31 @@ useEffect(() => {
 
       {/* Lightbox */}
       {activeIndex !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+            onTouchStart={(e) => {
+                setTouchStartX(e.touches[0].clientX);
+                setTouchEndX(null);
+            }}
+            onTouchMove={(e) => {
+                setTouchEndX(e.touches[0].clientX);
+            }}
+            onTouchEnd={() => {
+                if (touchStartX === null || touchEndX === null) return;
+
+                const distance = touchStartX - touchEndX;
+
+                const threshold = 50;
+
+                if (distance > threshold && images.length > 1) {
+                next();
+                }
+
+                if (distance < -threshold && images.length > 1) {
+                prev();
+                }
+            }}
+            >
           {/* Close */}
           <button
             type="button"
