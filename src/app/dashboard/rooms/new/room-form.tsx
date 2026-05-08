@@ -258,13 +258,18 @@ export function RoomForm({
           ) : null}
 
           <div className="mt-6 space-y-2">
-            <input
-              type="file"
-              name="images"
-              multiple
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="block w-full max-w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
-            />
+            <label className="block">
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+                Bilder auswählen
+              </span>
+              <input
+                type="file"
+                name="images"
+                multiple
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+              />
+            </label>
 
             {state.errors?.images ? (
               <p className="text-sm text-[var(--color-danger)]">
@@ -347,13 +352,18 @@ export function RoomForm({
           ) : null}
 
           <div className="mt-6 space-y-2">
-            <input
-              type="file"
-              name="documents"
-              multiple
-              accept="application/pdf"
-              className="block w-full max-w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
-            />
+            <label className="block">
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+                PDFs auswählen
+              </span>
+              <input
+                type="file"
+                name="documents"
+                multiple
+                accept="application/pdf"
+                className="sr-only"
+              />
+            </label>
 
             {state.errors?.documents ? (
               <p className="text-sm text-[var(--color-danger)]">
