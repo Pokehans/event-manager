@@ -203,9 +203,46 @@ useEffect(() => {
             </>
           ) : null}
 
-          <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 text-center text-sm text-white">
-            {images[activeIndex].file_name}
-          </div>
+          <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/90 to-transparent p-4">
+            <p className="mb-3 text-center text-sm text-white">
+                {images[activeIndex].file_name}
+            </p>
+
+            {images.length > 1 ? (
+                <div
+                className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-2 pb-1"
+                onClick={(event) => event.stopPropagation()}
+                >
+                {images.map((image, index) => (
+                    <button
+                    key={image.id}
+                    type="button"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        setActiveIndex(index);
+                    }}
+                    className={[
+                        "h-14 w-20 shrink-0 overflow-hidden rounded-lg border transition",
+                        index === activeIndex
+                        ? "border-white opacity-100"
+                        : "border-white/30 opacity-60 hover:opacity-100",
+                    ].join(" ")}
+                    >
+                    {image.signedUrl ? (
+                        <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={image.signedUrl}
+                            alt={image.alt_text || image.file_name}
+                            className="h-full w-full object-cover"
+                        />
+                        </>
+                    ) : null}
+                    </button>
+                ))}
+                </div>
+            ) : null}
+            </div>
 
           {/* Next */}
           {images.length > 1 && (
