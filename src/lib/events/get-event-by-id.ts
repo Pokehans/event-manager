@@ -44,6 +44,7 @@ export type EventDetail = {
   address: string | null;
   room_id_1: string | null;
   room_id_2: string | null;
+  room_names: string[];
   tech: string | null;
   infrastructure: string | null;
   schedule: string | null;
@@ -252,7 +253,28 @@ if (debriefingError) {
   );
 }
 
-  const rawEvent = eventData as RawEventData;
+const rawEvent = eventData as RawEventData;
+
+const selectedRoomIds = [rawEvent.room_id_1, rawEvent.room_id_2].filter(
+  (roomId): roomId is string => Boolean(roomId)
+);
+
+const { data: roomData, error: roomError } =
+  selectedRoomIds.length > 0
+    ? await supabase
+        .from("rooms")
+        .select("id, name")
+        .in("id", selectedRoomIds)
+    : { data: [], error: null };
+
+if (roomError) {
+  console.error("Fehler beim Laden der Event-Räume:", roomError.message);
+}
+
+const roomNames = selectedRoomIds
+  .map((roomId) => roomData?.find((room) => room.id === roomId)?.name)
+  .filter((name): name is string => Boolean(name));
+
   const rawUser = pickOne(rawEvent.users);
   const rawDepartment = pickOne(rawUser?.departments);
 
@@ -271,6 +293,7 @@ if (debriefingError) {
     address: rawEvent.address,
     room_id_1: rawEvent.room_id_1,
     room_id_2: rawEvent.room_id_2,
+    room_names: roomNames,
     tech: rawEvent.tech,
     infrastructure: rawEvent.infrastructure,
     schedule: rawEvent.schedule,

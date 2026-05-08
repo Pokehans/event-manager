@@ -279,6 +279,28 @@ function formatChangeText(
   return null;
 }
 
+async function getRoomNamesByIds(roomIds: string[]) {
+  if (roomIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("rooms")
+    .select("id, name")
+    .in("id", roomIds);
+
+  if (error) {
+    console.error("Fehler beim Laden der Raum-Namen:", error.message);
+    return roomIds;
+  }
+
+  return roomIds.map(
+    (roomId) => data?.find((room) => room.id === roomId)?.name ?? roomId
+  );
+}
+
 function validateEventValues(values: EventFormValues) {
   const errors: CreateEventState["errors"] = {};
 
@@ -368,7 +390,10 @@ function validateEventValues(values: EventFormValues) {
   return errors;
 }
 
-function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
+async function buildChangeLog(
+  existingEvent: ExistingEvent,
+  values: EventFormValues
+) {
   const changes: string[] = [];
 
   const nextAdults = parseOptionalInteger(values.adults);
@@ -494,11 +519,20 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
   );
   if (addressChange) changes.push(addressChange);
 
+  const existingRoomIds = [existingEvent.room_id_1, existingEvent.room_id_2].filter(
+    (roomId): roomId is string => Boolean(roomId)
+  );
+
+  const nextRoomIds = [nextEvent.room_id_1, nextEvent.room_id_2].filter(
+    (roomId): roomId is string => Boolean(roomId)
+  );
+
   const roomChange = formatChangeText(
     "Räume",
-    [existingEvent.room_id_1, existingEvent.room_id_2].filter(Boolean).join(", "),
-    [nextEvent.room_id_1, nextEvent.room_id_2].filter(Boolean).join(", ")
+    (await getRoomNamesByIds(existingRoomIds)).join(", "),
+    (await getRoomNamesByIds(nextRoomIds)).join(", ")
   );
+
   if (roomChange) changes.push(roomChange);
 
   if (existingEvent.tech !== nextEvent.tech) {
@@ -754,7 +788,7 @@ export async function updateEvent(
     };
   }
 
-  const { changes, nextEvent } = buildChangeLog(existingEvent, values);
+  const { changes, nextEvent } = await buildChangeLog(existingEvent, values);
 
   const { error } = await supabase
     .from("events")

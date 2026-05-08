@@ -29,9 +29,9 @@ function formatDate(date: string) {
 }
 
 function getRoomDisplay(event: EventDetail) {
-  const rooms = [event.room_id_1, event.room_id_2].filter(Boolean);
-
-  return rooms.length > 0 ? rooms.join(", ") : "Kein Raum definiert";
+  return event.room_names.length > 0
+    ? event.room_names.join(", ")
+    : "Kein Raum definiert";
 }
 
 function getPaymentTypeLabel(paymentType: string | null) {
