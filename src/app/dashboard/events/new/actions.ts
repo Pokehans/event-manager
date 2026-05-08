@@ -34,7 +34,7 @@ export type CreateEventState = {
     adults?: string;
     children?: string;
     address?: string;
-    room?: string;
+    room_ids?: string[];
     tech?: string;
     infrastructure?: string;
     schedule?: string;
@@ -56,15 +56,6 @@ const allowedStatuses = [
   "In Bearbeitung",
   "Bestätigt",
   "Storniert",
-] as const;
-
-const allowedRooms = [
-  "irgendwo",
-  "restaurant",
-  "saal",
-  "seminarraum",
-  "sitzungszimmer",
-  "terrasse",
 ] as const;
 
 const allowedPaymentTypes = [
@@ -124,7 +115,7 @@ type EventFormValues = {
   adults: string;
   children: string;
   address: string;
-  room: string;
+  room_ids: string[];
   tech: string;
   infrastructure: string;
   schedule: string;
@@ -153,7 +144,8 @@ type ExistingEvent = {
   adults: number | null;
   children: number | null;
   address: string | null;
-  room: string | null;
+  room_id_1: string | null;
+  room_id_2: string | null;
   tech: string | null;
   infrastructure: string | null;
   schedule: string | null;
@@ -182,7 +174,11 @@ function getFormValues(formData: FormData): EventFormValues {
     adults: String(formData.get("adults") ?? "").trim(),
     children: String(formData.get("children") ?? "").trim(),
     address: String(formData.get("address") ?? "").trim(),
-    room: String(formData.get("room") ?? "").trim(),
+    room_ids: formData
+      .getAll("room_ids")
+      .map((value) => String(value))
+      .filter(Boolean)
+      .slice(0, 2),
     tech: String(formData.get("tech") ?? "").trim(),
     infrastructure: String(formData.get("infrastructure") ?? "").trim(),
     schedule: String(formData.get("schedule") ?? "").trim(),
@@ -234,25 +230,6 @@ function getStatusLabel(status: string | null) {
       return "Archiviert";
     default:
       return status || null;
-  }
-}
-
-function getRoomLabel(room: string | null) {
-  switch (room) {
-    case "irgendwo":
-      return "Irgendwo";
-    case "restaurant":
-      return "Restaurant";
-    case "saal":
-      return "Saal";
-    case "seminarraum":
-      return "Seminarraum";
-    case "sitzungszimmer":
-      return "Sitzungszimmer";
-    case "terrasse":
-      return "Terrasse";
-    default:
-      return room || null;
   }
 }
 
@@ -346,10 +323,8 @@ function validateEventValues(values: EventFormValues) {
     }
   }
 
-  if (values.room) {
-    if (!allowedRooms.includes(values.room as (typeof allowedRooms)[number])) {
-      errors.room = "Ungültiger Raum.";
-    }
+  if (values.room_ids.length > 2) {
+    errors.room = "Es können maximal 2 Räume ausgewählt werden.";
   }
 
   if (values.payment_type) {
@@ -411,7 +386,8 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
     adults: nextAdults,
     children: nextChildren,
     address: normalizeOptionalString(values.address),
-    room: normalizeOptionalString(values.room),
+    room_id_1: values.room_ids[0] ?? null,
+    room_id_2: values.room_ids[1] ?? null,
     tech: normalizeOptionalString(values.tech),
     infrastructure: normalizeOptionalString(values.infrastructure),
     schedule: normalizeOptionalString(values.schedule),
@@ -519,9 +495,9 @@ function buildChangeLog(existingEvent: ExistingEvent, values: EventFormValues) {
   if (addressChange) changes.push(addressChange);
 
   const roomChange = formatChangeText(
-    "Raum",
-    getRoomLabel(existingEvent.room),
-    getRoomLabel(nextEvent.room)
+    "Räume",
+    [existingEvent.room_id_1, existingEvent.room_id_2].filter(Boolean).join(", "),
+    [nextEvent.room_id_1, nextEvent.room_id_2].filter(Boolean).join(", ")
   );
   if (roomChange) changes.push(roomChange);
 
@@ -640,7 +616,8 @@ export async function createEvent(
       adults: parseOptionalInteger(values.adults),
       children: parseOptionalInteger(values.children),
       address: values.address || null,
-      room: values.room || null,
+      room_id_1: values.room_ids[0] ?? null,
+      room_id_2: values.room_ids[1] ?? null,
       tech: values.tech || null,
       infrastructure: values.infrastructure || null,
       schedule: values.schedule || null,
@@ -748,7 +725,8 @@ export async function updateEvent(
       adults,
       children,
       address,
-      room,
+      room_id_1,
+      room_id_2,
       tech,
       infrastructure,
       schedule,
@@ -792,7 +770,8 @@ export async function updateEvent(
       adults: nextEvent.adults,
       children: nextEvent.children,
       address: nextEvent.address,
-      room: nextEvent.room,
+      room_id_1: nextEvent.room_id_1,
+      room_id_2: nextEvent.room_id_2,
       tech: nextEvent.tech,
       infrastructure: nextEvent.infrastructure,
       schedule: nextEvent.schedule,

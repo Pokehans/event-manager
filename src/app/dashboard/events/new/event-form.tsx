@@ -17,7 +17,8 @@ type EventFormInitialData = {
   adults?: number | null;
   children?: number | null;
   address?: string | null;
-  room?: string | null;
+  room_id_1?: string | null;
+  room_id_2?: string | null;
   tech?: string | null;
   infrastructure?: string | null;
   schedule?: string | null;
@@ -239,7 +240,15 @@ const [hasBillingAddress, setHasBillingAddress] =
     state.values?.children ??
     (initialData?.children != null ? String(initialData.children) : "");
   const addressValue = state.values?.address ?? initialData?.address ?? "";
-  const roomValue = state.values?.room ?? initialData?.room ?? "";
+  const initialSelectedRoomIds =
+    state.values?.room_ids ??
+    [initialData?.room_id_1, initialData?.room_id_2].filter(
+      (roomId): roomId is string => Boolean(roomId)
+    );
+
+  const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>(
+    initialSelectedRoomIds
+  );
   const techValue = state.values?.tech ?? initialData?.tech ?? "";
   const infrastructureValue =
     state.values?.infrastructure ?? initialData?.infrastructure ?? "";
@@ -533,31 +542,58 @@ const [hasBillingAddress, setHasBillingAddress] =
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {roomOptions.map((option) => (
-            <label
-              key={option.value}
-              className={[
-                "flex items-center gap-3 rounded-lg border px-4 py-3 transition",
-                visibleErrors.room
-                  ? "border-[var(--color-danger)]"
-                  : "border-[var(--color-border)]",
-              ].join(" ")}
-            >
-              <input
-                type="radio"
-                name="room"
-                value={option.value}
-                defaultChecked={(roomValue || "") === option.value}
-                onChange={() => clearFieldError("room")}
-              />
-              <span className="text-sm">
-                {option.status && option.status !== "active"
-                  ? `${option.label} (nicht mehr aktiv)`
-                  : option.label}
-              </span>
-            </label>
-          ))}
+          {roomOptions
+            .filter((option) => option.value)
+            .map((option) => {
+              const isChecked = selectedRoomIds.includes(option.value);
+              const isDisabled = !isChecked && selectedRoomIds.length >= 2;
+
+              return (
+                <label
+                  key={option.value}
+                  className={[
+                    "flex items-center gap-3 rounded-lg border px-4 py-3 transition",
+                    isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+                    visibleErrors.room
+                      ? "border-[var(--color-danger)]"
+                      : "border-[var(--color-border)]",
+                  ].join(" ")}
+                >
+                  <input
+                    type="checkbox"
+                    name="room_ids"
+                    value={option.value}
+                    checked={isChecked}
+                    disabled={isDisabled}
+                    onChange={(event) => {
+                      clearFieldError("room");
+
+                      setSelectedRoomIds((current) => {
+                        if (event.target.checked) {
+                          return [...current, option.value].slice(0, 2);
+                        }
+
+                        return current.filter((roomId) => roomId !== option.value);
+                      });
+                    }}
+                  />
+
+                  <span className="text-sm">
+                    {option.label}
+                    {option.status && option.status !== "active" && (
+                      <span className="ml-1 font-semibold text-red-600">
+                        (nicht mehr aktiv)
+                      </span>
+                    )}
+                  </span>
+                </label>
+              );
+            })}
         </div>
+
+        <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+          Es können maximal 2 Räume ausgewählt werden.
+        </p>
 
         {visibleErrors.room ? (
           <p className="mt-3 text-sm text-[var(--color-danger)]">

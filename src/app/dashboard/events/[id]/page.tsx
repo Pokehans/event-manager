@@ -8,6 +8,7 @@ import { deleteEvent } from "@/app/dashboard/events/new/actions";
 import DeleteEventButton from "@/components/events/delete-event-button";
 import { ArchiveEventButton } from "./archive-event-button";
 import { archiveEvent } from "./archive-event";
+import { createClient } from "@/lib/supabase/server";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -49,25 +50,6 @@ function formatDate(date: string) {
 function formatDateTime(date: string | null) {
   if (!date) return "—";
   return new Date(date).toLocaleString("de-CH");
-}
-
-function getRoomLabel(room: string | null) {
-  switch (room) {
-    case "irgendwo":
-      return "Irgendwo";
-    case "restaurant":
-      return "Restaurant";
-    case "saal":
-      return "Saal";
-    case "seminarraum":
-      return "Seminarraum";
-    case "sitzungszimmer":
-      return "Sitzungszimmer";
-    case "terrasse":
-      return "Terrasse";
-    default:
-      return room || "—";
-  }
 }
 
 function getPaymentTypeLabel(paymentType: string | null) {
@@ -245,6 +227,27 @@ export default async function EventDetailPage({
   if (!event) {
     notFound();
   }
+
+  const selectedRoomIds = [event.room_id_1, event.room_id_2].filter(
+    (roomId): roomId is string => Boolean(roomId)
+  );
+
+  const supabase = await createClient();
+
+  const { data: selectedRooms } =
+    selectedRoomIds.length > 0
+      ? await supabase
+          .from("rooms")
+          .select("id, name")
+          .in("id", selectedRoomIds)
+      : { data: [] };
+
+  const selectedRoomLabels = selectedRoomIds
+    .map((roomId) => selectedRooms?.find((room) => room.id === roomId)?.name)
+    .filter(Boolean);
+
+  const roomDisplayValue =
+    selectedRoomLabels.length > 0 ? selectedRoomLabels.join(", ") : "—";
 
   const currentUser = await getCurrentUser({ redirectTo: "/" });
 
@@ -438,7 +441,7 @@ export default async function EventDetailPage({
 
           <DetailSection title="Organisation">
             <div className="grid gap-6">
-              <DetailItem label="Raum" value={getRoomLabel(event.room)} />
+              <DetailItem label="Räume" value={roomDisplayValue} />
               <DetailItem
                 label="Ablauf"
                 value={

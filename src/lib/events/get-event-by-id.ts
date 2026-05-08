@@ -42,7 +42,8 @@ export type EventDetail = {
   adults: number | null;
   children: number | null;
   address: string | null;
-  room: string | null;
+  room_id_1: string | null;
+  room_id_2: string | null;
   tech: string | null;
   infrastructure: string | null;
   schedule: string | null;
@@ -107,7 +108,8 @@ type RawEventData = {
   adults: number | null;
   children: number | null;
   address: string | null;
-  room: string | null;
+  room_id_1: string | null;
+  room_id_2: string | null;
   tech: string | null;
   infrastructure: string | null;
   schedule: string | null;
@@ -168,7 +170,8 @@ export async function getEventById(id: string): Promise<EventDetail | null> {
       adults,
       children,
       address,
-      room,
+      room_id_1,
+      room_id_2,
       tech,
       infrastructure,
       schedule,
@@ -266,7 +269,8 @@ if (debriefingError) {
     adults: rawEvent.adults,
     children: rawEvent.children,
     address: rawEvent.address,
-    room: rawEvent.room,
+    room_id_1: rawEvent.room_id_1,
+    room_id_2: rawEvent.room_id_2,
     tech: rawEvent.tech,
     infrastructure: rawEvent.infrastructure,
     schedule: rawEvent.schedule,

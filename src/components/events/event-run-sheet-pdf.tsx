@@ -28,23 +28,10 @@ function formatDate(date: string) {
   });
 }
 
-function getRoomLabel(room: string | null) {
-  switch (room) {
-    case "irgendwo":
-      return "Irgendwo";
-    case "restaurant":
-      return "Restaurant";
-    case "saal":
-      return "Saal";
-    case "seminarraum":
-      return "Seminarraum";
-    case "sitzungszimmer":
-      return "Sitzungszimmer";
-    case "terrasse":
-      return "Terrasse";
-    default:
-      return room || "Kein Raum definiert";
-  }
+function getRoomDisplay(event: EventDetail) {
+  const rooms = [event.room_id_1, event.room_id_2].filter(Boolean);
+
+  return rooms.length > 0 ? rooms.join(", ") : "Kein Raum definiert";
 }
 
 function getPaymentTypeLabel(paymentType: string | null) {
@@ -192,7 +179,7 @@ function EventRunSheetPage({ event }: Props) {
         <View style={styles.twoColumnRow}>
           <View style={styles.leftColumn}>
             <Section title="Gebuchte Räume">
-              <Text style={styles.text}>{getRoomLabel(event.room)}</Text>
+              <Text style={styles.text}>{getRoomDisplay(event)}</Text>
             </Section>
           </View>
 

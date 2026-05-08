@@ -49,20 +49,23 @@ export default async function EditEventPage({ params }: Props) {
     .eq("status", "active")
     .order("name", { ascending: true });
 
-  const currentRoomId = event.room ?? "";
-
-  const currentRoomAlreadyIncluded = (activeRooms ?? []).some(
-    (room) => room.id === currentRoomId
+  const currentRoomIds = [event.room_id_1, event.room_id_2].filter(
+    (roomId): roomId is string => Boolean(roomId)
   );
 
-  const { data: currentRoom } =
-    currentRoomId && isUuid(currentRoomId) && !currentRoomAlreadyIncluded
+  const missingCurrentRoomIds = currentRoomIds.filter(
+    (roomId) =>
+      isUuid(roomId) &&
+      !(activeRooms ?? []).some((room) => room.id === roomId)
+  );
+
+  const { data: currentRooms } =
+    missingCurrentRoomIds.length > 0
       ? await supabase
           .from("rooms")
           .select("id, name, status")
-          .eq("id", currentRoomId)
-          .maybeSingle()
-      : { data: null };
+          .in("id", missingCurrentRoomIds)
+      : { data: [] };
 
   const roomOptions = [
     { value: "", label: "Kein Raum" },
@@ -71,23 +74,11 @@ export default async function EditEventPage({ params }: Props) {
       label: room.name,
       status: room.status,
     })),
-    ...(currentRoom
-      ? [
-          {
-            value: currentRoom.id,
-            label: currentRoom.name,
-            status: currentRoom.status,
-          },
-        ]
-      : currentRoomId && !isUuid(currentRoomId)
-        ? [
-            {
-              value: currentRoomId,
-              label: currentRoomId,
-              status: "legacy",
-            },
-          ]
-        : []),
+    ...(currentRooms ?? []).map((room) => ({
+      value: room.id,
+      label: room.name,
+      status: room.status,
+    })),
   ];
 
   return (
