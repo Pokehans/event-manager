@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
-import Card from "@/components/ui/card";
 
 type Room = {
   id: string;
@@ -72,22 +71,22 @@ export default async function RoomsPage() {
         </div>
 
       {roomList.length === 0 ? (
-        <Card>
-          <div className="p-6 text-sm text-[var(--color-text-muted)]">
-            Noch keine Räume erfasst.
-          </div>
-        </Card>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center shadow-sm">
+          <h2 className="section-title">Keine Räume erfasst</h2>
+          <p className="section-text mt-2">
+            Erstelle den ersten Raum, um die Raumverwaltung zu nutzen.
+          </p>
+        </div>
       ) : (
-        <Card>
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
           <div className="hidden overflow-x-auto lg:block">
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="border-b border-[var(--color-border)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+              <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <tr>
-                  <th className="px-5 py-4">Raum</th>
-                  <th className="px-5 py-4">Kapazität</th>
-                  <th className="px-5 py-4">Nutzung</th>
-                  <th className="px-5 py-4">Status</th>
-                  <th className="px-5 py-4 text-right">Aktion</th>
+                  <th className="px-5 py-4 font-bold">Raum</th>
+                  <th className="px-5 py-4 font-bold">Kapazität</th>
+                  <th className="px-5 py-4 font-bold">Nutzung</th>
+                  <th className="px-5 py-4 font-bold">Status</th>
                 </tr>
               </thead>
 
@@ -95,22 +94,41 @@ export default async function RoomsPage() {
                 {roomList.map((room) => (
                   <tr
                     key={room.id}
-                    className="transition hover:bg-[var(--color-surface-muted)]"
+                    className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
                   >
-                    <td className="px-5 py-4 font-semibold">{room.name}</td>
-                    <td className="px-5 py-4">
-                      {room.capacity ? `${room.capacity} Personen` : "—"}
-                    </td>
-                    <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                      {room.function_description || "—"}
-                    </td>
-                    <td className="px-5 py-4">{getStatusLabel(room.status)}</td>
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
                       <Link
                         href={`/dashboard/rooms/${room.id}`}
-                        className="font-semibold text-[var(--color-primary)] hover:underline"
+                        className="block"
                       >
-                        Details
+                        {room.name}
+                      </Link>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <Link
+                        href={`/dashboard/rooms/${room.id}`}
+                        className="block"
+                      >
+                        {room.capacity ? `${room.capacity} Personen` : "—"}
+                      </Link>
+                    </td>
+
+                    <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                      <Link
+                        href={`/dashboard/rooms/${room.id}`}
+                        className="block"
+                      >
+                        {room.function_description || "—"}
+                      </Link>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <Link
+                        href={`/dashboard/rooms/${room.id}`}
+                        className="block"
+                      >
+                        {getStatusLabel(room.status)}
                       </Link>
                     </td>
                   </tr>
@@ -126,7 +144,7 @@ export default async function RoomsPage() {
                 href={`/dashboard/rooms/${room.id}`}
                 className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <h3 className="break-words text-base font-semibold text-[var(--color-text)]">
                       {room.name}
@@ -149,14 +167,10 @@ export default async function RoomsPage() {
                     {room.function_description || "—"}
                   </p>
                 </div>
-
-                <div className="mt-4 text-sm font-semibold text-[var(--color-primary)]">
-                  Details ansehen
-                </div>
               </Link>
             ))}
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );
