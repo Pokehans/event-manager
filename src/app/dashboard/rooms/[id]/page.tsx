@@ -370,7 +370,7 @@ export default async function RoomDetailPage({ params }: Props) {
                       </a>
                     ) : (
                       <span className="text-sm text-[var(--color-text-muted)]">
-                        Download nicht verfügbar
+                        Download derzeit nicht verfügbar
                       </span>
                     )}
                   </div>
