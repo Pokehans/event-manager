@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
 import { RoomImageLightbox } from "./images/room-image-lightbox";
+import DeleteRoomButton from "@/components/rooms/delete-room-button";
+import { deleteRoom } from "./edit/actions";
 
 type Room = {
   id: string;
@@ -273,6 +275,9 @@ export default async function RoomDetailPage({ params }: Props) {
                 Bearbeiten
               </Link>
             ) : null}
+            {canManageRooms ? (
+            <DeleteRoomButton action={deleteRoom} roomId={r.id} />
+          ) : null}
           </div>
         </div>
       </div>

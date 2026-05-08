@@ -511,3 +511,85 @@ export async function updateRoom(
   revalidatePath(`/dashboard/rooms/${roomId}`);
   redirect(`/dashboard/rooms/${roomId}`);
 }
+
+export async function deleteRoom(formData: FormData) {
+  const user = await getCurrentUser({ redirectTo: "/" });
+
+  if (!user || !hasRole(user.role, [ROLES.ADMIN, ROLES.SYSTEMADMIN])) {
+    redirect("/dashboard/rooms");
+  }
+
+  const roomId = String(formData.get("id") ?? "");
+
+  if (!roomId) {
+    redirect("/dashboard/rooms");
+  }
+
+  const supabase = await createClient();
+
+  const { data: images, error: imagesError } = await supabase
+    .from("room_images")
+    .select("file_path")
+    .eq("room_id", roomId);
+
+  if (imagesError) {
+    console.error(
+      "Fehler beim Laden der zu löschenden Raumbilder:",
+      imagesError.message
+    );
+  }
+
+  const { data: documents, error: documentsError } = await supabase
+    .from("room_documents")
+    .select("file_path")
+    .eq("room_id", roomId);
+
+  if (documentsError) {
+    console.error(
+      "Fehler beim Laden der zu löschenden Raumdokumente:",
+      documentsError.message
+    );
+  }
+
+  const imagePaths = (images ?? []).map((image) => image.file_path);
+  const documentPaths = (documents ?? []).map((document) => document.file_path);
+
+  if (imagePaths.length > 0) {
+    const { error: imageStorageError } = await supabase.storage
+      .from("room-images")
+      .remove(imagePaths);
+
+    if (imageStorageError) {
+      console.error(
+        "Fehler beim Löschen der Raumbilder aus Storage:",
+        imageStorageError.message
+      );
+    }
+  }
+
+  if (documentPaths.length > 0) {
+    const { error: documentStorageError } = await supabase.storage
+      .from("room-documents")
+      .remove(documentPaths);
+
+    if (documentStorageError) {
+      console.error(
+        "Fehler beim Löschen der Raumdokumente aus Storage:",
+        documentStorageError.message
+      );
+    }
+  }
+
+  const { error: deleteRoomError } = await supabase
+    .from("rooms")
+    .delete()
+    .eq("id", roomId);
+
+  if (deleteRoomError) {
+    console.error("Fehler beim Löschen des Raums:", deleteRoomError.message);
+    redirect(`/dashboard/rooms/${roomId}`);
+  }
+
+  revalidatePath("/dashboard/rooms");
+  redirect("/dashboard/rooms");
+}
