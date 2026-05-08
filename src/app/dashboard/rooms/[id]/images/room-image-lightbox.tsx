@@ -133,6 +133,7 @@ useEffect(() => {
       {activeIndex !== null && (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+            onClick={close}
             onTouchStart={(e) => {
                 setTouchStartX(e.touches[0].clientX);
                 setTouchEndX(null);
@@ -145,7 +146,7 @@ useEffect(() => {
 
                 const distance = touchStartX - touchEndX;
 
-                const threshold = 50;
+                const threshold = 50; 
 
                 if (distance > threshold && images.length > 1) {
                 next();
@@ -157,19 +158,25 @@ useEffect(() => {
             }}
             >
           {/* Close */}
-          <button
+            <button
             type="button"
-            onClick={close}
+            onClick={(event) => {
+                event.stopPropagation();
+                close();
+            }}
             className="absolute right-6 top-6 text-white text-xl"
-          >
+            >
             ✕
-          </button>
+            </button>
 
           {/* Prev */}
           {images.length > 1 && (
             <button
               type="button"
-              onClick={prev}
+              onClick={(event) => {
+                event.stopPropagation();
+                prev();
+                }}
               className="absolute left-6 text-white text-3xl"
             >
               ‹
@@ -179,15 +186,20 @@ useEffect(() => {
           {/* Image */}
           {images[activeIndex].signedUrl ? (
             <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={images[activeIndex].signedUrl}
-                alt={
-                  images[activeIndex].alt_text ||
-                  images[activeIndex].file_name
-                }
-                className="max-h-[90vh] max-w-[90vw] object-contain"
-              />
+              <div
+                className="flex items-center justify-center"
+                onClick={(event) => event.stopPropagation()}
+                >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                    src={images[activeIndex].signedUrl}
+                    alt={
+                    images[activeIndex].alt_text ||
+                    images[activeIndex].file_name
+                    }
+                    className="max-h-[90vh] max-w-[90vw] object-contain"
+                />
+            </div>
             </>
           ) : null}
 
@@ -199,7 +211,10 @@ useEffect(() => {
           {images.length > 1 && (
             <button
               type="button"
-              onClick={next}
+              onClick={(event) => {
+                event.stopPropagation();
+                next();
+                }}
               className="absolute right-6 text-white text-3xl"
             >
               ›
