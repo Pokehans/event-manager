@@ -331,52 +331,55 @@ export default async function RoomDetailPage({ params }: Props) {
             </div>
           </DetailSection>
 
-                    <DetailSection title="Dokumente">
-                      {roomDocuments.length > 0 ? (
-                        <div className="space-y-3">
-                          {roomDocuments.map((document) => (
-                            <div
-                              key={document.id}
-                              className="flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-[var(--color-text)]">
-                                  <span className="flex min-w-0 items-start gap-2">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src="/pdf-icon.svg"
-                                      alt="PDF"
-                                      className="h-4 w-4 shrink-0"
-                                    />
-                                    <span className="min-w-0 break-all leading-5">{document.file_name}</span>
-                                  </span>
-                                </p>
-                                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                                  PDF-Dokument
-                                </p>
-                              </div>
+          <DetailSection title="Dokumente">
+            {roomDocuments.length > 0 ? (
+              <div className="space-y-3">
+                {roomDocuments.map((document) => (
+                  <div
+                    key={document.id}
+                    className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="w-full min-w-0 max-w-full overflow-hidden">
+                      <p className="text-sm font-semibold text-[var(--color-text)]">
+                        <span className="flex w-full min-w-0 max-w-full items-start gap-2 overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src="/pdf-icon.svg"
+                            alt="PDF"
+                            className="h-5 w-5 shrink-0"
+                          />
+                          <span className="block min-w-0 flex-1 break-all leading-5">
+                            {document.file_name}
+                          </span>
+                        </span>
+                      </p>
 
-                              {document.signedUrl ? (
-                                <a
-                                  href={document.signedUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
-                                >
-                                  Download
-                                </a>
-                              ) : (
-                                <span className="text-sm text-[var(--color-text-muted)]">
-                                  Download nicht verfügbar
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="section-text">Noch keine Dokumente erfasst.</p>
-                      )}
-                  </DetailSection>
+                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                        PDF-Dokument
+                      </p>
+                    </div>
+
+                    {document.signedUrl ? (
+                      <a
+                        href={document.signedUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex w-full shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)] sm:w-auto"
+                      >
+                        Download
+                      </a>
+                    ) : (
+                      <span className="text-sm text-[var(--color-text-muted)]">
+                        Download nicht verfügbar
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="section-text">Noch keine Dokumente erfasst.</p>
+            )}
+          </DetailSection>
         </div>
 
         <div className="space-y-6">
