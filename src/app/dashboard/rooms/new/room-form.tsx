@@ -277,8 +277,8 @@ export function RoomForm({
               </p>
             ) : (
               <p className="text-xs text-[var(--color-text-muted)]">
-                Erlaubt sind JPG, PNG, WEBP und GIF bis 5 MB pro Bild. Bild
-                anklicken zum Löschen.
+                Erlaubt sind JPG, PNG, WEBP und GIF bis 5 MB pro Bild.
+                {mode === "edit" && " Bild anklicken zum Löschen."}
               </p>
             )}
           </div>
