@@ -341,14 +341,14 @@ export default async function RoomDetailPage({ params }: Props) {
                             >
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-semibold text-[var(--color-text)]">
-                                  <span className="flex items-center gap-2">
+                                  <span className="flex min-w-0 items-start gap-2">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       src="/pdf-icon.svg"
                                       alt="PDF"
                                       className="h-4 w-4 shrink-0"
                                     />
-                                    <span className="truncate">{document.file_name}</span>
+                                    <span className="min-w-0 break-all leading-5">{document.file_name}</span>
                                   </span>
                                 </p>
                                 <p className="mt-1 text-xs text-[var(--color-text-muted)]">

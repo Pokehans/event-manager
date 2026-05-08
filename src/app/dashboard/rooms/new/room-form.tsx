@@ -302,14 +302,14 @@ export function RoomForm({
                       type="button"
                       onClick={() => toggleDocumentForDelete(document.id)}
                       className={[
-                        "flex w-full items-center justify-between gap-4 rounded-xl border bg-white px-4 py-3 text-left transition",
+                        "flex w-full min-w-0 flex-col items-start gap-3 rounded-xl border bg-white px-4 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between",
                         isMarkedForDelete
                           ? "border-[var(--color-danger)] bg-red-50 ring-1 ring-[var(--color-danger)]"
                           : "border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]",
                       ].join(" ")}
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[var(--color-text)]">
+                        <p className="break-all text-sm font-semibold leading-5 text-[var(--color-text)]">
                           {document.file_name}
                         </p>
                         <p className="text-xs text-[var(--color-text-muted)]">

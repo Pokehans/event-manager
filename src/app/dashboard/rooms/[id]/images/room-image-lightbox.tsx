@@ -121,10 +121,10 @@ useEffect(() => {
                 </button>
 
                 <div className="space-y-3 p-3">
-                    <p className="truncate text-sm font-medium text-[var(--color-text)]">
-                        {img.file_name}
+                    <p className="break-all text-sm font-medium leading-5 text-[var(--color-text)]">
+                      {img.file_name}
                     </p>
-                    </div>
+                  </div>
             </div>
             ))}
       </div>
@@ -204,8 +204,8 @@ useEffect(() => {
           ) : null}
 
           <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/90 to-transparent p-4">
-            <p className="mb-3 text-center text-sm text-white">
-                {images[activeIndex].file_name}
+            <p className="mx-auto mb-3 max-w-[90vw] break-all text-center text-sm leading-5 text-white">
+              {images[activeIndex].file_name}
             </p>
 
             {images.length > 1 ? (
