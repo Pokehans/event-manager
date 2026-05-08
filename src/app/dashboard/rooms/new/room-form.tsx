@@ -263,7 +263,7 @@ export function RoomForm({
               name="images"
               multiple
               accept="image/jpeg,image/png,image/webp,image/gif"
-              className="block w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
+              className="block w-full max-w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
             />
 
             {state.errors?.images ? (
@@ -282,9 +282,6 @@ export function RoomForm({
         <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
           <div className="space-y-1">
             <h2 className="section-title">Dokumente</h2>
-            <p className="section-text">
-              PDFs wie Raumpläne, Offerten oder technische Unterlagen verwalten.
-            </p>
           </div>
 
           {documents.length > 0 ? (
@@ -355,7 +352,7 @@ export function RoomForm({
               name="documents"
               multiple
               accept="application/pdf"
-              className="block w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
+              className="block w-full max-w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-[var(--color-primary)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90"
             />
 
             {state.errors?.documents ? (
