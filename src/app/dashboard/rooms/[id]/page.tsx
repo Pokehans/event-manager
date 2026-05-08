@@ -53,6 +53,15 @@ type RoomImage = {
   signedUrl: string | null;
 };
 
+type RoomDocument = {
+  id: string;
+  room_id: string;
+  file_path: string;
+  file_name: string;
+  created_at: string;
+  signedUrl: string | null;
+};
+
 type Props = {
   params: Promise<{ id: string }>;
 };
@@ -211,6 +220,25 @@ export default async function RoomDetailPage({ params }: Props) {
     })
   );
 
+    const { data: documents } = await supabase
+      .from("room_documents")
+      .select("id, room_id, file_path, file_name, created_at")
+      .eq("room_id", id)
+      .order("created_at", { ascending: false });
+
+    const roomDocuments: RoomDocument[] = await Promise.all(
+      (documents ?? []).map(async (document) => {
+        const { data } = await supabase.storage
+          .from("room-documents")
+          .createSignedUrl(document.file_path, 60 * 60);
+
+        return {
+          ...document,
+          signedUrl: data?.signedUrl ?? null,
+        };
+      })
+    );
+
   const r = room as Room;
   const createdByUser = pickOne(r.users);
   const roomLogs: RoomLog[] = (logs ?? []).map((log) => ({
@@ -303,11 +331,52 @@ export default async function RoomDetailPage({ params }: Props) {
             </div>
           </DetailSection>
 
-          <DetailSection title="Dokumente">
-            <p className="section-text">
-              Dokumente wie Bestuhlungspläne werden im nächsten Schritt ergänzt.
-            </p>
-          </DetailSection>
+                    <DetailSection title="Dokumente">
+                      {roomDocuments.length > 0 ? (
+                        <div className="space-y-3">
+                          {roomDocuments.map((document) => (
+                            <div
+                              key={document.id}
+                              className="flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-[var(--color-text)]">
+                                  <span className="flex items-center gap-2">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src="/pdf-icon.svg"
+                                      alt="PDF"
+                                      className="h-4 w-4 shrink-0"
+                                    />
+                                    <span className="truncate">{document.file_name}</span>
+                                  </span>
+                                </p>
+                                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                                  PDF-Dokument
+                                </p>
+                              </div>
+
+                              {document.signedUrl ? (
+                                <a
+                                  href={document.signedUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
+                                >
+                                  Download
+                                </a>
+                              ) : (
+                                <span className="text-sm text-[var(--color-text-muted)]">
+                                  Download nicht verfügbar
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="section-text">Noch keine Dokumente erfasst.</p>
+                      )}
+                  </DetailSection>
         </div>
 
         <div className="space-y-6">

@@ -10,7 +10,10 @@ import type { RoomFormState } from "../../new/actions";
 const allowedStatuses = ["active", "inactive", "blocked"] as const;
 
 const ROOM_IMAGES_BUCKET = "room-images";
+const ROOM_DOCUMENTS_BUCKET = "room-documents";
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024;
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -18,6 +21,8 @@ const ALLOWED_IMAGE_TYPES = [
   "image/webp",
   "image/gif",
 ];
+
+const ALLOWED_DOCUMENT_TYPES = ["application/pdf"];
 
 function sanitizeFileName(fileName: string) {
   return fileName
@@ -87,10 +92,7 @@ function formatEquipment(value: string[] | null | undefined) {
   return value.join(", ");
 }
 
-function createRoomChangeLogs(
-  oldRoom: RoomSnapshot,
-  newRoom: RoomSnapshot
-) {
+function createRoomChangeLogs(oldRoom: RoomSnapshot, newRoom: RoomSnapshot) {
   const changes: string[] = [];
 
   if (oldRoom.name !== newRoom.name) {
@@ -148,7 +150,9 @@ export async function updateRoom(
   const values = {
     name: String(formData.get("name") ?? "").trim(),
     capacity: String(formData.get("capacity") ?? "").trim(),
-    function_description: String(formData.get("function_description") ?? "").trim(),
+    function_description: String(
+      formData.get("function_description") ?? ""
+    ).trim(),
     status: String(formData.get("status") ?? "active").trim(),
     equipment: String(formData.get("equipment") ?? "").trim(),
     internal_notes: String(formData.get("internal_notes") ?? "").trim(),
@@ -160,7 +164,9 @@ export async function updateRoom(
     errors.name = "Bitte einen Raumnamen erfassen.";
   }
 
-  if (!allowedStatuses.includes(values.status as (typeof allowedStatuses)[number])) {
+  if (
+    !allowedStatuses.includes(values.status as (typeof allowedStatuses)[number])
+  ) {
     errors.status = "Bitte einen gültigen Status wählen.";
   }
 
@@ -182,6 +188,22 @@ export async function updateRoom(
 
     if (file.size > MAX_FILE_SIZE) {
       errors.images = "Ein Bild darf maximal 5 MB gross sein.";
+      break;
+    }
+  }
+
+  const documentFiles = formData
+    .getAll("documents")
+    .filter((file): file is File => file instanceof File && file.size > 0);
+
+  for (const file of documentFiles) {
+    if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
+      errors.documents = "Es sind nur PDF-Dateien erlaubt.";
+      break;
+    }
+
+    if (file.size > MAX_DOCUMENT_SIZE) {
+      errors.documents = "Ein Dokument darf maximal 10 MB gross sein.";
       break;
     }
   }
@@ -228,7 +250,7 @@ export async function updateRoom(
       values,
     };
   }
-  
+
   const updatedRoom: RoomSnapshot = {
     name: values.name,
     capacity,
@@ -342,13 +364,15 @@ export async function updateRoom(
       continue;
     }
 
-    const { error: imageInsertError } = await supabase.from("room_images").insert({
-      room_id: roomId,
-      file_path: filePath,
-      file_name: file.name,
-      alt_text: file.name,
-      sort_order: 0,
-    });
+    const { error: imageInsertError } = await supabase
+      .from("room_images")
+      .insert({
+        room_id: roomId,
+        file_path: filePath,
+        file_name: file.name,
+        alt_text: file.name,
+        sort_order: 0,
+      });
 
     if (imageInsertError) {
       console.error(
@@ -361,7 +385,113 @@ export async function updateRoom(
     }
   }
 
-  const allChangeLogs = [...changeLogs, ...imageChangeLogs];
+  const documentChangeLogs: string[] = [];
+
+  const deleteDocumentIds = formData
+    .getAll("delete_document_ids")
+    .map((value) => String(value))
+    .filter(Boolean);
+
+  const documentsToDelete =
+    deleteDocumentIds.length > 0
+      ? await supabase
+          .from("room_documents")
+          .select("id, file_path, file_name")
+          .eq("room_id", roomId)
+          .in("id", deleteDocumentIds)
+      : { data: [], error: null };
+
+  if (documentsToDelete.error) {
+    console.error(
+      "Fehler beim Laden der zu löschenden Raumdokumente:",
+      documentsToDelete.error.message
+    );
+  }
+
+  const deleteDocumentPaths = (documentsToDelete.data ?? []).map(
+    (document) => document.file_path
+  );
+
+  if (deleteDocumentPaths.length > 0) {
+    const { error: deleteStorageError } = await supabase.storage
+      .from(ROOM_DOCUMENTS_BUCKET)
+      .remove(deleteDocumentPaths);
+
+    if (deleteStorageError) {
+      console.error(
+        "Fehler beim Löschen der Raumdokumente aus Storage:",
+        deleteStorageError.message
+      );
+    }
+  }
+
+  if ((documentsToDelete.data ?? []).length > 0) {
+    const { error: deleteDocumentsError } = await supabase
+      .from("room_documents")
+      .delete()
+      .eq("room_id", roomId)
+      .in(
+        "id",
+        (documentsToDelete.data ?? []).map((document) => document.id)
+      );
+
+    if (deleteDocumentsError) {
+      console.error(
+        "Fehler beim Löschen der Raumdokumente aus der Datenbank:",
+        deleteDocumentsError.message
+      );
+    } else {
+      documentChangeLogs.push(
+        ...(documentsToDelete.data ?? []).map(
+          (document) => `Dokument gelöscht Neu: ${document.file_name}`
+        )
+      );
+    }
+  }
+
+  for (const file of documentFiles) {
+    const cleanFileName = sanitizeFileName(file.name);
+    const filePath = `rooms/${roomId}/documents/${Date.now()}-${cleanFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(ROOM_DOCUMENTS_BUCKET)
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error(
+        "Fehler beim Hochladen des Raumdokuments:",
+        uploadError.message
+      );
+      continue;
+    }
+
+    const { error: documentInsertError } = await supabase
+      .from("room_documents")
+      .insert({
+        room_id: roomId,
+        file_path: filePath,
+        file_name: file.name,
+      });
+
+    if (documentInsertError) {
+      console.error(
+        "Fehler beim Speichern des Raumdokuments:",
+        documentInsertError.message
+      );
+      await supabase.storage.from(ROOM_DOCUMENTS_BUCKET).remove([filePath]);
+    } else {
+      documentChangeLogs.push(`Dokument hochgeladen Neu: ${file.name}`);
+    }
+  }
+
+  const allChangeLogs = [
+    ...changeLogs,
+    ...imageChangeLogs,
+    ...documentChangeLogs,
+  ];
 
   if (allChangeLogs.length > 0) {
     const { error: logError } = await supabase.from("room_logs").insert(
