@@ -37,10 +37,17 @@ type EventFormProps = {
   mode?: "create" | "edit";
   submitLabel?: string;
   initialData?: EventFormInitialData;
+  roomOptions?: RoomOption[];
   action?: (
     state: CreateEventState,
     formData: FormData
   ) => Promise<CreateEventState>;
+};
+
+type RoomOption = {
+  value: string;
+  label: string;
+  status?: string;
 };
 
 const initialState: CreateEventState = {
@@ -54,16 +61,6 @@ const statusOptions = [
   { value: "In Bearbeitung", label: "In Bearbeitung" },
   { value: "Bestätigt", label: "Bestätigt" },
   { value: "Storniert", label: "Storniert" },
-] as const;
-
-const ROOM_OPTIONS = [
-  { value: "", label: "Kein Raum" },
-  { value: "irgendwo", label: "Irgendwo" },
-  { value: "restaurant", label: "Restaurant" },
-  { value: "saal", label: "Saal" },
-  { value: "seminarraum", label: "Seminarraum" },
-  { value: "sitzungszimmer", label: "Sitzungszimmer" },
-  { value: "terrasse", label: "Terrasse" },
 ] as const;
 
 const PAYMENT_TYPE_OPTIONS = [
@@ -112,6 +109,7 @@ export function EventForm({
   mode = "create",
   submitLabel,
   initialData,
+  roomOptions = [],
   action,
 }: EventFormProps) {
   const formAction = action ?? createEvent;
@@ -535,7 +533,7 @@ const [hasBillingAddress, setHasBillingAddress] =
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-2">
-          {ROOM_OPTIONS.map((option) => (
+          {roomOptions.map((option) => (
             <label
               key={option.value}
               className={[
@@ -552,7 +550,11 @@ const [hasBillingAddress, setHasBillingAddress] =
                 defaultChecked={(roomValue || "") === option.value}
                 onChange={() => clearFieldError("room")}
               />
-              <span className="text-sm">{option.label}</span>
+              <span className="text-sm">
+                {option.status && option.status !== "active"
+                  ? `${option.label} (nicht mehr aktiv)`
+                  : option.label}
+              </span>
             </label>
           ))}
         </div>
