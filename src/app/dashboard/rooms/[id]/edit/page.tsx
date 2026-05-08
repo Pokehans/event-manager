@@ -65,6 +65,14 @@ export default async function EditRoomPage({ params }: Props) {
     })
   );
 
+  const { data: documents } = await supabase
+    .from("room_documents")
+    .select("id, file_path, file_name")
+    .eq("room_id", r.id)
+    .order("created_at", { ascending: false });
+
+  const roomDocuments = documents ?? [];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -84,6 +92,7 @@ export default async function EditRoomPage({ params }: Props) {
         submitLabel="Änderungen speichern"
         pendingLabel="Änderungen werden gespeichert..."
         images={roomImages}
+        documents={roomDocuments}
         initialValues={{
           name: r.name,
           capacity: r.capacity?.toString() ?? "",

@@ -364,8 +364,7 @@ export function RoomForm({
               </p>
             ) : (
               <p className="text-xs text-[var(--color-text-muted)]">
-                Erlaubt sind PDF-Dateien bis 10 MB pro Dokument. Dokument
-                anklicken zum Löschen.
+                Erlaubt sind PDF-Dateien bis 10 MB pro Dokument.
               </p>
             )}
           </div>
