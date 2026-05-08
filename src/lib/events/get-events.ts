@@ -10,7 +10,9 @@ export type EventListItem = {
   lastname: string | null;
   adults: number | null;
   children: number | null;
-  room: string | null;
+  room_id_1: string | null;
+  room_id_2: string | null;
+  room_names: string[];
   payment_type: string | null;
   event_debriefings:
     | {
@@ -75,7 +77,8 @@ export async function getEvents(): Promise<EventListItem[]> {
       lastname,
       adults,
       children,
-      room,
+      room_id_1,
+      room_id_2,
       payment_type,
       event_debriefings (
         id
@@ -95,6 +98,29 @@ export async function getEvents(): Promise<EventListItem[]> {
     return [];
   }
 
+  const roomIds = Array.from(
+    new Set(
+      (data ?? [])
+        .flatMap((event) => [event.room_id_1, event.room_id_2])
+        .filter((roomId): roomId is string => Boolean(roomId))
+    )
+  );
+
+  const { data: rooms, error: roomsError } =
+    roomIds.length > 0
+      ? await supabase.from("rooms").select("id, name").in("id", roomIds)
+      : { data: [], error: null };
+
+  if (roomsError) {
+    console.error("Fehler beim Laden der Raumnamen:", roomsError.message);
+  }
+
+  function getRoomNames(event: RawEvent) {
+    return [event.room_id_1, event.room_id_2]
+      .map((roomId) => rooms?.find((room) => room.id === roomId)?.name)
+      .filter((roomName): roomName is string => Boolean(roomName));
+  }
+
   const today = getTodayString();
 
   return ((data ?? []) as RawEvent[])
@@ -104,6 +130,7 @@ export async function getEvents(): Promise<EventListItem[]> {
 
       return {
         ...event,
+        room_names: getRoomNames(event),
         event_debriefings: event.event_debriefings ?? [],
         users: rawUser
           ? {

@@ -188,7 +188,7 @@ export default function OperativeCockpit({ events }: OperativeCockpitProps) {
     .slice(0, 3);
 
   const eventsWithoutRoom = activeEvents.filter(
-    (event) => event.date >= today && !event.room?.trim()
+    (event) => event.date >= today && !event.room_id_1 && !event.room_id_2
   );
 
   const openDebriefingEvents = activeEvents.filter(

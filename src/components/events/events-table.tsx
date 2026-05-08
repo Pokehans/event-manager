@@ -450,7 +450,7 @@ const hasActiveFilters =
     return Array.from(
       new Set(
         events
-          .map((event) => event.room?.trim())
+          .flatMap((event) => event.room_names)
           .filter((room): room is string => Boolean(room))
       )
     ).sort();
@@ -479,7 +479,7 @@ const hasActiveFilters =
       const eventYear = event.date.slice(0, 4);
       const eventMonth = event.date.slice(5, 7);
       const departmentName = department?.name ?? "";
-      const roomName = event.room ?? "";
+      const roomNames = event.room_names ?? [];
       const paymentType = event.payment_type ?? "";
       const eventRating = event.event_debriefings?.[0]?.rating ?? "";
       const participantCount = (event.adults ?? 0) + (event.children ?? 0);
@@ -508,8 +508,8 @@ const hasActiveFilters =
 
       const matchesRoom =
         roomFilter === "all" ||
-        (roomFilter === "__none__" && !roomName.trim()) ||
-        roomName.trim() === roomFilter;
+        (roomFilter === "__none__" && roomNames.length === 0) ||
+        roomNames.includes(roomFilter);
 
       const matchesPayment =
         paymentFilter === "all" ||
