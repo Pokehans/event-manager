@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
+import StatusBadge from "@/components/ui/status-badge";
 
 type Room = {
   id: string;
@@ -83,10 +84,10 @@ export default async function RoomsPage() {
             <table className="w-full min-w-[720px] border-collapse text-left text-sm">
               <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <tr>
+                  <th className="w-[140px] px-5 py-4 font-bold">Status</th>
                   <th className="px-5 py-4 font-bold">Raum</th>
-                  <th className="px-5 py-4 font-bold">Kapazität</th>
+                  <th className="w-[160px] px-5 py-4 font-bold">Kapazität</th>
                   <th className="px-5 py-4 font-bold">Nutzung</th>
-                  <th className="px-5 py-4 font-bold">Status</th>
                 </tr>
               </thead>
 
@@ -96,39 +97,27 @@ export default async function RoomsPage() {
                     key={room.id}
                     className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
                   >
+                    <td className="px-5 py-4">
+                      <Link href={`/dashboard/rooms/${room.id}`} className="block">
+                        <StatusBadge label={getStatusLabel(room.status)} />
+                      </Link>
+                    </td>
+
                     <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
-                      <Link
-                        href={`/dashboard/rooms/${room.id}`}
-                        className="block"
-                      >
+                      <Link href={`/dashboard/rooms/${room.id}`} className="block">
                         {room.name}
                       </Link>
                     </td>
 
                     <td className="px-5 py-4">
-                      <Link
-                        href={`/dashboard/rooms/${room.id}`}
-                        className="block"
-                      >
+                      <Link href={`/dashboard/rooms/${room.id}`} className="block">
                         {room.capacity ? `${room.capacity} Personen` : "—"}
                       </Link>
                     </td>
 
                     <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                      <Link
-                        href={`/dashboard/rooms/${room.id}`}
-                        className="block"
-                      >
+                      <Link href={`/dashboard/rooms/${room.id}`} className="block">
                         {room.function_description || "—"}
-                      </Link>
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <Link
-                        href={`/dashboard/rooms/${room.id}`}
-                        className="block"
-                      >
-                        {getStatusLabel(room.status)}
                       </Link>
                     </td>
                   </tr>
@@ -154,9 +143,7 @@ export default async function RoomsPage() {
                     </p>
                   </div>
 
-                  <span className="shrink-0 rounded-full bg-[var(--color-surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">
-                    {getStatusLabel(room.status)}
-                  </span>
+                  <StatusBadge label={getStatusLabel(room.status)} />
                 </div>
 
                 <div className="mt-4 space-y-1">
