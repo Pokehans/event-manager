@@ -276,7 +276,7 @@ export async function updateRoom(
 
   if (error) {
     return {
-      message: "Raum konnte nicht aktualisiert werden.",
+      message: "Raum konnte nicht aktualisiert werden. Kontkatiere den Support",
       errors: {
         general: error.message,
       },
