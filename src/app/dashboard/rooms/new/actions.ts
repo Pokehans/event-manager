@@ -9,12 +9,13 @@ import { ROLES, hasRole } from "@/lib/auth/roles";
 export type RoomFormState = {
   message?: string;
   errors?: {
-  name?: string;
-  capacity?: string;
-  status?: string;
-  images?: string;
-  general?: string;
-};
+    name?: string;
+    capacity?: string;
+    status?: string;
+    images?: string;
+    documents?: string;
+    general?: string;
+  };
   values?: {
     name?: string;
     capacity?: string;
@@ -26,8 +27,12 @@ export type RoomFormState = {
 };
 
 const allowedStatuses = ["active", "inactive", "blocked"] as const;
+
 const ROOM_IMAGES_BUCKET = "room-images";
+const ROOM_DOCUMENTS_BUCKET = "room-documents";
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024;
 
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
@@ -35,6 +40,8 @@ const ALLOWED_IMAGE_TYPES = [
   "image/webp",
   "image/gif",
 ];
+
+const ALLOWED_DOCUMENT_TYPES = ["application/pdf"];
 
 function sanitizeFileName(fileName: string) {
   return fileName
@@ -79,7 +86,9 @@ export async function createRoom(
   const values = {
     name: String(formData.get("name") ?? "").trim(),
     capacity: String(formData.get("capacity") ?? "").trim(),
-    function_description: String(formData.get("function_description") ?? "").trim(),
+    function_description: String(
+      formData.get("function_description") ?? ""
+    ).trim(),
     status: String(formData.get("status") ?? "active").trim(),
     equipment: String(formData.get("equipment") ?? "").trim(),
     internal_notes: String(formData.get("internal_notes") ?? "").trim(),
@@ -91,7 +100,9 @@ export async function createRoom(
     errors.name = "Bitte einen Raumnamen erfassen.";
   }
 
-  if (!allowedStatuses.includes(values.status as (typeof allowedStatuses)[number])) {
+  if (
+    !allowedStatuses.includes(values.status as (typeof allowedStatuses)[number])
+  ) {
     errors.status = "Bitte einen gültigen Status wählen.";
   }
 
@@ -117,6 +128,22 @@ export async function createRoom(
     }
   }
 
+  const documentFiles = formData
+    .getAll("documents")
+    .filter((file): file is File => file instanceof File && file.size > 0);
+
+  for (const file of documentFiles) {
+    if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
+      errors.documents = "Es sind nur PDF-Dateien erlaubt.";
+      break;
+    }
+
+    if (file.size > MAX_DOCUMENT_SIZE) {
+      errors.documents = "Ein Dokument darf maximal 10 MB gross sein.";
+      break;
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return {
       message: "Raum konnte nicht erstellt werden.",
@@ -133,22 +160,24 @@ export async function createRoom(
     .eq("name", values.name)
     .maybeSingle();
 
-    if (existing) {
+  if (existing) {
     return {
-        message: "Raum existiert bereits.",
-        errors: {
+      message: "Raum existiert bereits.",
+      errors: {
         name: "Ein Raum mit diesem Namen existiert bereits.",
-        },
-        values,
+      },
+      values,
     };
-    }
+  }
 
   const { data: room, error } = await supabase
     .from("rooms")
     .insert({
       name: values.name,
       capacity,
-      function_description: normalizeOptionalString(values.function_description),
+      function_description: normalizeOptionalString(
+        values.function_description
+      ),
       status: values.status,
       equipment: parseEquipment(values.equipment),
       internal_notes: normalizeOptionalString(values.internal_notes),
@@ -184,17 +213,58 @@ export async function createRoom(
       continue;
     }
 
-    const { error: imageInsertError } = await supabase.from("room_images").insert({
-      room_id: room.id,
-      file_path: filePath,
-      file_name: file.name,
-      alt_text: file.name,
-      sort_order: 0,
-    });
+    const { error: imageInsertError } = await supabase
+      .from("room_images")
+      .insert({
+        room_id: room.id,
+        file_path: filePath,
+        file_name: file.name,
+        alt_text: file.name,
+        sort_order: 0,
+      });
 
     if (imageInsertError) {
-      console.error("Fehler beim Speichern des Raumbildes:", imageInsertError.message);
+      console.error(
+        "Fehler beim Speichern des Raumbildes:",
+        imageInsertError.message
+      );
       await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([filePath]);
+    }
+  }
+
+  for (const file of documentFiles) {
+    const cleanFileName = sanitizeFileName(file.name);
+    const filePath = `rooms/${room.id}/documents/${Date.now()}-${cleanFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(ROOM_DOCUMENTS_BUCKET)
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error(
+        "Fehler beim Hochladen des Raumdokuments:",
+        uploadError.message
+      );
+      continue;
+    }
+
+    const { error: documentInsertError } = await supabase
+      .from("room_documents")
+      .insert({
+        room_id: room.id,
+        file_path: filePath,
+        file_name: file.name,
+      });
+
+    if (documentInsertError) {
+      console.error(
+        "Fehler beim Speichern des Raumdokuments:",
+        documentInsertError.message
+      );
+      await supabase.storage.from(ROOM_DOCUMENTS_BUCKET).remove([filePath]);
     }
   }
 
