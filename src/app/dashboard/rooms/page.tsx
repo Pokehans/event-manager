@@ -79,7 +79,7 @@ export default async function RoomsPage() {
         </Card>
       ) : (
         <Card>
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto lg:block">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-[var(--color-border)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                 <tr>
@@ -93,7 +93,10 @@ export default async function RoomsPage() {
 
               <tbody className="divide-y divide-[var(--color-border)]">
                 {roomList.map((room) => (
-                  <tr key={room.id} className="transition hover:bg-[var(--color-surface-muted)]">
+                  <tr
+                    key={room.id}
+                    className="transition hover:bg-[var(--color-surface-muted)]"
+                  >
                     <td className="px-5 py-4 font-semibold">{room.name}</td>
                     <td className="px-5 py-4">
                       {room.capacity ? `${room.capacity} Personen` : "—"}
@@ -101,9 +104,7 @@ export default async function RoomsPage() {
                     <td className="px-5 py-4 text-[var(--color-text-muted)]">
                       {room.function_description || "—"}
                     </td>
-                    <td className="px-5 py-4">
-                      {getStatusLabel(room.status)}
-                    </td>
+                    <td className="px-5 py-4">{getStatusLabel(room.status)}</td>
                     <td className="px-5 py-4 text-right">
                       <Link
                         href={`/dashboard/rooms/${room.id}`}
@@ -116,6 +117,44 @@ export default async function RoomsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="divide-y divide-[var(--color-border)] lg:hidden">
+            {roomList.map((room) => (
+              <Link
+                key={room.id}
+                href={`/dashboard/rooms/${room.id}`}
+                className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="break-words text-base font-semibold text-[var(--color-text)]">
+                      {room.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                      {room.capacity ? `${room.capacity} Personen` : "Keine Kapazität"}
+                    </p>
+                  </div>
+
+                  <span className="shrink-0 rounded-full bg-[var(--color-surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">
+                    {getStatusLabel(room.status)}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                    Nutzung
+                  </p>
+                  <p className="break-words text-sm text-[var(--color-text)]">
+                    {room.function_description || "—"}
+                  </p>
+                </div>
+
+                <div className="mt-4 text-sm font-semibold text-[var(--color-primary)]">
+                  Details ansehen
+                </div>
+              </Link>
+            ))}
           </div>
         </Card>
       )}
