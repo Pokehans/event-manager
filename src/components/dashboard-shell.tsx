@@ -134,6 +134,22 @@ function RoomsIcon() {
   );
 }
 
+function PricelistIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-none stroke-current"
+      strokeWidth="2"
+    >
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h10" />
+      <path d="M17 16l3 3" />
+      <path d="M20 16l-3 3" />
+    </svg>
+  );
+}
+
 function UsersIcon() {
   return (
     <svg
@@ -368,6 +384,12 @@ export default function DashboardShell({
                   collapsed={sidebarCollapsed}
                 />
                 <SidebarLink
+                  href="/dashboard/pricelist"
+                  label="Preisliste"
+                  icon={<PricelistIcon />}
+                  collapsed={sidebarCollapsed}
+                />
+                <SidebarLink
                   href="#"
                   label="Benutzer"
                   icon={<UsersIcon />}
@@ -462,6 +484,12 @@ export default function DashboardShell({
                     href="/dashboard/rooms"
                     label="Räume"
                     icon={<RoomsIcon />}
+                    onClick={() => setMobileMenuOpen(false)}
+                  />
+                  <SidebarLink
+                    href="/dashboard/pricelist"
+                    label="Preisliste"
+                    icon={<PricelistIcon />}
                     onClick={() => setMobileMenuOpen(false)}
                   />
                   <SidebarLink
