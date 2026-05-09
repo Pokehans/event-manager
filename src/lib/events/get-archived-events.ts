@@ -48,7 +48,8 @@ export async function getArchivedEvents(
       lastname,
       adults,
       children,
-      room,
+      room_id_1,
+      room_id_2,
       payment_type,
       event_debriefings (
         rating
@@ -79,12 +80,36 @@ export async function getArchivedEvents(
     return [];
   }
 
+    const roomIds = Array.from(
+      new Set(
+        (data ?? [])
+          .flatMap((event) => [event.room_id_1, event.room_id_2])
+          .filter((roomId): roomId is string => Boolean(roomId))
+      )
+    );
+
+    const { data: rooms, error: roomsError } =
+      roomIds.length > 0
+        ? await supabase.from("rooms").select("id, name").in("id", roomIds)
+        : { data: [], error: null };
+
+    if (roomsError) {
+      console.error("Fehler beim Laden der Raumnamen:", roomsError.message);
+    }
+
+    function getRoomNames(event: RawArchivedEvent) {
+      return [event.room_id_1, event.room_id_2]
+        .map((roomId) => rooms?.find((room) => room.id === roomId)?.name)
+        .filter((roomName): roomName is string => Boolean(roomName));
+    }
+
   return ((data ?? []) as RawArchivedEvent[]).map((event) => {
     const rawUser = pickOne(event.users);
     const rawDepartment = pickOne(rawUser?.departments);
 
     return {
       ...event,
+      room_names: getRoomNames(event),
       event_debriefings: event.event_debriefings ?? null,
       users: rawUser
         ? {
