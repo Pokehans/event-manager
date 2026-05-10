@@ -2,14 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Card from "@/components/ui/card";
-import Input from "@/components/ui/input";
-import Button from "@/components/ui/button";
 import type { OfferItem } from "@/lib/offers/get-offer-items";
 import { getUnitLabel } from "./utils";
 
 type Props = {
   items: OfferItem[];
 };
+
+type TypeFilter = "all" | "item" | "package";
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat("de-CH", {
@@ -18,29 +18,93 @@ function formatPrice(price: number) {
   }).format(price);
 }
 
+function getCategoryLabel(item: OfferItem) {
+  return item.category_path.map((category) => category.name).join(" / ");
+}
+
 export default function PricelistClient({ items }: Props) {
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "item" | "package">(
-    "all"
-  );
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [mainCategoryFilter, setMainCategoryFilter] = useState("all");
+  const [subCategoryFilter, setSubCategoryFilter] = useState("all");
+  const [detailCategoryFilter, setDetailCategoryFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const categories = useMemo(() => {
+  const mainCategories = useMemo(() => {
     const set = new Set<string>();
 
     items.forEach((item) => {
-      const categoryName = item.category?.parent?.name ?? item.category?.name;
-      if (categoryName) set.add(categoryName);
+      const mainCategory = item.category_path[0]?.name;
+      if (mainCategory) set.add(mainCategory);
     });
 
     return Array.from(set).sort();
   }, [items]);
 
+  const subCategories = useMemo(() => {
+    const set = new Set<string>();
+
+    items.forEach((item) => {
+      const mainCategory = item.category_path[0]?.name;
+      const subCategory = item.category_path[1]?.name;
+
+      if (
+        subCategory &&
+        (mainCategoryFilter === "all" || mainCategory === mainCategoryFilter)
+      ) {
+        set.add(subCategory);
+      }
+    });
+
+    return Array.from(set).sort();
+  }, [items, mainCategoryFilter]);
+
+  const detailCategories = useMemo(() => {
+    const set = new Set<string>();
+
+    items.forEach((item) => {
+      const mainCategory = item.category_path[0]?.name;
+      const subCategory = item.category_path[1]?.name;
+      const detailCategory = item.category_path[2]?.name;
+
+      if (
+        detailCategory &&
+        (mainCategoryFilter === "all" || mainCategory === mainCategoryFilter) &&
+        (subCategoryFilter === "all" || subCategory === subCategoryFilter)
+      ) {
+        set.add(detailCategory);
+      }
+    });
+
+    return Array.from(set).sort();
+  }, [items, mainCategoryFilter, subCategoryFilter]);
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const searchValue = search.trim().toLowerCase();
+      const mainCategory = item.category_path[0]?.name;
+      const subCategory = item.category_path[1]?.name;
+      const detailCategory = item.category_path[2]?.name;
 
       if (searchValue && !item.name.toLowerCase().includes(searchValue)) {
+        return false;
+      }
+
+      if (
+        mainCategoryFilter !== "all" &&
+        mainCategory !== mainCategoryFilter
+      ) {
+        return false;
+      }
+
+      if (subCategoryFilter !== "all" && subCategory !== subCategoryFilter) {
+        return false;
+      }
+
+      if (
+        detailCategoryFilter !== "all" &&
+        detailCategory !== detailCategoryFilter
+      ) {
         return false;
       }
 
@@ -48,18 +112,31 @@ export default function PricelistClient({ items }: Props) {
         return false;
       }
 
-      const categoryName = item.category?.parent?.name ?? item.category?.name;
-
-      if (categoryFilter !== "all" && categoryName !== categoryFilter) {
-        return false;
-      }
-
       return true;
     });
-  }, [items, search, typeFilter, categoryFilter]);
+  }, [
+    items,
+    search,
+    mainCategoryFilter,
+    subCategoryFilter,
+    detailCategoryFilter,
+    typeFilter,
+  ]);
 
   const hasActiveFilters =
-    search.trim() !== "" || typeFilter !== "all" || categoryFilter !== "all";
+    search.trim() !== "" ||
+    mainCategoryFilter !== "all" ||
+    subCategoryFilter !== "all" ||
+    detailCategoryFilter !== "all" ||
+    typeFilter !== "all";
+
+  const clearFilters = () => {
+    setSearch("");
+    setMainCategoryFilter("all");
+    setSubCategoryFilter("all");
+    setDetailCategoryFilter("all");
+    setTypeFilter("all");
+  };
 
   return (
     <div className="w-full space-y-6">
@@ -71,53 +148,114 @@ export default function PricelistClient({ items }: Props) {
       </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-4 shadow-sm backdrop-blur lg:sticky lg:top-4 lg:z-20">
-        <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px_auto] lg:items-center">
-          <Input
-            label="Suche"
-            placeholder="Suche nach Position..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            />
+        <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3 lg:hidden">
+            <div>
+                <p className="text-sm font-semibold text-[var(--color-text)]">
+                Filter
+                </p>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                {hasActiveFilters ? "Filter aktiv" : "Keine Filter aktiv"}
+                </p>
+            </div>
 
-          <select
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text)]"
-          >
-            <option value="all">Alle Kategorien</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+            <button
+                type="button"
+                onClick={() => setFiltersOpen((prev) => !prev)}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+            >
+                {filtersOpen ? "Filter ausblenden" : "Filter anzeigen"}
+            </button>
+            </div>
 
-          <select
-            value={typeFilter}
-            onChange={(event) =>
-              setTypeFilter(event.target.value as "all" | "item" | "package")
-            }
-            className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text)]"
-          >
-            <option value="all">Alle Typen</option>
-            <option value="item">Position</option>
-            <option value="package">Paket</option>
-          </select>
+            <div
+                className={`${filtersOpen ? "flex" : "hidden"} flex-col gap-4 lg:flex`}
+                >
+                <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Suche nach Position"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                />
 
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!hasActiveFilters}
-            onClick={() => {
-              setSearch("");
-              setCategoryFilter("all");
-              setTypeFilter("all");
-            }}
-          >
-            Filter löschen
-          </Button>
+                <div className="grid gap-3 lg:grid-cols-4">
+                    <select
+                    value={mainCategoryFilter}
+                    onChange={(event) => {
+                        setMainCategoryFilter(event.target.value);
+                        setSubCategoryFilter("all");
+                        setDetailCategoryFilter("all");
+                    }}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                    >
+                    <option value="all">Alle Kategorien</option>
+                    {mainCategories.map((category) => (
+                        <option key={category} value={category}>
+                        {category}
+                        </option>
+                    ))}
+                    </select>
+
+                    <select
+                    value={subCategoryFilter}
+                    onChange={(event) => {
+                        setSubCategoryFilter(event.target.value);
+                        setDetailCategoryFilter("all");
+                    }}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                    >
+                    <option value="all">Alle Unterkategorien</option>
+                    {subCategories.map((category) => (
+                        <option key={category} value={category}>
+                        {category}
+                        </option>
+                    ))}
+                    </select>
+
+                    <select
+                    value={detailCategoryFilter}
+                    onChange={(event) => setDetailCategoryFilter(event.target.value)}
+                    disabled={detailCategories.length === 0}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)] disabled:bg-[var(--color-surface-muted)] disabled:text-[var(--color-text-muted)]"
+                    >
+                    <option value="all">Alle Details</option>
+                    {detailCategories.map((category) => (
+                        <option key={category} value={category}>
+                        {category}
+                        </option>
+                    ))}
+                    </select>
+
+                    <select
+                    value={typeFilter}
+                    onChange={(event) => setTypeFilter(event.target.value as TypeFilter)}
+                    className="rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none transition focus:border-[var(--color-primary)]"
+                    >
+                    <option value="all">Alle Typen</option>
+                    <option value="item">Position</option>
+                    <option value="package">Paket</option>
+                    </select>
+                </div>
+                </div>
+
+            <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">
+            <p className="text-sm text-[var(--color-text-muted)]">
+                {filteredItems.length} Position
+                {filteredItems.length === 1 ? "" : "en"} gefunden
+            </p>
+
+            <button
+                type="button"
+                disabled={!hasActiveFilters}
+                title={hasActiveFilters ? "Filter löschen" : "Keine Filter aktiv"}
+                onClick={clearFilters}
+                className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:hover:bg-[var(--color-border)] disabled:hover:text-[var(--color-text-muted)]"
+            >
+                Filter löschen
+            </button>
+            </div>
         </div>
-      </div>
+        </div>
 
       <Card>
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -151,9 +289,7 @@ export default function PricelistClient({ items }: Props) {
                       {item.name}
                     </td>
                     <td className="px-4 py-3 text-[var(--color-text-muted)]">
-                      {item.category?.parent?.name
-                        ? `${item.category.parent.name} / ${item.category.name}`
-                        : item.category?.name ?? "Ohne Kategorie"}
+                      {getCategoryLabel(item) || "Ohne Kategorie"}
                     </td>
                     <td className="px-4 py-3 text-[var(--color-text-muted)]">
                       {item.item_type === "package" ? "Paket" : "Position"}
