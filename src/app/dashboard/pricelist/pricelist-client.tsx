@@ -266,46 +266,78 @@ export default function PricelistClient({ items }: Props) {
         </div>
 
         {filteredItems.length === 0 ? (
-          <p className="section-text">Keine Ergebnisse gefunden.</p>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-[var(--color-border)]">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Position</th>
-                  <th className="px-4 py-3 font-semibold">Kategorie</th>
-                  <th className="px-4 py-3 font-semibold">Typ</th>
-                  <th className="px-4 py-3 font-semibold">Einheit</th>
-                  <th className="px-4 py-3 text-right font-semibold">Preis</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--color-border)] bg-white">
+            <p className="section-text">Keine Ergebnisse gefunden.</p>
+            ) : (
+            <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
+                <div className="hidden overflow-x-auto lg:block">
+                <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+                    <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+                    <tr>
+                        <th className="px-5 py-4 font-bold">Position</th>
+                        <th className="px-5 py-4 font-bold">Kategorie</th>
+                        <th className="px-5 py-4 font-bold">Typ</th>
+                        <th className="px-5 py-4 font-bold">Einheit</th>
+                        <th className="px-5 py-4 text-right font-bold">Preis</th>
+                    </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-[var(--color-border)]">
+                    {filteredItems.map((item) => (
+                        <tr
+                        key={item.id}
+                        className="group transition hover:bg-[var(--color-surface-muted)]/70"
+                        >
+                        <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
+                            {item.name}
+                        </td>
+                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                            {getCategoryLabel(item) || "Ohne Kategorie"}
+                        </td>
+                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                            {item.item_type === "package" ? "Paket" : "Position"}
+                        </td>
+                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                            {getUnitLabel(item.unit)}
+                        </td>
+                        <td className="px-5 py-4 text-right font-semibold text-[var(--color-text)]">
+                            {formatPrice(item.price)}
+                        </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+                </div>
+
+                <div className="divide-y divide-[var(--color-border)] lg:hidden">
                 {filteredItems.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-[var(--color-surface-muted)]/60"
-                  >
-                    <td className="px-4 py-3 font-semibold text-[var(--color-text)]">
-                      {item.name}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--color-text-muted)]">
-                      {getCategoryLabel(item) || "Ohne Kategorie"}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--color-text-muted)]">
-                      {item.item_type === "package" ? "Paket" : "Position"}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--color-text-muted)]">
-                      {getUnitLabel(item.unit)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-[var(--color-text)]">
-                      {formatPrice(item.price)}
-                    </td>
-                  </tr>
+                    <div key={item.id} className="block p-5">
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                        <p className="text-sm font-bold text-[var(--color-primary)]">
+                            {item.item_type === "package" ? "Paket" : "Position"}
+                        </p>
+                        <h2 className="mt-1 font-bold text-[var(--color-text)]">
+                            {item.name}
+                        </h2>
+                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                            {getCategoryLabel(item) || "Ohne Kategorie"}
+                        </p>
+                        </div>
+
+                        <p className="shrink-0 text-right font-bold text-[var(--color-text)]">
+                        {formatPrice(item.price)}
+                        </p>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 text-sm text-[var(--color-text-muted)]">
+                        <p>Einheit: {getUnitLabel(item.unit)}</p>
+                        <p>Typ: {item.item_type === "package" ? "Paket" : "Position"}</p>
+                    </div>
+                    </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </div>
+            </div>
+            )}
       </Card>
     </div>
   );
