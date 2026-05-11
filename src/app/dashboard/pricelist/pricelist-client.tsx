@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Card from "@/components/ui/card";
+import Link from "next/link";
 import type { OfferItem } from "@/lib/offers/get-offer-items";
 import { getUnitLabel } from "./utils";
 
@@ -20,6 +20,10 @@ function formatPrice(price: number) {
 
 function getCategoryLabel(item: OfferItem) {
   return item.category_path.map((category) => category.name).join(" / ");
+}
+
+function getOfferItemHref(itemId: string) {
+  return `/dashboard/pricelist/${itemId}`;
 }
 
 export default function PricelistClient({ items }: Props) {
@@ -257,88 +261,111 @@ export default function PricelistClient({ items }: Props) {
         </div>
         </div>
 
-      <Card>
+      <div>
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="section-title">Positionen</h2>
-          <p className="text-sm text-[var(--color-text-muted)]">
+            <h2 className="section-title">Positionen</h2>
+            <p className="text-sm text-[var(--color-text-muted)]">
             {filteredItems.length} von {items.length}
-          </p>
+            </p>
         </div>
 
         {filteredItems.length === 0 ? (
-            <p className="section-text">Keine Ergebnisse gefunden.</p>
-            ) : (
+            <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center shadow-sm">
+            <h2 className="section-title">Keine passenden Positionen gefunden</h2>
+            <p className="section-text mt-2">
+                Passe die Suche oder Filter an, um wieder Positionen anzuzeigen.
+            </p>
+            </div>
+        ) : (
             <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
-                <div className="hidden overflow-x-auto lg:block">
+            <div className="hidden overflow-x-auto lg:block">
                 <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-                    <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
+                <thead className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                     <tr>
-                        <th className="px-5 py-4 font-bold">Position</th>
-                        <th className="px-5 py-4 font-bold">Kategorie</th>
-                        <th className="px-5 py-4 font-bold">Typ</th>
-                        <th className="px-5 py-4 font-bold">Einheit</th>
-                        <th className="px-5 py-4 text-right font-bold">Preis</th>
+                    <th className="px-5 py-4 font-bold">Position</th>
+                    <th className="px-5 py-4 font-bold">Kategorie</th>
+                    <th className="px-5 py-4 font-bold">Typ</th>
+                    <th className="px-5 py-4 font-bold">Einheit</th>
+                    <th className="px-5 py-4 text-right font-bold">Preis</th>
                     </tr>
-                    </thead>
+                </thead>
 
-                    <tbody className="divide-y divide-[var(--color-border)]">
+                <tbody className="divide-y divide-[var(--color-border)]">
                     {filteredItems.map((item) => (
-                        <tr
+                    <tr
                         key={item.id}
-                        className="group transition hover:bg-[var(--color-surface-muted)]/70"
-                        >
+                        className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
+                    >
                         <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
+                        <Link href={getOfferItemHref(item.id)} className="block">
                             {item.name}
+                        </Link>
                         </td>
-                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                            {getCategoryLabel(item) || "Ohne Kategorie"}
-                        </td>
-                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                            {item.item_type === "package" ? "Paket" : "Position"}
-                        </td>
-                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                            {getUnitLabel(item.unit)}
-                        </td>
-                        <td className="px-5 py-4 text-right font-semibold text-[var(--color-text)]">
-                            {formatPrice(item.price)}
-                        </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </table>
-                </div>
 
-                <div className="divide-y divide-[var(--color-border)] lg:hidden">
-                {filteredItems.map((item) => (
-                    <div key={item.id} className="block p-5">
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                        <p className="text-sm font-bold text-[var(--color-primary)]">
+                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                        <Link href={getOfferItemHref(item.id)} className="block">
+                            {getCategoryLabel(item) || "Ohne Kategorie"}
+                        </Link>
+                        </td>
+
+                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                        <Link href={getOfferItemHref(item.id)} className="block">
                             {item.item_type === "package" ? "Paket" : "Position"}
+                        </Link>
+                        </td>
+
+                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
+                        <Link href={getOfferItemHref(item.id)} className="block">
+                            {getUnitLabel(item.unit)}
+                        </Link>
+                        </td>
+
+                        <td className="px-5 py-4 text-right font-semibold text-[var(--color-text)]">
+                        <Link href={getOfferItemHref(item.id)} className="block">
+                            {formatPrice(item.price)}
+                        </Link>
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+            </div>
+
+            <div className="divide-y divide-[var(--color-border)] lg:hidden">
+                {filteredItems.map((item) => (
+                <Link
+                    key={item.id}
+                    href={getOfferItemHref(item.id)}
+                    className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
+                >
+                    <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="text-sm font-bold text-[var(--color-primary)]">
+                        {item.item_type === "package" ? "Paket" : "Position"}
                         </p>
                         <h2 className="mt-1 font-bold text-[var(--color-text)]">
-                            {item.name}
+                        {item.name}
                         </h2>
                         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                            {getCategoryLabel(item) || "Ohne Kategorie"}
+                        {getCategoryLabel(item) || "Ohne Kategorie"}
                         </p>
-                        </div>
+                    </div>
 
-                        <p className="shrink-0 text-right font-bold text-[var(--color-text)]">
+                    <p className="shrink-0 text-right font-bold text-[var(--color-text)]">
                         {formatPrice(item.price)}
-                        </p>
+                    </p>
                     </div>
 
                     <div className="mt-4 grid gap-2 text-sm text-[var(--color-text-muted)]">
-                        <p>Einheit: {getUnitLabel(item.unit)}</p>
-                        <p>Typ: {item.item_type === "package" ? "Paket" : "Position"}</p>
+                    <p>Einheit: {getUnitLabel(item.unit)}</p>
+                    <p>Typ: {item.item_type === "package" ? "Paket" : "Position"}</p>
                     </div>
-                    </div>
+                </Link>
                 ))}
-                </div>
             </div>
-            )}
-      </Card>
+            </div>
+        )}
+        </div>
     </div>
   );
 }
