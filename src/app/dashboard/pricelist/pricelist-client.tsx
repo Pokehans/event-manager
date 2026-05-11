@@ -134,6 +134,49 @@ export default function PricelistClient({ items }: Props) {
     detailCategoryFilter !== "all" ||
     typeFilter !== "all";
 
+  const typeFilterLabel =
+    typeFilter === "package"
+        ? "Paket"
+        : typeFilter === "item"
+            ? "Position"
+            : "";
+
+  const activeChips = [
+    search.trim() && {
+        label: `Suche: ${search}`,
+        onRemove: () => setSearch(""),
+    },
+
+    mainCategoryFilter !== "all" && {
+        label: `Kategorie: ${mainCategoryFilter}`,
+        onRemove: () => {
+        setMainCategoryFilter("all");
+        setSubCategoryFilter("all");
+        setDetailCategoryFilter("all");
+        },
+    },
+
+    subCategoryFilter !== "all" && {
+        label: `Unterkategorie: ${subCategoryFilter}`,
+        onRemove: () => {
+        setSubCategoryFilter("all");
+        setDetailCategoryFilter("all");
+        },
+    },
+
+    detailCategoryFilter !== "all" && {
+        label: `Detail: ${detailCategoryFilter}`,
+        onRemove: () => setDetailCategoryFilter("all"),
+    },
+
+    typeFilter !== "all" && {
+        label: `Typ: ${typeFilterLabel}`,
+        onRemove: () => setTypeFilter("all"),
+    },
+    ].filter(
+    (chip): chip is { label: string; onRemove: () => void } => Boolean(chip)
+    );
+
   const clearFilters = () => {
     setSearch("");
     setMainCategoryFilter("all");
@@ -240,7 +283,28 @@ export default function PricelistClient({ items }: Props) {
                     <option value="package">Paket</option>
                     </select>
                 </div>
+            </div>
+
+            {activeChips.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-2">
+                    {activeChips.map((chip, index) => (
+                    <div
+                        key={index}
+                        className="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs shadow-sm"
+                    >
+                        <span>{chip.label}</span>
+
+                        <button
+                        type="button"
+                        onClick={chip.onRemove}
+                        className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                        >
+                        ×
+                        </button>
+                    </div>
+                    ))}
                 </div>
+                )}
 
             <div className="flex flex-col gap-3 border-t border-[var(--color-border)] pt-4 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm text-[var(--color-text-muted)]">
