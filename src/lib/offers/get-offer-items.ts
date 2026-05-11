@@ -137,3 +137,69 @@ export async function getOfferItems(): Promise<OfferItem[]> {
     };
   });
 }
+
+export async function getOfferItemById(
+  id: string
+): Promise<OfferItem | null> {
+  const supabase = await createClient();
+
+  const { data: categories, error: categoriesError } = await supabase
+    .from("offer_categories")
+    .select("id, parent_id, name, slug, sort_order");
+
+  if (categoriesError) {
+    console.error("Error loading offer categories:", categoriesError.message);
+    return null;
+  }
+
+  const typedCategories = categories as OfferCategoryRow[] | null;
+
+  const { data: item, error: itemError } = await supabase
+    .from("offer_items")
+    .select(
+      "id, category_id, name, description, unit, price, item_type, is_active, sort_order"
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (itemError) {
+    console.error("Error loading offer item:", itemError.message);
+    return null;
+  }
+
+  if (!item) {
+    return null;
+  }
+
+  const typedItem = item as OfferItemRow;
+
+  const categoryMap = new Map(
+    (typedCategories ?? []).map((category) => [category.id, category])
+  );
+
+  const category = categoryMap.get(typedItem.category_id) ?? null;
+  const parent = category?.parent_id
+    ? categoryMap.get(category.parent_id) ?? null
+    : null;
+
+  return {
+    ...typedItem,
+    category_path: buildCategoryPath(category, categoryMap),
+    category: category
+      ? {
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+          sort_order: category.sort_order,
+          parent: parent
+            ? {
+                id: parent.id,
+                name: parent.name,
+                slug: parent.slug,
+                sort_order: parent.sort_order,
+              }
+            : null,
+        }
+      : null,
+  };
+}

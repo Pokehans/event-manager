@@ -403,15 +403,23 @@ export default function PricelistClient({ items, currentUserRole }: Props) {
                         </td>
 
                         <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                        <Link href={getOfferItemHref(item.id)} className="block">
+                          <MaybeOfferItemLink
+                            canOpen={canOpenOfferItems}
+                            href={getOfferItemHref(item.id)}
+                            className="block"
+                          >
                             {getCategoryLabel(item) || "Ohne Kategorie"}
-                        </Link>
+                          </MaybeOfferItemLink>
                         </td>
 
                         <td className="px-5 py-4 text-right font-semibold text-[var(--color-text)]">
-                        <Link href={getOfferItemHref(item.id)} className="block">
+                          <MaybeOfferItemLink
+                            canOpen={canOpenOfferItems}
+                            href={getOfferItemHref(item.id)}
+                            className="block"
+                          >
                             {formatPrice(item.price)}
-                        </Link>
+                          </MaybeOfferItemLink>
                         </td>
                     </tr>
                     ))}
