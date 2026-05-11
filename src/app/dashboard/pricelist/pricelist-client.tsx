@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import Link from "next/link";
 import type { OfferItem } from "@/lib/offers/get-offer-items";
 
 type Props = {
   items: OfferItem[];
+  currentUserRole: string | null;
 };
 
 type TypeFilter = "all" | "item" | "package";
@@ -25,7 +26,32 @@ function getOfferItemHref(itemId: string) {
   return `/dashboard/pricelist/${itemId}`;
 }
 
-export default function PricelistClient({ items }: Props) {
+function MaybeOfferItemLink({
+  canOpen,
+  href,
+  className,
+  children,
+}: {
+  canOpen: boolean;
+  href: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  if (!canOpen) {
+    return <span className={className}>{children}</span>;
+  }
+
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+}
+
+export default function PricelistClient({ items, currentUserRole }: Props) {
+  const canOpenOfferItems = ["editor", "admin", "systemadmin"].includes(
+    currentUserRole ?? ""
+    );
   const [search, setSearch] = useState("");
   const [mainCategoryFilter, setMainCategoryFilter] = useState("all");
   const [subCategoryFilter, setSubCategoryFilter] = useState("all");
@@ -360,12 +386,20 @@ export default function PricelistClient({ items }: Props) {
                     {filteredItems.map((item) => (
                     <tr
                         key={item.id}
-                        className="group cursor-pointer transition hover:bg-[var(--color-surface-muted)]/70"
+                        className={`group transition ${
+                            canOpenOfferItems
+                                ? "cursor-pointer hover:bg-[var(--color-surface-muted)]/70"
+                                : ""
+                        }`}
                     >
                         <td className="px-5 py-4 font-semibold text-[var(--color-text)]">
-                        <Link href={getOfferItemHref(item.id)} className="block">
+                        <MaybeOfferItemLink
+                            canOpen={canOpenOfferItems}
+                            href={getOfferItemHref(item.id)}
+                            className="block"
+                            >
                             {item.name}
-                        </Link>
+                        </MaybeOfferItemLink>
                         </td>
 
                         <td className="px-5 py-4 text-[var(--color-text-muted)]">
@@ -386,36 +420,49 @@ export default function PricelistClient({ items }: Props) {
             </div>
 
             <div className="divide-y divide-[var(--color-border)] lg:hidden">
-                {filteredItems.map((item) => (
-                <Link
-                    key={item.id}
-                    href={getOfferItemHref(item.id)}
-                    className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
-                >
-                    <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <p className="text-sm font-bold text-[var(--color-primary)]">
-                        {item.item_type === "package" ? "Paket" : "Position"}
-                        </p>
-                        <h2 className="mt-1 font-bold text-[var(--color-text)]">
-                        {item.name}
-                        </h2>
-                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                        {getCategoryLabel(item) || "Ohne Kategorie"}
-                        </p>
-                    </div>
+                {filteredItems.map((item) => {
+                    const mobileContent = (
+                    <>
+                        <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-bold text-[var(--color-primary)]">
+                            {item.item_type === "package" ? "Paket" : "Position"}
+                            </p>
+                            <h2 className="mt-1 font-bold text-[var(--color-text)]">
+                            {item.name}
+                            </h2>
+                            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                            {getCategoryLabel(item) || "Ohne Kategorie"}
+                            </p>
+                        </div>
 
-                    <p className="shrink-0 text-right font-bold text-[var(--color-text)]">
-                        {formatPrice(item.price)}
-                    </p>
-                    </div>
+                        <p className="shrink-0 text-right font-bold text-[var(--color-text)]">
+                            {formatPrice(item.price)}
+                        </p>
+                        </div>
+                    </>
+                    );
 
-                    <div className="mt-4 grid gap-2 text-sm text-[var(--color-text-muted)]">
-                    </div>
-                </Link>
-                ))}
+                    if (!canOpenOfferItems) {
+                    return (
+                        <div key={item.id} className="block p-5">
+                        {mobileContent}
+                        </div>
+                    );
+                    }
+
+                    return (
+                    <Link
+                        key={item.id}
+                        href={getOfferItemHref(item.id)}
+                        className="block p-5 transition hover:bg-[var(--color-surface-muted)]"
+                    >
+                        {mobileContent}
+                    </Link>
+                    );
+                })}
             </div>
-            </div>
+        </div>
         )}
         </div>
     </div>
