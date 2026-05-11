@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
 import { getOfferItemById } from "@/lib/offers/get-offer-items";
+import { updateOfferItemPrice } from "./actions";
+import { EditableDetailField } from "./editable-detail-field";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -51,6 +53,22 @@ function DetailItem({ label, value }: DetailItemProps) {
   );
 }
 
+type DetailRowProps = {
+  label: string;
+  value: React.ReactNode;
+};
+
+function DetailRow({ label, value }: DetailRowProps) {
+  return (
+    <div className="grid gap-2 py-3 sm:grid-cols-[160px_1fr] sm:items-center">
+      <p className="text-sm font-medium text-[var(--color-text-muted)]">
+        {label}
+      </p>
+      <div className="text-sm text-[var(--color-text)]">{value}</div>
+    </div>
+  );
+}
+
 type DetailSectionProps = {
   title: string;
   description?: string;
@@ -81,6 +99,10 @@ export default async function PricelistItemDetailPage({ params }: Props) {
 
   const canDeleteOfferItem = currentUser
     ? hasRole(currentUser.role, [ROLES.ADMIN, ROLES.SYSTEMADMIN])
+    : false;
+
+  const canEditOfferItem = currentUser
+    ? hasRole(currentUser.role, [ROLES.EDITOR, ROLES.ADMIN, ROLES.SYSTEMADMIN])
     : false;
 
   if (!canOpenOfferItem) {
@@ -125,26 +147,33 @@ export default async function PricelistItemDetailPage({ params }: Props) {
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
           <DetailSection title="Stammdaten">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <DetailItem label="Name" value={item.name} />
-
-              <DetailItem
+            <div>
+                <DetailRow
                 label="Kategorie"
                 value={getCategoryLabel(item.category_path) || "Ohne Kategorie"}
-              />
+                />
 
-              <DetailItem label="Preis" value={formatPrice(item.price)} />
+                <DetailRow
+                label="Preis"
+                value={
+                    <EditableDetailField
+                    value={formatPrice(item.price)}
+                    name="price"
+                    initialValue={item.price}
+                    formAction={updateOfferItemPrice.bind(null, item.id)}
+                    canEdit={canEditOfferItem}
+                    inputMode="decimal"
+                    />
+                }
+                />
 
-              <DetailItem label="Einheit / Größe" value={item.unit || "—"} />
+                <DetailRow label="Einheit / Größe" value={item.unit || "—"} />
 
-              <DetailItem label="Typ" value={getTypeLabel(item.item_type)} />
+                <DetailRow label="Typ" value={getTypeLabel(item.item_type)} />
 
-              <DetailItem
-                label="Status"
-                value={item.is_active ? "Aktiv" : "Inaktiv"}
-              />
+                <DetailRow label="Status" value={item.is_active ? "Aktiv" : "Inaktiv"} />
             </div>
-          </DetailSection>
+        </DetailSection>
 
           <DetailSection title="Beschreibung">
             <p className="whitespace-pre-wrap text-sm leading-6">
