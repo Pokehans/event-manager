@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { OfferItem } from "@/lib/offers/get-offer-items";
-import { getUnitLabel } from "./utils";
 
 type Props = {
   items: OfferItem[];
@@ -326,13 +325,7 @@ export default function PricelistClient({ items }: Props) {
         </div>
 
       <div>
-        <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="section-title">Positionen</h2>
-            <p className="text-sm text-[var(--color-text-muted)]">
-            {filteredItems.length} von {items.length}
-            </p>
-        </div>
-
+        
         {filteredItems.length === 0 ? (
             <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center shadow-sm">
             <h2 className="section-title">Keine passenden Positionen gefunden</h2>
@@ -348,8 +341,6 @@ export default function PricelistClient({ items }: Props) {
                     <tr>
                     <th className="px-5 py-4 font-bold">Position</th>
                     <th className="px-5 py-4 font-bold">Kategorie</th>
-                    <th className="px-5 py-4 font-bold">Typ</th>
-                    <th className="px-5 py-4 font-bold">Einheit</th>
                     <th className="px-5 py-4 text-right font-bold">Preis</th>
                     </tr>
                 </thead>
@@ -369,18 +360,6 @@ export default function PricelistClient({ items }: Props) {
                         <td className="px-5 py-4 text-[var(--color-text-muted)]">
                         <Link href={getOfferItemHref(item.id)} className="block">
                             {getCategoryLabel(item) || "Ohne Kategorie"}
-                        </Link>
-                        </td>
-
-                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                        <Link href={getOfferItemHref(item.id)} className="block">
-                            {item.item_type === "package" ? "Paket" : "Position"}
-                        </Link>
-                        </td>
-
-                        <td className="px-5 py-4 text-[var(--color-text-muted)]">
-                        <Link href={getOfferItemHref(item.id)} className="block">
-                            {getUnitLabel(item.unit)}
                         </Link>
                         </td>
 
@@ -421,8 +400,6 @@ export default function PricelistClient({ items }: Props) {
                     </div>
 
                     <div className="mt-4 grid gap-2 text-sm text-[var(--color-text-muted)]">
-                    <p>Einheit: {getUnitLabel(item.unit)}</p>
-                    <p>Typ: {item.item_type === "package" ? "Paket" : "Position"}</p>
                     </div>
                 </Link>
                 ))}
