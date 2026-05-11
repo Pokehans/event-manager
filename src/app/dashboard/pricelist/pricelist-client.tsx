@@ -186,12 +186,23 @@ export default function PricelistClient({ items }: Props) {
 
   return (
     <div className="w-full space-y-6">
-      <div>
-        <h1 className="page-title">Preisliste</h1>
-        <p className="page-subtitle">
-          Strukturierte Übersicht aller Angebotspositionen.
-        </p>
-      </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+            <h1 className="page-title">Preisliste</h1>
+            <p className="page-subtitle">
+            Strukturierte Übersicht aller Angebotspositionen.
+            </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+            <Link
+            href="/dashboard/pricelist/new"
+            className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)]"
+            >
+            Position erstellen
+            </Link>
+        </div>
+        </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-4 shadow-sm backdrop-blur lg:sticky lg:top-4 lg:z-20">
         <div className="flex flex-col gap-4">
