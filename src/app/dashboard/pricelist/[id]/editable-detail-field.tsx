@@ -71,11 +71,11 @@ export function EditableDetailField({
       />
 
       <button
-  type="submit"
-  className="inline-save-button inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition"
->
-  Speichern
-</button>
+        type="submit"
+        className="inline-save-button inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition"
+        >
+        Speichern
+        </button>
 
       <button
         type="button"
@@ -93,9 +93,9 @@ export function EditableDetailField({
         <p className="basis-full text-xs text-red-600">{state.message}</p>
       ) : null}
       {state.success ? (
-  <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-    {state.message ?? "Gespeichert"}
-  </span>
+        <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+            {state.message ?? "Gespeichert"}
+        </span>
 ) : null}
     </form>
   );
