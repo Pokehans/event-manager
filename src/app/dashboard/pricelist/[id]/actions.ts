@@ -70,3 +70,58 @@ export async function updateOfferItemPrice(
     message: "Preis gespeichert.",
   };
 }
+
+type UpdateDescriptionState = {
+  success: boolean;
+  message?: string;
+  errors?: {
+    description?: string;
+  };
+};
+
+export async function updateOfferItemDescription(
+  itemId: string,
+  _prevState: UpdateDescriptionState,
+  formData: FormData
+): Promise<UpdateDescriptionState> {
+  const currentUser = await getCurrentUser({ redirectTo: "/" });
+
+  const canEdit = currentUser
+    ? hasRole(currentUser.role, [ROLES.EDITOR, ROLES.ADMIN, ROLES.SYSTEMADMIN])
+    : false;
+
+  if (!canEdit) {
+    return {
+      success: false,
+      message: "Du hast keine Berechtigung, diese Position zu bearbeiten.",
+    };
+  }
+
+  const description = String(formData.get("description") ?? "").trim();
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("offer_items")
+    .update({
+      description: description || null,
+    })
+    .eq("id", itemId);
+
+  if (error) {
+    console.error("Error updating offer item description:", error.message);
+
+    return {
+      success: false,
+      message: "Die Beschreibung konnte nicht gespeichert werden.",
+    };
+  }
+
+  revalidatePath(`/dashboard/pricelist/${itemId}`);
+  revalidatePath("/dashboard/pricelist");
+
+  return {
+    success: true,
+    message: "Beschreibung gespeichert.",
+  };
+}

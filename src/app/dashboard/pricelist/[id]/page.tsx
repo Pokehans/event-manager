@@ -3,8 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
 import { getOfferItemById } from "@/lib/offers/get-offer-items";
-import { updateOfferItemPrice } from "./actions";
-import { EditableDetailField } from "./editable-detail-field";
+import {
+  updateOfferItemDescription,
+  updateOfferItemPrice,
+} from "./actions";
+import {
+  EditableDescriptionSection,
+  EditableDetailField,
+} from "./editable-detail-field";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -30,6 +36,21 @@ function getTypeLabel(type: string) {
       return "Paket";
     default:
       return type;
+  }
+}
+
+function getUnitLabel(unit: string | null) {
+  switch (unit) {
+    case "person":
+      return "pro Person";
+    case "portion":
+      return "pro Portion";
+    case "piece":
+      return "pro Stück";
+    case "bottle":
+      return "Flasche";
+    default:
+      return unit || "—";
   }
 }
 
@@ -72,15 +93,25 @@ function DetailRow({ label, value }: DetailRowProps) {
 type DetailSectionProps = {
   title: string;
   description?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 };
 
-function DetailSection({ title, description, children }: DetailSectionProps) {
+function DetailSection({
+  title,
+  description,
+  action,
+  children,
+}: DetailSectionProps) {
   return (
     <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-      <div className="space-y-1">
-        <h2 className="section-title">{title}</h2>
-        {description ? <p className="section-text">{description}</p> : null}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="section-title">{title}</h2>
+          {description ? <p className="section-text">{description}</p> : null}
+        </div>
+
+        {action ? <div className="shrink-0">{action}</div> : null}
       </div>
 
       <div className="mt-6">{children}</div>
@@ -167,7 +198,7 @@ export default async function PricelistItemDetailPage({ params }: Props) {
                 }
                 />
 
-                <DetailRow label="Einheit / Größe" value={item.unit || "—"} />
+                <DetailRow label="Einheit / Größe" value={getUnitLabel(item.unit)} />
 
                 <DetailRow label="Typ" value={getTypeLabel(item.item_type)} />
 
@@ -175,11 +206,11 @@ export default async function PricelistItemDetailPage({ params }: Props) {
             </div>
         </DetailSection>
 
-          <DetailSection title="Beschreibung">
-            <p className="whitespace-pre-wrap text-sm leading-6">
-              {item.description || "Keine Beschreibung erfasst."}
-            </p>
-          </DetailSection>
+         <EditableDescriptionSection
+            initialValue={item.description ?? ""}
+            formAction={updateOfferItemDescription.bind(null, item.id)}
+            canEdit={canEditOfferItem}
+          />
         </div>
 
         <div className="space-y-6">
