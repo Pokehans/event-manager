@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useActionState } from "react";
+import { useState, useTransition } from "react";
 
 type EditableFieldState = {
   success: boolean;
@@ -24,6 +23,14 @@ type Props = {
   inputMode?: "text" | "decimal" | "numeric";
 };
 
+function SuccessBadge({ message }: { message?: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+      {message ?? "Gespeichert"}
+    </span>
+  );
+}
+
 export function EditableDetailField({
   value,
   name,
@@ -34,49 +41,47 @@ export function EditableDetailField({
   inputMode = "text",
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [state, setState] = useState<EditableFieldState>({ success: false });
+  const [isPending, startTransition] = useTransition();
 
-  const [state, action] = useActionState(formAction, {
-    success: false,
-  });
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      const result = await formAction({ success: false }, formData);
+      setState(result);
+
+      if (result.success) {
+        setIsEditing(false);
+      }
+    });
+  }
 
   if (!canEdit) {
     return <span>{value}</span>;
   }
 
   if (!isEditing) {
-    if (type === "textarea") {
-      return (
-        <div className="space-y-3">
-          <div>{value}</div>
-
-          <button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            className="inline-flex items-center justify-center rounded-md border border-[var(--color-border)] bg-white px-2 py-0.5 text-xs font-medium leading-5 transition hover:bg-[var(--color-surface-muted)]"
-          >
-            Bearbeiten
-          </button>
-        </div>
-      );
-    }
-
     return (
       <div className="flex items-center gap-3">
         <span>{value}</span>
 
         <button
           type="button"
-          onClick={() => setIsEditing(true)}
+          onClick={() => {
+            setState({ success: false });
+            setIsEditing(true);
+          }}
           className="inline-flex items-center justify-center rounded-md border border-[var(--color-border)] bg-white px-2 py-0.5 text-xs font-medium leading-5 transition hover:bg-[var(--color-surface-muted)]"
         >
           Bearbeiten
         </button>
+
+        {state.success ? <SuccessBadge message={state.message} /> : null}
       </div>
     );
   }
 
   return (
-    <form action={action} className="flex w-full flex-wrap items-center gap-2">
+    <form action={handleSubmit} className="flex w-full flex-wrap items-center gap-2">
       {type === "textarea" ? (
         <textarea
           name={name}
@@ -98,18 +103,19 @@ export function EditableDetailField({
 
       <button
         type="submit"
-        className="inline-save-button inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition"
-        >
+        disabled={isPending}
+        className="inline-save-button inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition disabled:opacity-60"
+      >
         Speichern
-        </button>
+      </button>
 
       <button
         type="button"
         onClick={() => setIsEditing(false)}
         className="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
-        >
+      >
         Abbrechen
-        </button>
+      </button>
 
       {state.errors?.[name] ? (
         <p className="basis-full text-xs text-red-600">{state.errors[name]}</p>
@@ -118,11 +124,6 @@ export function EditableDetailField({
       {state.message && !state.success ? (
         <p className="basis-full text-xs text-red-600">{state.message}</p>
       ) : null}
-      {state.success ? (
-        <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-            {state.message ?? "Gespeichert"}
-        </span>
-) : null}
     </form>
   );
 }
@@ -139,30 +140,48 @@ export function EditableDescriptionSection({
   canEdit,
 }: EditableDescriptionSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [state, setState] = useState<EditableFieldState>({ success: false });
+  const [isPending, startTransition] = useTransition();
 
-  const [state, action] = useActionState(formAction, {
-    success: false,
-  });
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      const result = await formAction({ success: false }, formData);
+      setState(result);
+
+      if (result.success) {
+        setIsEditing(false);
+      }
+    });
+  }
 
   return (
     <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <h2 className="section-title">Beschreibung</h2>
 
-        {canEdit && !isEditing ? (
-          <button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            className="inline-flex items-center justify-center rounded-md border border-[var(--color-border)] bg-white px-2 py-0.5 text-xs font-medium leading-5 transition hover:bg-[var(--color-surface-muted)]"
-          >
-            Bearbeiten
-          </button>
+        {canEdit ? (
+          <div className="flex items-center gap-2">
+            {!isEditing ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setState({ success: false });
+                  setIsEditing(true);
+                }}
+                className="inline-flex items-center justify-center rounded-md border border-[var(--color-border)] bg-white px-2 py-px text-xs font-medium leading-4 transition hover:bg-[var(--color-surface-muted)]"
+              >
+                Bearbeiten
+              </button>
+            ) : null}
+
+            {state.success ? <SuccessBadge message={state.message} /> : null}
+          </div>
         ) : null}
       </div>
 
       <div className="mt-6">
         {isEditing ? (
-          <form action={action} className="flex w-full flex-wrap items-center gap-2">
+          <form action={handleSubmit} className="flex w-full flex-wrap items-center gap-2">
             <textarea
               name="description"
               defaultValue={initialValue}
@@ -173,7 +192,8 @@ export function EditableDescriptionSection({
 
             <button
               type="submit"
-              className="inline-save-button inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition"
+              disabled={isPending}
+              className="inline-save-button inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition disabled:opacity-60"
             >
               Speichern
             </button>
@@ -194,12 +214,6 @@ export function EditableDescriptionSection({
 
             {state.message && !state.success ? (
               <p className="basis-full text-xs text-red-600">{state.message}</p>
-            ) : null}
-
-            {state.success ? (
-              <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                {state.message ?? "Gespeichert"}
-              </span>
             ) : null}
           </form>
         ) : (
