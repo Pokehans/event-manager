@@ -42,6 +42,15 @@ export type OfferItem = {
   } | null;
 };
 
+export type OfferCategory = {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  slug: string;
+  sort_order: number;
+  category_path: OfferCategoryPathItem[];
+};
+
 type OfferCategoryRow = {
   id: string;
   parent_id: string | null;
@@ -265,4 +274,30 @@ async function getOfferItemUsers(
   return new Map(
     ((users ?? []) as OfferItemUser[]).map((user) => [user.id, user])
   );
+}
+
+export async function getOfferCategories(): Promise<OfferCategory[]> {
+  const supabase = await createClient();
+
+  const { data: categories, error } = await supabase
+    .from("offer_categories")
+    .select("id, parent_id, name, slug, sort_order")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Error loading offer categories:", error.message);
+    return [];
+  }
+
+  const typedCategories = categories as OfferCategoryRow[] | null;
+
+  const categoryMap = new Map(
+    (typedCategories ?? []).map((category) => [category.id, category])
+  );
+
+  return (typedCategories ?? []).map((category) => ({
+    ...category,
+    category_path: buildCategoryPath(category, categoryMap),
+  }));
 }
