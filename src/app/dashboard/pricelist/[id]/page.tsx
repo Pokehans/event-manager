@@ -228,11 +228,12 @@ export default async function PricelistItemDetailPage({ params }: Props) {
           <DetailSection title="Interne Informationen">
             <div className="grid gap-4">
               <DetailItem label="Produkt-ID" value={item.id} />
+              <DetailItem label="Kategorie-ID" value={item.category?.id ?? "—"} />
+              <DetailItem label="Erstellt am" value={formatDateTime(item.created_at)} />
               <DetailItem
-                label="Sortierung"
-                value={String(item.sort_order ?? "—")}
+                label="Zuletzt geändert"
+                value={formatDateTime(item.updated_at)}
               />
-              <DetailItem label="Erstellt am" value={formatDateTime(null)} />
             </div>
           </DetailSection>
 

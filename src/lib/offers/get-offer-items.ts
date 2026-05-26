@@ -16,6 +16,8 @@ export type OfferItem = {
   item_type: "item" | "package";
   is_active: boolean;
   sort_order: number;
+  created_at: string | null;
+  updated_at: string | null;
   category_path: OfferCategoryPathItem[];
   category: {
     id: string;
@@ -49,6 +51,8 @@ type OfferItemRow = {
   item_type: "item" | "package";
   is_active: boolean;
   sort_order: number;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 function buildCategoryPath(
@@ -93,7 +97,7 @@ export async function getOfferItems(): Promise<OfferItem[]> {
   const { data: items, error: itemsError } = await supabase
     .from("offer_items")
     .select(
-      "id, category_id, name, description, unit, price, item_type, is_active, sort_order"
+      "id, category_id, name, description, unit, price, item_type, is_active, sort_order, created_at, updated_at"
     )
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -157,7 +161,7 @@ export async function getOfferItemById(
   const { data: item, error: itemError } = await supabase
     .from("offer_items")
     .select(
-      "id, category_id, name, description, unit, price, item_type, is_active, sort_order"
+      "id, category_id, name, description, unit, price, item_type, is_active, sort_order, created_at, updated_at"
     )
     .eq("id", id)
     .maybeSingle();
