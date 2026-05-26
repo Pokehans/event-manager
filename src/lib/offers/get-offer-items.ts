@@ -7,6 +7,11 @@ export type OfferCategoryPathItem = {
   sort_order: number;
 };
 
+export type OfferItemUser = {
+  id: string;
+  email: string;
+};
+
 export type OfferItem = {
   id: string;
   name: string;
@@ -18,6 +23,10 @@ export type OfferItem = {
   sort_order: number;
   created_at: string | null;
   updated_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_by_user: OfferItemUser | null;
+  updated_by_user: OfferItemUser | null;
   category_path: OfferCategoryPathItem[];
   category: {
     id: string;
@@ -53,8 +62,9 @@ type OfferItemRow = {
   sort_order: number;
   created_at: string | null;
   updated_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
 };
-
 function buildCategoryPath(
   category: OfferCategoryRow | null,
   categoryMap: Map<string, OfferCategoryRow>
@@ -97,7 +107,7 @@ export async function getOfferItems(): Promise<OfferItem[]> {
   const { data: items, error: itemsError } = await supabase
     .from("offer_items")
     .select(
-      "id, category_id, name, description, unit, price, item_type, is_active, sort_order, created_at, updated_at"
+      "id, category_id, name, description, unit, price, item_type, is_active, sort_order, created_at, updated_at, created_by, updated_by"
     )
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -113,6 +123,10 @@ export async function getOfferItems(): Promise<OfferItem[]> {
     (typedCategories ?? []).map((category) => [category.id, category])
   );
 
+  const userMap = await getOfferItemUsers(
+    (typedItems ?? []).flatMap((item) => [item.created_by, item.updated_by])
+  );
+
   return (typedItems ?? []).map((item) => {
     const category = categoryMap.get(item.category_id) ?? null;
     const parent = category?.parent_id
@@ -121,6 +135,12 @@ export async function getOfferItems(): Promise<OfferItem[]> {
 
     return {
       ...item,
+      created_by_user: item.created_by
+        ? userMap.get(item.created_by) ?? null
+        : null,
+      updated_by_user: item.updated_by
+        ? userMap.get(item.updated_by) ?? null
+        : null,
       category_path: buildCategoryPath(category, categoryMap),
       category: category
         ? {
@@ -161,7 +181,7 @@ export async function getOfferItemById(
   const { data: item, error: itemError } = await supabase
     .from("offer_items")
     .select(
-      "id, category_id, name, description, unit, price, item_type, is_active, sort_order, created_at, updated_at"
+      "id, category_id, name, description, unit, price, item_type, is_active, sort_order, created_at, updated_at, created_by, updated_by"
     )
     .eq("id", id)
     .maybeSingle();
@@ -181,6 +201,11 @@ export async function getOfferItemById(
     (typedCategories ?? []).map((category) => [category.id, category])
   );
 
+  const userMap = await getOfferItemUsers([
+    typedItem.created_by,
+    typedItem.updated_by,
+  ]);
+
   const category = categoryMap.get(typedItem.category_id) ?? null;
   const parent = category?.parent_id
     ? categoryMap.get(category.parent_id) ?? null
@@ -188,6 +213,12 @@ export async function getOfferItemById(
 
   return {
     ...typedItem,
+    created_by_user: typedItem.created_by
+      ? userMap.get(typedItem.created_by) ?? null
+      : null,
+    updated_by_user: typedItem.updated_by
+      ? userMap.get(typedItem.updated_by) ?? null
+      : null,
     category_path: buildCategoryPath(category, categoryMap),
     category: category
       ? {
@@ -206,4 +237,32 @@ export async function getOfferItemById(
         }
       : null,
   };
+}
+
+async function getOfferItemUsers(
+  userIds: (string | null)[]
+): Promise<Map<string, OfferItemUser>> {
+  const uniqueUserIds = Array.from(
+    new Set(userIds.filter((userId): userId is string => Boolean(userId)))
+  );
+
+  if (uniqueUserIds.length === 0) {
+    return new Map();
+  }
+
+  const supabase = await createClient();
+
+  const { data: users, error } = await supabase
+    .from("users")
+    .select("id, email")
+    .in("id", uniqueUserIds);
+
+  if (error) {
+    console.error("Error loading offer item users:", error.message);
+    return new Map();
+  }
+
+  return new Map(
+    ((users ?? []) as OfferItemUser[]).map((user) => [user.id, user])
+  );
 }

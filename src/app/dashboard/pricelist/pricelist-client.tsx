@@ -51,7 +51,11 @@ function MaybeOfferItemLink({
 export default function PricelistClient({ items, currentUserRole }: Props) {
   const canOpenOfferItems = ["editor", "admin", "systemadmin"].includes(
     currentUserRole ?? ""
-    );
+  );
+
+  const canCreateOfferItems = ["admin", "systemadmin"].includes(
+    currentUserRole ?? ""
+  );
   const [search, setSearch] = useState("");
   const [mainCategoryFilter, setMainCategoryFilter] = useState("all");
   const [subCategoryFilter, setSubCategoryFilter] = useState("all");
@@ -220,14 +224,16 @@ export default function PricelistClient({ items, currentUserRole }: Props) {
             </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {canCreateOfferItems ? (
+          <div className="flex flex-wrap items-center gap-2">
             <Link
-            href="/dashboard/pricelist/new"
-            className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)]"
+              href="/dashboard/pricelist/new"
+              className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)]"
             >
-            Position erstellen
+              Position erstellen
             </Link>
-        </div>
+          </div>
+        ) : null}
         </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-4 shadow-sm backdrop-blur lg:sticky lg:top-4 lg:z-20">

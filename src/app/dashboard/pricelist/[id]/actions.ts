@@ -24,7 +24,7 @@ export async function updateOfferItemPrice(
     ? hasRole(currentUser.role, [ROLES.EDITOR, ROLES.ADMIN, ROLES.SYSTEMADMIN])
     : false;
 
-  if (!canEdit) {
+  if (!currentUser || !canEdit) {
     return {
       success: false,
       message: "Du hast keine Berechtigung, diese Position zu bearbeiten.",
@@ -50,7 +50,7 @@ export async function updateOfferItemPrice(
 
   const { error } = await supabase
     .from("offer_items")
-    .update({ price })
+    .update({ price,  updated_by: currentUser.id, })
     .eq("id", itemId);
 
   if (error) {
@@ -90,7 +90,7 @@ export async function updateOfferItemDescription(
     ? hasRole(currentUser.role, [ROLES.EDITOR, ROLES.ADMIN, ROLES.SYSTEMADMIN])
     : false;
 
-  if (!canEdit) {
+  if (!currentUser || !canEdit) {
     return {
       success: false,
       message: "Du hast keine Berechtigung, diese Position zu bearbeiten.",
@@ -104,7 +104,7 @@ export async function updateOfferItemDescription(
   const { error } = await supabase
     .from("offer_items")
     .update({
-      description: description || null,
+      description: description || null, updated_by: currentUser.id,
     })
     .eq("id", itemId);
 
@@ -141,7 +141,7 @@ export async function updateOfferItemStatus(
     ? hasRole(currentUser.role, [ROLES.EDITOR, ROLES.ADMIN, ROLES.SYSTEMADMIN])
     : false;
 
-  if (!canEdit) {
+  if (!currentUser || !canEdit) {
     return {
       success: false,
       message: "Du hast keine Berechtigung, diese Position zu bearbeiten.",
@@ -154,7 +154,7 @@ export async function updateOfferItemStatus(
 
   const { error } = await supabase
     .from("offer_items")
-    .update({ is_active: isActive })
+    .update({ is_active: isActive, updated_by: currentUser.id, })
     .eq("id", itemId);
 
   if (error) {
