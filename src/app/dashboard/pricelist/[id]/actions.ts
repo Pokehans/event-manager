@@ -125,3 +125,52 @@ export async function updateOfferItemDescription(
     message: "Beschreibung gespeichert.",
   };
 }
+type UpdateStatusState = {
+  success: boolean;
+  message?: string;
+};
+
+export async function updateOfferItemStatus(
+  itemId: string,
+  _prevState: UpdateStatusState,
+  formData: FormData
+): Promise<UpdateStatusState> {
+  const currentUser = await getCurrentUser({ redirectTo: "/" });
+
+  const canEdit = currentUser
+    ? hasRole(currentUser.role, [ROLES.EDITOR, ROLES.ADMIN, ROLES.SYSTEMADMIN])
+    : false;
+
+  if (!canEdit) {
+    return {
+      success: false,
+      message: "Du hast keine Berechtigung, diese Position zu bearbeiten.",
+    };
+  }
+
+  const isActive = formData.get("is_active") === "true";
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("offer_items")
+    .update({ is_active: isActive })
+    .eq("id", itemId);
+
+  if (error) {
+    console.error("Error updating offer item status:", error.message);
+
+    return {
+      success: false,
+      message: "Der Status konnte nicht gespeichert werden.",
+    };
+  }
+
+  revalidatePath(`/dashboard/pricelist/${itemId}`);
+  revalidatePath("/dashboard/pricelist");
+
+  return {
+    success: true,
+    message: isActive ? "Status aktiv." : "Status inaktiv.",
+  };
+}

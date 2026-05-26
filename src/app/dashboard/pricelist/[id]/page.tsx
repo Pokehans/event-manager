@@ -6,10 +6,12 @@ import { getOfferItemById } from "@/lib/offers/get-offer-items";
 import {
   updateOfferItemDescription,
   updateOfferItemPrice,
+  updateOfferItemStatus,
 } from "./actions";
 import {
   EditableDescriptionSection,
   EditableDetailField,
+  StatusToggle,
 } from "./editable-detail-field";
 
 type Props = {
@@ -202,7 +204,16 @@ export default async function PricelistItemDetailPage({ params }: Props) {
 
                 <DetailRow label="Typ" value={getTypeLabel(item.item_type)} />
 
-                <DetailRow label="Status" value={item.is_active ? "Aktiv" : "Inaktiv"} />
+                <DetailRow
+                  label="Status"
+                  value={
+                    <StatusToggle
+                      initialValue={item.is_active}
+                      formAction={updateOfferItemStatus.bind(null, item.id)}
+                      canEdit={canEditOfferItem}
+                    />
+                  }
+                />
             </div>
         </DetailSection>
 

@@ -225,3 +225,78 @@ export function EditableDescriptionSection({
     </section>
   );
 }
+type StatusToggleProps = {
+  initialValue: boolean;
+  formAction: EditableFieldAction;
+  canEdit: boolean;
+};
+
+export function StatusToggle({
+  initialValue,
+  formAction,
+  canEdit,
+}: StatusToggleProps) {
+  const [isActive, setIsActive] = useState(initialValue);
+  const [state, setState] = useState<EditableFieldState>({ success: false });
+  const [isPending, startTransition] = useTransition();
+
+  function handleChange(nextValue: boolean) {
+    setIsActive(nextValue);
+    setState({ success: false });
+
+    const formData = new FormData();
+    formData.set("is_active", String(nextValue));
+
+    startTransition(async () => {
+      const result = await formAction({ success: false }, formData);
+      setState(result);
+
+      if (!result.success) {
+        setIsActive(initialValue);
+      }
+    });
+  }
+
+  if (!canEdit) {
+    return (
+      <span className={isActive ? "status-badge status-badge--active" : "status-badge status-badge--inactive"}>
+        {isActive ? "Aktiv" : "Inaktiv"}
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isActive}
+        disabled={isPending}
+        onClick={() => handleChange(!isActive)}
+        className={[
+          "relative inline-flex h-5 w-9 items-center rounded-full border transition disabled:opacity-60",
+          isActive
+            ? "border-green-200 bg-green-100"
+            : "border-red-200 bg-red-100",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "inline-block h-4 w-4 rounded-full bg-white shadow-sm transition",
+            isActive ? "translate-x-4" : "translate-x-0.5",
+          ].join(" ")}
+        />
+      </button>
+
+      <span className={isActive ? "status-badge status-badge--active" : "status-badge status-badge--inactive"}>
+        {isActive ? "Aktiv" : "Inaktiv"}
+      </span>
+
+      {state.success ? <SuccessBadge message={state.message} /> : null}
+
+      {state.message && !state.success ? (
+        <p className="basis-full text-xs text-red-600">{state.message}</p>
+      ) : null}
+    </div>
+  );
+}
