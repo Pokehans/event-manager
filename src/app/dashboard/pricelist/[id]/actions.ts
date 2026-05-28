@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { ROLES, hasRole } from "@/lib/auth/roles";
@@ -173,4 +174,31 @@ export async function updateOfferItemStatus(
     success: true,
     message: isActive ? "Status aktiv." : "Status inaktiv.",
   };
+}
+
+export async function deleteOfferItem(itemId: string) {
+  const currentUser = await getCurrentUser({ redirectTo: "/" });
+
+  const canDelete = currentUser
+    ? hasRole(currentUser.role, [ROLES.ADMIN, ROLES.SYSTEMADMIN])
+    : false;
+
+  if (!currentUser || !canDelete) {
+    redirect("/dashboard/pricelist");
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("offer_items")
+    .delete()
+    .eq("id", itemId);
+
+  if (error) {
+    console.error("Error deleting offer item:", error.message);
+    redirect(`/dashboard/pricelist/${itemId}`);
+  }
+
+  revalidatePath("/dashboard/pricelist");
+  redirect("/dashboard/pricelist");
 }

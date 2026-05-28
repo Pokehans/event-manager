@@ -13,6 +13,7 @@ import {
   EditableDetailField,
   StatusToggle,
 } from "./editable-detail-field";
+import { DeleteOfferItemButton } from "./delete-offer-item-button";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -165,14 +166,7 @@ export default async function PricelistItemDetailPage({ params }: Props) {
           </Link>
 
           {canDeleteOfferItem ? (
-            <button
-              type="button"
-              disabled
-              className="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 opacity-60"
-              title="Löschen wird im nächsten Schritt integriert"
-            >
-              Löschen
-            </button>
+            <DeleteOfferItemButton itemId={item.id} itemName={item.name} />
           ) : null}
         </div>
       </div>
