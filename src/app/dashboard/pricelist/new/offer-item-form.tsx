@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import type { OfferCategory } from "@/lib/offers/get-offer-items";
 import { createOfferItem } from "./actions";
@@ -13,123 +12,148 @@ function getCategoryLabel(category: OfferCategory) {
   return category.category_path.map((item) => item.name).join(" / ");
 }
 
+function fieldClass(error?: string) {
+  return [
+    "w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none transition",
+    error
+      ? "border-[var(--color-danger)] ring-1 ring-[var(--color-danger)]"
+      : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-soft)]",
+  ].join(" ");
+}
+
 export function OfferItemForm({ categories }: Props) {
-  const [state, formAction] = useActionState(createOfferItem, {
+  const [state, formAction, pending] = useActionState(createOfferItem, {
     success: false,
   });
 
   return (
+  <div className="space-y-6">
     <form action={formAction} className="space-y-6">
-      {state.message ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {state.message}
-        </div>
-      ) : null}
+        {state.message ? (
+          <div className="rounded-xl border border-[var(--color-danger)] bg-red-50 px-4 py-3 text-sm text-[var(--color-danger)]">
+            {state.message}
+          </div>
+        ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-sm font-medium">Name</label>
-          <input
-            name="name"
-            className="mt-1 w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
-          />
-          {state.errors?.name ? (
-            <p className="mt-1 text-xs text-red-600">{state.errors.name}</p>
-          ) : null}
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">Kategorie</label>
-          <select
-            name="category_id"
-            className="mt-1 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-            defaultValue=""
-          >
-            <option value="">Kategorie wählen</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {getCategoryLabel(category)}
-              </option>
-            ))}
-          </select>
-          {state.errors?.category_id ? (
-            <p className="mt-1 text-xs text-red-600">
-              {state.errors.category_id}
+        <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+          <div className="space-y-1">
+            <h2 className="section-title">Basisdaten</h2>
+            <p className="section-text">
+              Grundinformationen zur Position, Kategorie und Preisgestaltung.
             </p>
-          ) : null}
-        </div>
+          </div>
 
-        <div>
-          <label className="text-sm font-medium">Preis</label>
-          <input
-            name="price"
-            inputMode="decimal"
-            className="mt-1 w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
-          />
-          {state.errors?.price ? (
-            <p className="mt-1 text-xs text-red-600">{state.errors.price}</p>
-          ) : null}
-        </div>
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-sm font-medium">Name</span>
+              <input
+                name="name"
+                className={fieldClass(state.errors?.name)}
+              />
+              {state.errors?.name ? (
+                <p className="text-sm text-[var(--color-danger)]">
+                  {state.errors.name}
+                </p>
+              ) : null}
+            </label>
 
-        <div>
-          <label className="text-sm font-medium">Einheit / Größe</label>
-          <select
-            name="unit"
-            className="mt-1 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-            defaultValue="person"
+            <label className="space-y-2">
+              <span className="text-sm font-medium">Kategorie</span>
+              <select
+                name="category_id"
+                defaultValue=""
+                className={fieldClass(state.errors?.category_id)}
+              >
+                <option value="">Kategorie wählen</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {getCategoryLabel(category)}
+                  </option>
+                ))}
+              </select>
+              {state.errors?.category_id ? (
+                <p className="text-sm text-[var(--color-danger)]">
+                  {state.errors.category_id}
+                </p>
+              ) : null}
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-sm font-medium">Preis</span>
+              <input
+                name="price"
+                inputMode="decimal"
+                className={fieldClass(state.errors?.price)}
+              />
+              {state.errors?.price ? (
+                <p className="text-sm text-[var(--color-danger)]">
+                  {state.errors.price}
+                </p>
+              ) : null}
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-sm font-medium">Einheit / Größe</span>
+              <select
+                name="unit"
+                defaultValue="person"
+                className={fieldClass(state.errors?.unit)}
+              >
+                <option value="person">Person</option>
+                <option value="portion">Portion</option>
+                <option value="piece">Stück</option>
+                <option value="bottle">Flasche</option>
+              </select>
+              {state.errors?.unit ? (
+                <p className="text-sm text-[var(--color-danger)]">
+                  {state.errors.unit}
+                </p>
+              ) : null}
+            </label>
+
+            <label className="space-y-2">
+            <span className="text-sm font-medium">Typ</span>
+              <select
+                name="item_type"
+                defaultValue="item"
+                className={fieldClass(state.errors?.item_type)}
+              >
+                <option value="item">Position</option>
+                <option value="package">Paket</option>
+              </select>
+              {state.errors?.item_type ? (
+                <p className="text-sm text-[var(--color-danger)]">
+                  {state.errors.item_type}
+                </p>
+              ) : null}
+            </label>
+
+            <label className="space-y-2 md:col-span-2">
+              <span className="text-sm font-medium">Beschreibung</span>
+              <textarea
+                name="description"
+                rows={6}
+                className={fieldClass()}
+                placeholder="z. B. Kaffee, Gipfeli, Orangensaft ..."
+              />
+            </label>
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Nach dem Speichern erscheint die Position in der Preisliste.
+          </p>
+
+          <button
+            type="submit"
+            disabled={pending}
+            className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--color-border)] disabled:text-[var(--color-text-muted)] disabled:shadow-none"
           >
-            <option value="person">Person</option>
-            <option value="portion">Portion</option>
-            <option value="piece">Stück</option>
-            <option value="bottle">Flasche</option>
-          </select>
-          {state.errors?.unit ? (
-            <p className="mt-1 text-xs text-red-600">{state.errors.unit}</p>
-          ) : null}
+            {pending ? "Position wird erstellt..." : "Position erstellen"}
+          </button>
         </div>
-
-        <div>
-          <label className="text-sm font-medium">Typ</label>
-          <select
-            name="item_type"
-            className="mt-1 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-            defaultValue="item"
-          >
-            <option value="item">Position</option>
-            <option value="package">Paket</option>
-          </select>
-          {state.errors?.item_type ? (
-            <p className="mt-1 text-xs text-red-600">
-              {state.errors.item_type}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div>
-        <label className="text-sm font-medium">Beschreibung</label>
-        <textarea
-          name="description"
-          rows={4}
-          className="mt-1 w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm"
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)]"
-        >
-          Position erstellen
-        </button>
-
-        <Link
-            href="/dashboard/pricelist"
-            className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-medium transition hover:bg-[var(--color-surface-muted)]"
-            >
-            Abbrechen
-        </Link>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

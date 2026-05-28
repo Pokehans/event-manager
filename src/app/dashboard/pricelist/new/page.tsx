@@ -19,12 +19,14 @@ export default async function NewPricelistItemPage() {
   const categories = await getOfferCategories();
 
   return (
-    <div className="w-full space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="space-y-1">
-          <h1 className="page-title">Position erstellen</h1>
-          <p className="page-subtitle">
-            Neue Preislistenposition erfassen.
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight text-[var(--color-primary)]">
+            Position erstellen
+          </h1>
+          <p className="mt-2 text-base text-[var(--color-text-muted)]">
+            Neue Preislistenposition mit Kategorie, Preis und Einheit erfassen
           </p>
         </div>
 
@@ -35,13 +37,7 @@ export default async function NewPricelistItemPage() {
           Zurück zur Preisliste
         </Link>
       </div>
-
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-        <h2 className="section-title">Stammdaten</h2>
-            <div className="mt-6">
-                <OfferItemForm categories={categories} />
-            </div>
-      </section>
+    <OfferItemForm categories={categories} />
     </div>
   );
 }

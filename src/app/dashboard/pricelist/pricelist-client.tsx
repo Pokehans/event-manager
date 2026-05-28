@@ -215,15 +215,17 @@ export default function PricelistClient({ items, currentUserRole }: Props) {
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-            <h1 className="page-title">Preisliste</h1>
-            <p className="page-subtitle">
-            Strukturierte Übersicht aller Angebotspositionen.
+            <h1 className="text-4xl font-bold tracking-tight text-[var(--color-primary)]">
+            Preisliste
+            </h1>
+            <p className="mt-2 text-base text-[var(--color-text-muted)]">
+            Übersicht aller Angebotspositionen
             </p>
         </div>
-
+  
         {canCreateOfferItems ? (
           <div className="flex flex-wrap items-center gap-2">
             <Link
